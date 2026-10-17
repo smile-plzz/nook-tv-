@@ -15,6 +15,10 @@ public final class SourceDocument {
     public static final int MAX_ITEMS_PER_SOURCE = 20;
 
     private SourceDocument() {}
+    public static String itemTag(String sourceId,String itemId,String url){
+        String identity=itemId==null||itemId.isEmpty()?url:itemId;
+        return "source-"+sourceId+"-"+UUID.nameUUIDFromBytes(identity.getBytes(StandardCharsets.UTF_8));
+    }
 
     public static JSONObject defaults() throws JSONException {
         return new JSONObject()
@@ -69,17 +73,25 @@ public final class SourceDocument {
         if ("youtube".equals(type)) {
             require(Targets.youtube(url), "YouTube source must point to youtube.com or youtu.be");
         } else if ("rss".equals(type)) {
-            validatePublicHost(host);
+            // Pure validation must work offline, including during startup/store recovery.
+            String literal = host.toLowerCase(Locale.ROOT);
+            require(!literal.equals("localhost") && !literal.endsWith(".localhost") && !literal.endsWith(".local"), "Local hosts are not permitted");
+            if (literal.matches("[0-9.]+") || literal.contains(":")) validatePublicHost(literal);
         }
     }
 
     public static void validatePublicHost(String host) {
         try {
-            InetAddress addr = InetAddress.getByName(host);
+            for (InetAddress addr : InetAddress.getAllByName(host)) {
             require(!addr.isLoopbackAddress(), "Loopback addresses are not permitted");
             require(!addr.isSiteLocalAddress(), "Private network addresses are not permitted");
             require(!addr.isLinkLocalAddress(), "Link-local addresses are not permitted");
             require(!addr.isAnyLocalAddress(), "Wildcard local addresses are not permitted");
+            require(!addr.isMulticastAddress(), "Multicast addresses are not permitted");
+            byte[] bytes = addr.getAddress();
+            require(!(bytes.length == 16 && (bytes[0] & 0xfe) == 0xfc), "Private IPv6 addresses are not permitted");
+            require(!(bytes.length == 4 && (bytes[0] & 255) == 100 && (bytes[1] & 0xc0) == 64), "Shared network addresses are not permitted");
+            }
         } catch (Exception e) {
             if (e instanceof IllegalArgumentException) throw (IllegalArgumentException) e;
             throw new IllegalArgumentException("Cannot resolve host: " + host);
@@ -114,3 +126,4 @@ public final class SourceDocument {
         return input;
     }
 }
+

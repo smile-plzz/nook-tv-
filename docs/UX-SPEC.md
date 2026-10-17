@@ -1,3 +1,5 @@
+> Current source (0.4.5): F1 Home selection, F2 focus styling, F3 source shelves and F4 QR/video organization are implemented; see [F5 repairs](F5-HARDENING.md). Focused source shelves defer refresh until focus leaves. Hidden-from-Home media is excluded from all Home rows but remains in Shared/storage. Native progress is textual resume information; graphical progress bars are not delivered. The design below includes additional targets, not a claim of complete owner acceptance.
+
 # Launcher and companion experience
 
 TV feedback partially validates the direction, not the finished design. Next: coherent premium/minimal styling and a small configurable content shelf; see [dynamic Home](DYNAMIC-HOME.md) for card states/tokens and [companion design](COMPANION-SPEC.md) for browser/mobile flows. All new behavior below is planned unless recorded in [build status](BUILD-STATUS.md).
@@ -108,3 +110,4 @@ Offer Make Nook your Home during onboarding and from Settings; explain before op
 Preserve working D-pad/OK/Back. Hold OK opens contextual actions with a visible More/Edit alternative. Add a compact Quick actions entry for Customize, Send video and source refresh. Menu-key support can mirror these actions where the remote provides it. Swipe/pointer controls may supplement mobile editing; gestures, double presses and remapping system Home/volume are not required. Validate any shortcut on the actual remote before assigning it.
 
 Home must feel complete with zero sources and restrained with populated sources. Review empty, 3-5 visible content cards, long titles, poor artwork, offline, stale content, personal-media hidden and reduced-motion states. Owner approval on the TV remains the visual gate; merely adding rounded cards or more animation is insufficient.
+

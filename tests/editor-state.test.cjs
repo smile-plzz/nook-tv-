@@ -21,5 +21,42 @@ async function click(id){await elements.get(id).onclick();}
   reset();const backup={...base,schemaVersion:99};elements.get('import').files=[{size:200,text:async()=>JSON.stringify(backup)}];await elements.get('import').onchange();assert.equal(calls.length,0,'unsupported backup never sent');assert.equal(evaluate('config.revision'),7);
   reset();elements.get('import').files=[{size:200,text:async()=>JSON.stringify({...base,title:'Imported'})}];reply={ok:false,status:409,data:{error:'conflict'}};await elements.get('import').onchange();assert.equal(calls[0].path,'/api/import');assert.equal(JSON.parse(calls[0].options.body).expectedRevision,7);assert.equal(evaluate('config.title'),'My TV');
   reset();evaluate("config.title='Keep this draft';changed();");const draft=JSON.parse(storage.get('nook-dashboard-draft-v2'));assert.equal(draft.token,undefined);assert.equal(draft.title,'Keep this draft');await click('disconnect');assert.equal(evaluate('session'),null);assert.equal(JSON.parse(storage.get('nook-dashboard-draft-v2')).title,'Keep this draft');
-  console.log('PASS: editor saves, conflicts, retries, imports, memberships and draft privacy');
+  // Source GET metadata must never be submitted as source configuration.
+  reset();evaluate("sourcesConfig=sourceDocument({schemaVersion:1,revision:2,sources:[],cache:{one:{status:'Updated'}}});changed();");
+  let sourceFailure=true,sourceBodies=[];
+  context.fetch=async(path,options)=>{
+    calls.push({path,options});
+    if(path==='/api/sources'){
+      sourceBodies.push(JSON.parse(options.body));
+      return {ok:!sourceFailure,status:sourceFailure?409:200,json:async()=>sourceFailure?{error:'Source conflict'}:{schemaVersion:1,revision:3,sources:[]}};
+    }
+    return {ok:true,status:200,json:async()=>({...base,revision:8})};
+  };
+  await click('save');
+  assert.deepEqual(Object.keys(sourceBodies[0].config).sort(),['revision','schemaVersion','sources']);
+  assert.match(elements.get('status').textContent,/sources were not saved/);
+  assert.equal(evaluate('dirty'),true);
+  assert.ok(storage.has('nook-sources-draft-v1'),'source conflict preserves source draft');
+  sourceFailure=false;await click('save');
+  assert.equal(evaluate('dirty'),false);
+  assert.equal(storage.has('nook-sources-draft-v1'),false,'clear drafts only after both acknowledgements');
+  // An uncertain source save retries with the same mutation fingerprint.
+  evaluate("sourcesConfig.revision=3;changed();");
+  let failOnce=true;sourceBodies=[];
+  context.fetch=async(path,options)=>{
+    if(path==='/api/sources'){
+      sourceBodies.push(JSON.parse(options.body));
+      const fail=failOnce;failOnce=false;
+      return {ok:!fail,status:fail?503:200,json:async()=>fail?{error:'Disconnected'}:{schemaVersion:1,revision:4,sources:[]}};
+    }
+    return {ok:true,status:200,json:async()=>({...base,revision:9})};
+  };
+  await click('save');await click('save');
+  assert.deepEqual(sourceBodies[0],sourceBodies[1],'source retry retains exact mutation and payload');
+  // Restoring a browser draft restores the source document as well.
+  evaluate("config.title='Retained draft';sourcesConfig.sources=[{id:'test',type:'rss',label:'News',url:'https://example.com/feed',enabled:true}];changed();sourcesConfig.sources=[];");
+  await click('restore-draft');
+  assert.equal(evaluate('sourcesConfig.sources[0].label'),'News');
+  console.log('PASS: editor saves, conflicts, retries, imports, memberships, source acknowledgement and draft recovery');
 })().catch(error=>{console.error(error);process.exitCode=1;});
+

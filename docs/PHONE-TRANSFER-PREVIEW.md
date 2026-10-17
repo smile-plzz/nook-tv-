@@ -1,3 +1,5 @@
+> Current candidate (0.4.5): QR setup and authenticated media update/reset/delete/thumbnail endpoints are implemented. Bounded lazy thumbnails use API 27+; API 26 uses fallback artwork. Hidden-from-Home clips remain accessible in Shared/storage. [F5](F5-HARDENING.md) fixes Home history privacy, ledger renames and storage accounting. Transfer limits and foreground lifecycle below remain unchanged; real iPhone/TV compatibility remains unverified.
+
 # Phone video transfer | 0.4.0-phone-preview
 
 Current 0.4 implementation guide, preserved after the TV feedback. PR #5 is merged. The owner has not yet tested upload or retained replay/resume; external YouTube sharing is not verification of this path. Proposed QR, thumbnails, titles/organization and richer browser controls are specified in [companion design](COMPANION-SPEC.md), and are not 0.4 capabilities. Start with the focused [device tests](DEVICE-TEST.md).
@@ -62,3 +64,4 @@ Chunked/ambiguous framing remains rejected. The dashboard JSON endpoint keeps it
 82 local core/model/HTTP assertions and browser-state checks pass. Hosted Gradle packaging and 43 Android runtime assertions passed; exact run links/code SHA are recorded in [build status](BUILD-STATUS.md). Android cases cover generated-video reception, store recreation, receipt reuse, interruption, invalid file/size, revoked permission, path rejection, history/file separation, deletion and corruption preservation. Runtime also exercises the real loopback HTTP path and the production local player/progress save. This does not establish physical TV, real Safari, Wi-Fi throughput, HEVC or large-file performance.
 
 Next: real iPhone-to-TV trial and codec/storage tuning, then the separately gated receiver and Drive work in [plan](DEVELOPMENT-PLAN.md).
+

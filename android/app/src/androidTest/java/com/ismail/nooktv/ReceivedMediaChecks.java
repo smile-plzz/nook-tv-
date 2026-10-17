@@ -27,6 +27,7 @@ final class ReceivedMediaChecks {
         check(updated.getString("label").equals("Renamed sample.mp4")&&updated.getBoolean("pinned")&&updated.getString("collection").equals("Family"),"store update applies rename, pin and collection");
         check(store.find(ID).getBoolean("pinned"),"re-read item confirms pin persistence");
         File thumb=store.thumbnail(ID);check(thumb==null||thumb.getName().endsWith(".thumb"),"thumbnail accessor returns null or valid thumb file");
+        if(android.os.Build.VERSION.SDK_INT>=27){check(thumb!=null,"fixture produces a bounded thumbnail");android.graphics.BitmapFactory.Options bounds=new android.graphics.BitmapFactory.Options();bounds.inJustDecodeBounds=true;android.graphics.BitmapFactory.decodeFile(thumb.getAbsolutePath(),bounds);check(bounds.outWidth>0&&bounds.outWidth<=320&&bounds.outHeight>0&&bounds.outHeight<=180,"thumbnail decode is bounded before bitmap allocation");}
         store.update(ID,new JSONObject().put("label","Phone sample.mp4").put("pinned",false).put("collection",""));
         String deleted="33333333333333333333333333333333";store.receive(new ByteArrayInputStream(video),video.length,"Delete.mp4",deleted,()->true);store.delete(deleted);check(store.find(deleted)==null&&!new File(context.getFilesDir(),"received-media/"+deleted+".media").exists()&&!new File(context.getFilesDir(),"received-media/"+deleted+".thumb").exists(),"explicit deletion removes file, thumbnail and index entry");
         File index=new File(context.getFilesDir(),"received-media-v1.json");byte[] saved=read(index);try(FileOutputStream out=new FileOutputStream(index)){out.write("broken".getBytes("UTF-8"));}
@@ -35,3 +36,4 @@ final class ReceivedMediaChecks {
     }
     static byte[] read(File file)throws IOException{try(InputStream in=new FileInputStream(file);ByteArrayOutputStream out=new ByteArrayOutputStream()){byte[] buffer=new byte[4096];int n;while((n=in.read(buffer))!=-1)out.write(buffer,0,n);return out.toByteArray();}}
 }
+

@@ -83,6 +83,7 @@ public final class SmokeInstrumentation extends Instrumentation {
             HomeCoordinator.setAliasEnabled(context,false);
             sendKeyDownUpSync(KeyEvent.KEYCODE_BACK);waitForIdleSync();
             loopbackTransfer(activity,context,retainedFixture);waitForIdleSync();
+            assertions+=HardeningChecks.run(this,activity,context);
             View savedVideo=awaitTag(activity,"received-"+ReceivedMediaChecks.ID);onMain(savedVideo::performClick);waitForIdleSync();
             final ExoPlayer[] retainedPlayer={null};CountDownLatch retainedReady=new CountDownLatch(1);
             onMain(()->{try{java.lang.reflect.Field field=MainActivity.class.getDeclaredField("player");field.setAccessible(true);retainedPlayer[0]=(ExoPlayer)field.get(activity);retainedPlayer[0].addListener(new Player.Listener(){@Override public void onPlaybackStateChanged(int state){if(state==Player.STATE_READY)retainedReady.countDown();}});if(retainedPlayer[0].getPlaybackState()==Player.STATE_READY)retainedReady.countDown();}catch(Exception e){throw new RuntimeException(e);}});
@@ -110,3 +111,4 @@ public final class SmokeInstrumentation extends Instrumentation {
         } catch(Throwable error) { result.putString("stream","FAIL: "+android.util.Log.getStackTraceString(error)+"\n"); result.putString("failure",error.toString()); finish(Activity.RESULT_CANCELED,result); }
     }
 }
+

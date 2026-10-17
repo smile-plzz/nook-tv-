@@ -1,5 +1,13 @@
 # Development Log
 
+## 2026-10-17T22:30:00+06:00 — F5 repair and branch reconciliation candidate
+- Verified main at 273755c and F4 merge at 1c65cf8. PR #10 and #11 were merged into feature branches; this work targets main without merging.
+- Reproduced source-save false success/draft loss; repaired cache/config projection, partial acknowledgement and retry/draft recovery.
+- Replaced self-blocking feed scheduling, added stable focus/deferred refresh, fixed hidden-history visibility and detached ledger rename.
+- Bounded lazy thumbnail extraction, heap-aware LRUs, disk reserve/cache limits, offline source loading and XML/entity handling; bumped version to 0.4.5/code 5.
+- Local suites: 654 Java assertions plus editor/media browser-state checks passed. Local Gradle blocked by native/loopback restrictions; hosted APK, focus/privacy/thumbnail runtime and F4-to-F5 same-key upgrade checks pending.
+- Updated README, handoff, status/spec annotations, changelog and F5-HARDENING. F6 receiver/Drive stays conditional; owner TV/iPhone acceptance is still pending.
+
 ## 2026-10-17T20:30:00+06:00 — Session Start: PR #7 Verification & Documentation Reconciliation
 - Verified merged PR #7 (`ef193f1`) and hosted CI results:
   - Run 39040451993 (Compatibility APK): `success`.
@@ -110,6 +118,7 @@
   - Total headless Java assertions passing: 635 assertions.
   - `gradlew.bat assembleDebug`: SUCCESS (built `app-debug.apk`, copied to `outputs/nook-tv-0.4.4-f4-personal-shelf.apk`).
   - `gradlew.bat compileDebugAndroidTestJavaWithJavac`: SUCCESS.
+
 
 
 
