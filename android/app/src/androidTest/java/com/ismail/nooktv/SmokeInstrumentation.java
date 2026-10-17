@@ -4,6 +4,11 @@ import android.content.*;
 import android.os.Bundle;
 import android.view.*;
 import org.json.*;
+import androidx.media3.common.*;
+import androidx.media3.exoplayer.ExoPlayer;
+import androidx.media3.ui.PlayerView;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 /** Platform-only instrumentation: real Android storage, activity and TV input smoke checks. */
 public final class SmokeInstrumentation extends Instrumentation {
@@ -28,6 +33,13 @@ public final class SmokeInstrumentation extends Instrumentation {
             runOnMainSync(()->{ View root=activity.getWindow().getDecorView(); check(root.findViewWithTag("settings-collections")!=null,"collections settings reachable"); root.findViewWithTag("settings-collections").performClick(); }); waitForIdleSync();
             runOnMainSync(()->check(activity.getWindow().getDecorView().findViewWithTag("manage-add")!=null,"remote-only collection creation reachable"));
             sendKeyDownUpSync(KeyEvent.KEYCODE_BACK); waitForIdleSync(); runOnMainSync(()->check(activity.getWindow().getDecorView().findViewWithTag("nav-watch")!=null,"Back returns to native Home"));
+            java.io.File fixture=new java.io.File(context.getCacheDir(),"fixture.mp4");
+            try(java.io.InputStream in=getContext().getAssets().open("fixture.mp4"); java.io.OutputStream out=new java.io.FileOutputStream(fixture)) { byte[] bytes=new byte[4096]; int n; while((n=in.read(bytes))!=-1) out.write(bytes,0,n); }
+            final ExoPlayer[] player={null}; final PlayerView[] view={null}; CountDownLatch ready=new CountDownLatch(1); final String[] failure={null};
+            runOnMainSync(()->{ player[0]=new ExoPlayer.Builder(context).build(); view[0]=new PlayerView(activity); view[0].setPlayer(player[0]); activity.addContentView(view[0],new ViewGroup.LayoutParams(320,180)); player[0].addListener(new Player.Listener(){ @Override public void onPlaybackStateChanged(int state){ if(state==Player.STATE_READY)ready.countDown(); } @Override public void onPlayerError(PlaybackException e){ failure[0]=e.getErrorCodeName();ready.countDown(); }}); player[0].setMediaItem(MediaItem.fromUri(android.net.Uri.fromFile(fixture))); player[0].prepare();player[0].play(); });
+            check(ready.await(20,TimeUnit.SECONDS)&&failure[0]==null,"Media3 prepares generated H264/AAC fixture");
+            Thread.sleep(900); runOnMainSync(()->{ check(player[0].getDuration()>2000&&player[0].getCurrentPosition()>300,"Media3 advances a finite native timeline"); player[0].seekTo(1500);player[0].pause(); });
+            Thread.sleep(300); runOnMainSync(()->{ check(player[0].getCurrentPosition()>=1400&&!player[0].getPlayWhenReady(),"native seek and pause"); view[0].setPlayer(null);player[0].release();((ViewGroup)view[0].getParent()).removeView(view[0]); });
             result.putString("stream","PASS: "+assertions+" Android storage/activity assertions\n"); result.putInt("assertions",assertions); finish(Activity.RESULT_OK,result);
         } catch(Throwable error) { result.putString("stream","FAIL: "+error.toString()+"\n"); result.putString("failure",error.toString()); finish(Activity.RESULT_CANCELED,result); }
     }
