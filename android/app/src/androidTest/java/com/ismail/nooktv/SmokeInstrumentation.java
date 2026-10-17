@@ -14,6 +14,7 @@ import java.util.concurrent.TimeUnit;
 public final class SmokeInstrumentation extends Instrumentation {
     private int assertions;
     private void check(boolean condition,String description) { assertions++; if(!condition) throw new AssertionError(description); }
+    private void onMain(Runnable run) { final Throwable[] failure={null}; runOnMainSync(()->{ try { run.run(); } catch(Throwable e) { failure[0]=e; } }); if(failure[0]!=null) throw new AssertionError("Main-thread test operation failed",failure[0]); }
     @Override public void onCreate(Bundle arguments) { super.onCreate(arguments); start(); }
     @Override public void onStart() {
         Bundle result=new Bundle();
@@ -29,18 +30,18 @@ public final class SmokeInstrumentation extends Instrumentation {
             long before=new DashboardStore(context).read().getLong("revision"); boolean rejected=false; try { new DashboardStore(context).restore(new JSONObject(backup.toString()).put("schemaVersion",999),before,"instrumentation-bad-import"); } catch(Exception e) { rejected=true; } check(rejected&&new DashboardStore(context).read().getLong("revision")==before,"invalid import leaves disk unchanged");
             ViewingStore viewing=new ViewingStore(context); viewing.ledger.pause(false); viewing.ledger.opened("native-test","Test","https://example.com/sample.mp4","native"); viewing.ledger.observe("native-test",30000,100000,false,false); viewing.persist(); check(new ViewingStore(context).ledger.find("native-test").getLong("position")==30000,"committed progress survives recreation");
             Intent intent=new Intent(context,MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK); Activity activity=startActivitySync(intent); waitForIdleSync();
-            runOnMainSync(()->{ View root=activity.getWindow().getDecorView(); View home=root.findViewWithTag("nav-home"); check(home!=null&&home.isFocusable(),"native Home navigation"); root.findViewWithTag("nav-settings").performClick(); }); waitForIdleSync();
-            runOnMainSync(()->{ View root=activity.getWindow().getDecorView(); check(root.findViewWithTag("settings-collections")!=null,"collections settings reachable"); root.findViewWithTag("settings-collections").performClick(); }); waitForIdleSync();
-            runOnMainSync(()->check(activity.getWindow().getDecorView().findViewWithTag("manage-add")!=null,"remote-only collection creation reachable"));
-            sendKeyDownUpSync(KeyEvent.KEYCODE_BACK); waitForIdleSync(); runOnMainSync(()->check(activity.getWindow().getDecorView().findViewWithTag("nav-watch")!=null,"Back returns to native Home"));
+            onMain(()->{ View root=activity.getWindow().getDecorView(); View home=root.findViewWithTag("nav-home"); check(home!=null&&home.isFocusable(),"native Home navigation"); root.findViewWithTag("nav-settings").performClick(); }); waitForIdleSync();
+            onMain(()->{ View root=activity.getWindow().getDecorView(); check(root.findViewWithTag("settings-collections")!=null,"collections settings reachable"); root.findViewWithTag("settings-collections").performClick(); }); waitForIdleSync();
+            onMain(()->check(activity.getWindow().getDecorView().findViewWithTag("manage-add")!=null,"remote-only collection creation reachable"));
+            sendKeyDownUpSync(KeyEvent.KEYCODE_BACK); waitForIdleSync(); onMain(()->check(activity.getWindow().getDecorView().findViewWithTag("nav-watch")!=null,"Back returns to native Home"));
             java.io.File fixture=new java.io.File(context.getCacheDir(),"fixture.mp4");
             try(java.io.InputStream in=getContext().getAssets().open("fixture.mp4"); java.io.OutputStream out=new java.io.FileOutputStream(fixture)) { byte[] bytes=new byte[4096]; int n; while((n=in.read(bytes))!=-1) out.write(bytes,0,n); }
             final ExoPlayer[] player={null}; final PlayerView[] view={null}; CountDownLatch ready=new CountDownLatch(1); final String[] failure={null};
-            runOnMainSync(()->{ player[0]=new ExoPlayer.Builder(context).build(); view[0]=new PlayerView(activity); view[0].setPlayer(player[0]); activity.addContentView(view[0],new ViewGroup.LayoutParams(320,180)); player[0].addListener(new Player.Listener(){ @Override public void onPlaybackStateChanged(int state){ if(state==Player.STATE_READY)ready.countDown(); } @Override public void onPlayerError(PlaybackException e){ failure[0]=e.getErrorCodeName();ready.countDown(); }}); player[0].setMediaItem(MediaItem.fromUri(android.net.Uri.fromFile(fixture))); player[0].prepare();player[0].play(); });
+            onMain(()->{ player[0]=new ExoPlayer.Builder(context).build(); view[0]=new PlayerView(activity); view[0].setPlayer(player[0]); activity.addContentView(view[0],new ViewGroup.LayoutParams(320,180)); player[0].addListener(new Player.Listener(){ @Override public void onPlaybackStateChanged(int state){ if(state==Player.STATE_READY)ready.countDown(); } @Override public void onPlayerError(PlaybackException e){ failure[0]=e.getErrorCodeName();ready.countDown(); }}); player[0].setMediaItem(MediaItem.fromUri(android.net.Uri.fromFile(fixture))); player[0].prepare();player[0].play(); });
             check(ready.await(20,TimeUnit.SECONDS)&&failure[0]==null,"Media3 prepares generated H264/AAC fixture");
-            Thread.sleep(900); runOnMainSync(()->{ check(player[0].getDuration()>2000&&player[0].getCurrentPosition()>300,"Media3 advances a finite native timeline"); player[0].seekTo(1500);player[0].pause(); });
-            Thread.sleep(300); runOnMainSync(()->{ check(player[0].getCurrentPosition()>=1400&&!player[0].getPlayWhenReady(),"native seek and pause"); view[0].setPlayer(null);player[0].release();((ViewGroup)view[0].getParent()).removeView(view[0]); });
+            Thread.sleep(900); onMain(()->{ check(player[0].getDuration()>2000&&player[0].getCurrentPosition()>300,"Media3 advances a finite native timeline"); player[0].seekTo(1500);player[0].pause(); });
+            Thread.sleep(300); onMain(()->{ check(player[0].getCurrentPosition()>=1400&&!player[0].getPlayWhenReady(),"native seek and pause"); view[0].setPlayer(null);player[0].release();((ViewGroup)view[0].getParent()).removeView(view[0]); });
             result.putString("stream","PASS: "+assertions+" Android storage/activity assertions\n"); result.putInt("assertions",assertions); finish(Activity.RESULT_OK,result);
-        } catch(Throwable error) { result.putString("stream","FAIL: "+error.toString()+"\n"); result.putString("failure",error.toString()); finish(Activity.RESULT_CANCELED,result); }
+        } catch(Throwable error) { result.putString("stream","FAIL: "+android.util.Log.getStackTraceString(error)+"\n"); result.putString("failure",error.toString()); finish(Activity.RESULT_CANCELED,result); }
     }
 }

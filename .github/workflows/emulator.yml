@@ -40,7 +40,9 @@ jobs:
           script: |
             adb install android/app/build/outputs/apk/debug/app-debug.apk
             adb install android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+            adb logcat -c
             adb shell am instrument -w com.ismail.nooktv.compat.test/com.ismail.nooktv.SmokeInstrumentation | tee smoke-result.txt
+            adb logcat -d > android-logcat.txt
             grep 'PASS:' smoke-result.txt
             adb shell screencap -p /sdcard/nook-preview.png
             adb pull /sdcard/nook-preview.png nook-preview.png
@@ -50,4 +52,5 @@ jobs:
           name: android-smoke-evidence
           path: |
             smoke-result.txt
+            android-logcat.txt
             nook-preview.png
