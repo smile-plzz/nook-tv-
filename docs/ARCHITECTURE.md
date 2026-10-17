@@ -1,6 +1,6 @@
 # Proposed architecture
 
-2026-10-17 | Documentation baseline v1.0. Implementation has been authorized. M1 currently uses Java/native Views, platform VideoView, AtomicFile configuration and a bounded Java HTTP server to build with available offline SDK tooling. Media3, Room and the full architecture below remain planned; no device measurements yet support a final toolkit choice. See [build status](BUILD-STATUS.md).
+2026-10-17 | Implementation authorized. Preview 0.2 uses Java/native Views, Media3 ExoPlayer, atomic configuration/viewing envelopes and a bounded foreground HTTP server. Dashboard schema v2 and persisted mutation receipts provide migration/concurrency protection. Room remains a documented deviation from the proposed architecture below; no target-TV performance measurement has been made. See [build status](BUILD-STATUS.md).
 
 ## Components
 
@@ -150,7 +150,7 @@ A local-network address may change. Display the current address, offer an option
 
 ## Credential boundary
 
-Metadata API-key entry is performed on the TV settings screen for the initial HTTP editor design. Do not send keys in URL query strings, exports or logs. A later secure provisioning route requires a documented transport decision; session authentication alone does not encrypt LAN traffic. Optional YouTube credentials are evaluated separately; no shared hard-coded secret is shipped.
+Metadata API-key entry is performed on the TV settings screen for the initial HTTP editor design. Do not expose keys in editor URLs, exports or logs. OMDb requires its key in the HTTPS API query; CatalogClient confines it to that API endpoint and disables redirects. A later secure provisioning route requires a documented transport decision; session authentication alone does not encrypt LAN traffic. Optional YouTube credentials are evaluated separately; no shared hard-coded secret is shipped.
 
 ## Metadata and recommendation semantics
 

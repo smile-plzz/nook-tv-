@@ -1,4 +1,4 @@
-# M1 TV test — record actual results
+# TV test — record actual results
 
 Use the owner's TV. Do not mark a result passed until observed. The first goal is compatibility; provider integration and production acceptance follow later.
 
@@ -18,7 +18,9 @@ Use the owner's TV. Do not mark a result passed until observed. The first goal i
 | Lifecycle | Leave Nook for another app while editor is open; return and Reload latest | Disconnected state, retained draft; no silent save |
 | Restart | Exit/force-stop/reopen Nook | Dashboard persists; browser must pair again if process died |
 
-DASH, filtering, launcher replacement, provider playback and full collections are not implemented in this preview; record them as Not implemented, not Passed.
+DASH, collections, background editing and dashboard backup import are implemented in preview 0.2 and need physical-TV verification. Filtering and launcher replacement remain unimplemented. No provider has been verified; record each route separately.
+
+Additional 0.2 checks: create/rename/reorder collections on PC; add/remove memberships without deleting independent saved items; hide/reorder rows; upload a photo; export/import then undo import; verify several native videos have independent resume state; test subtitle/audio controls when supported; search metadata with your own OMDb key; preserve season/episode selection on opaque web sources. Invalid backup and stale saves must leave the existing dashboard untouched.
 
 Evidence entry:
 

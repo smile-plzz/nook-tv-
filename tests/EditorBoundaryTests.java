@@ -52,7 +52,7 @@ public final class EditorBoundaryTests {
         check(invoke(server,"POST","/api/config",base+origin+auth,save).startsWith("HTTP/1.1 200")&&host.saves==1,"authenticated mutation");
         check(invoke(server,"POST","/api/config",base+origin+auth,save).startsWith("HTTP/1.1 409")&&host.saves==1,"stale edit conflict");
         check(invoke(server,"POST","/api/config",base+origin+auth,"{bad").startsWith("HTTP/1.1 400"),"malformed JSON error");
-        check(invoke(server,"POST","/api/config",base+origin+auth,String.join("",Collections.nCopies(24001,"x"))).startsWith("HTTP/1.1 413"),"bounded request body");
+        check(invoke(server,"POST","/api/config",base+origin+auth,String.join("",Collections.nCopies(1000001,"x"))).startsWith("HTTP/1.1 413"),"bounded request body");
         check(invoke(server,"GET","/api/config",base+auth+"Transfer-Encoding: chunked\r\n","").startsWith("HTTP/1.1 403"),"ambiguous body framing blocked");
         pairing.revoke(); check(invoke(server,"POST","/api/config",base+origin+auth,save).startsWith("HTTP/1.1 401")&&host.saves==1,"revoke prevents writes");
         System.out.println("PASS: "+count+" actual editor-handler assertions (in-memory transport; no device/network claim)");

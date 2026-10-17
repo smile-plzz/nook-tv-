@@ -1,6 +1,6 @@
 # TV and browser experience specification
 
-Baseline 1.0 — full-product design intent. An initial native M1 interface and PC editor are implemented; broader flows below remain planned. See [build status](BUILD-STATUS.md).
+Baseline 1.0 — full-product design intent. Preview 0.2 implements native dashboard, collections, editor layout/backgrounds/import, Media3 controls and initial native catalog flows; broader integrations and device validation remain pending. See [build status](BUILD-STATUS.md).
 
 ## Experience principles
 

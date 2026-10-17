@@ -1,13 +1,20 @@
 plugins { id 'com.android.application' }
 android {
     namespace 'com.ismail.nooktv'
-    compileSdk 35
+    compileSdk 36
     defaultConfig {
         applicationId 'com.ismail.nooktv.compat'
         minSdk 26
         targetSdk 35
-        versionCode 1
-        versionName '0.1.0-m1'
+        versionCode 2
+        versionName '0.2.0-preview'
+        testInstrumentationRunner 'com.ismail.nooktv.SmokeInstrumentation'
     }
     compileOptions { sourceCompatibility JavaVersion.VERSION_1_8; targetCompatibility JavaVersion.VERSION_1_8 }
+}
+dependencies {
+    implementation 'androidx.media3:media3-exoplayer:1.11.1'
+    implementation 'androidx.media3:media3-exoplayer-hls:1.11.1'
+    implementation 'androidx.media3:media3-exoplayer-dash:1.11.1'
+    implementation 'androidx.media3:media3-ui:1.11.1'
 }

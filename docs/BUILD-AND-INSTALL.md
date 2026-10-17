@@ -1,64 +1,67 @@
-# Build and install the compatibility preview
+# Build and install | 0.2.0-preview
 
-Version 0.1.0-m1, compatibility app ID `com.ismail.nooktv.compat`. This separate preview ID can be uninstalled without affecting a future production app. No launcher replacement is registered or enabled.
+Compatibility app ID remains `com.ismail.nooktv.compat`, version code 2. This app remains a standalone preview; it does not replace the stock launcher.
 
-## Windows SDK-only build
+## Build
 
-Requirements: Java JDK 21 (including `javac`, `jar`, `keytool`), PowerShell, Android SDK platform `android-35` and build-tools `35.0.1`. Node is needed for the browser syntax check. No downloaded runtime dependency is used by the app.
+Requirements: JDK 21, Android SDK, network access for pinned Gradle/AGP/Media3 dependencies on first build. Gradle 8.13, AGP 8.13.2, Media3 1.11.1, compile SDK 36; target SDK 35, minimum API 26. `ANDROID_HOME` or Android Studio's local SDK configuration locates the SDK.
 
-From repository root:
+```powershell
+cd android
+./gradlew.bat --no-daemon assembleDebug assembleAndroidTest
+```
+
+On Linux/macOS: `sh gradlew --no-daemon assembleDebug assembleAndroidTest`.
+
+App APK: `android/app/build/outputs/apk/debug/app-debug.apk`.
+Instrumentation APK: `android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk`.
+
+The old SDK-only M1 pipeline cannot compile Media3. `scripts/build-offline.ps1` now explains the required Gradle route instead of producing an incorrectly labeled APK. A populated Gradle cache may permit `--offline`; no claim is made that the local cache contains the new dependencies.
+
+## Automated checks
 
 ```powershell
 ./scripts/test-core.ps1
 ./scripts/test-editor.ps1 -AndroidSdk 'C:\path\to\Android\Sdk'
-./scripts/build-offline.ps1 -AndroidSdk 'C:\path\to\Android\Sdk'
 ```
 
-Editor-handler tests also need SDK package `sources;android-35`. They compile the installed AOSP JSON implementation into ignored test output, stripping only Android annotations. No SDK source is added to the APK or repository. Core checks do not require the SDK.
+These execute 74 core/document/source/viewing/HTTP-boundary assertions and browser syntax checks. Handler/document tests need `sources;android-35` for the SDK's AOSP JSON implementation. The helper strips annotations only in ignored test output; SDK sources are not redistributed in the APK.
 
-Build output: `android/app/build/offline/nook-tv-0.1.0-m1.apk`. The script compiles/resources, compiles Java, dexes, aligns, debug-signs, verifies and prints SHA-256. It stops on failed tool steps. `ANDROID_HOME` can be used instead of the argument. There is no dependency installation in this build path.
+The Compatibility APK workflow builds the app/test APKs and runs those checks. The Android runtime smoke workflow installs them in an API-35 emulator and runs a custom platform Instrumentation entrypoint:
 
-The generated debug signing key is in ignored `.signing/compat-debug.keystore`. Keep it locally for update continuity. It uses a standard development password and is not a production signing credential. Do not commit it.
-
-## Gradle build
-
-The conventional Android project includes Gradle 8.11.1 wrapper and AGP 8.9.1, compile/target SDK 35 and Java source compatibility 8. These versions match installed tooling; they are pinned for this compatibility branch, not claimed to be the latest available versions. Gradle needs network access or an already-populated dependency cache.
-
-```powershell
-$env:ANDROID_HOME = 'C:\path\to\Android\Sdk'
-cd android
-./gradlew.bat assembleDebug
+```text
+adb install -r android/app/build/outputs/apk/debug/app-debug.apk
+adb install -r android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+adb shell am instrument -w com.ismail.nooktv.compat.test/com.ismail.nooktv.SmokeInstrumentation
 ```
 
-On macOS/Linux use `sh gradlew assembleDebug`. The Gradle APK appears under `android/app/build/outputs/apk/debug/`. The SDK-only pipeline was executed locally; Gradle assembly has not yet been verified. Gradle's default debug key may differ from the SDK-only key. Do not assume the two APKs can update each other without reinstalling.
+Use a disposable test device/emulator for instrumentation: it changes dashboard/history fixtures. The owner installs only the app APK. Hosted artifacts are `nook-tv-0.2.0-preview` and `android-smoke-evidence`.
 
-CI runs the SDK-only pipeline and uploads an APK artifact named `nook-tv-0.1.0-m1` in the GitHub Actions run. It does not publish a production release or claim device acceptance.
+## Install / update
 
-## Install on the TV
+Copy the app APK to a USB drive or trusted TV file-transfer app, open it with the TV file manager and install **Nook TV Preview**. Open from the app list. The normal system launcher stays available. Developer-install equivalent:
 
-1. Copy the APK to a USB drive or use your preferred trusted TV file-transfer app.
-2. Open it in the TV file manager and allow installation for that app if Android asks.
-3. Install **Nook TV Preview**, then open it from your apps list.
-4. Keep the original TV launcher. Nook does not request a default-home change in this build.
-5. Test Apps and the sample video before pairing a PC.
-
-If you already use Android debugging, the equivalent command is:
-
-```powershell
-adb install -r android/app/build/offline/nook-tv-0.1.0-m1.apk
+```text
+adb install -r app-debug.apk
 adb shell am start -n com.ismail.nooktv.compat/com.ismail.nooktv.MainActivity
 ```
 
-Do not enable network debugging or alter TV settings automatically. ADB was unavailable in the current execution environment, so installation is not yet verified.
+The delivered `nook-tv-0.2.0-preview.apk` was re-signed from the passing CI build with the same private development key as the delivered M1 APK. Its certificate matches M1, and v2/v3 signatures and alignment were verified. It can update that M1 installation. SHA-256: `43680b094c3f07207f07de325dedb5defac05c1893f5fc8cbed608c75140360d`.
 
-## Pair your PC
+Same-key upgrades preserve/migrate M1 dashboard and progress. Raw Gradle/CI debug artifacts may use different keys from the delivered owner APK. If Android reports a signature mismatch, export your dashboard before deciding to uninstall/reinstall. Schema-v1 and schema-v2 dashboard imports are supported in the browser editor; viewing history and secrets are not in these exports. Keep the same development keystore for repeated builds where update continuity is needed. Production signing is still a later release gate.
 
-Choose **Pair PC** on the TV. Open the displayed `http://<TV-address>:8765` on a PC on the same network, enter the code and approve the browser request on the TV. Edit and choose **Save to TV**. Nook must stay foregrounded, including when its native player is active. External YouTube/browser apps disconnect the editor; reopen Nook to reconnect.
+## Browser editing / backup
 
-If there is no address, check TV network connectivity. If the browser cannot connect, check guest Wi-Fi/client isolation and that both devices are on the same home network. Do not forward port 8765 through your router. Revoke browsers from TV Settings when needed.
+On TV choose Pair PC. Open the displayed local HTTP address from a PC on the same home network, enter the code and approve the request on TV. Use Save to TV for ordinary edits; saving never automatically plays a link. Use Export for the current dashboard draft. Import shows item counts, asks before replacing, and keeps a pre-import recovery snapshot; TV Settings offers Undo last dashboard import.
 
-## Update and rollback
+Keep Nook foregrounded. Opening external apps stops the editor listener, closes its clients and cancels pending pairing; the browser keeps its draft. Reopen Nook and reload latest data before applying changes. Codes expire; sessions can be revoked on TV. No router forwarding, provider credentials or cloud account are needed.
 
-Use an APK signed with the same key and an equal/higher version code to preserve preview data. If Android reports a signature mismatch, export your dashboard first, then uninstall/reinstall if you choose; this removes local preview state. Backup import is not implemented yet, so keep the export as a manual recovery reference.
+## Metadata / sources
 
-Rollback in M1 means leaving or uninstalling Nook TV Preview and returning to the unchanged stock launcher. A downgrade to a lower Android version code may require uninstalling the preview. Do not use production user data with this compatibility build.
+TV Settings accepts an optional OMDb key for native search/details. It is not editable over HTTP and is not exported. It supplies metadata, not streaming rights or availability.
+
+For a site you can use, TV Settings accepts its documented HTTPS movie/series URL templates with `{imdb}` and, for series, `{season}`/`{episode}`. IMDb IDs are never substituted into TMDB fields. No provider is enabled by default or marked tested. Choose source at title details; opaque websites retain selected episode/recent opens without timestamp claims.
+
+## Rollback
+
+Leave/uninstall the preview and return to the unchanged original launcher. A lower-version-code APK may require uninstalling. Export your dashboard first if preserving it matters. Full target-TV acceptance remains pending; CI and emulator results are recorded separately from physical-device evidence.

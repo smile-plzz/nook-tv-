@@ -1,72 +1,41 @@
 'use strict';
-const $ = id => document.getElementById(id);
-let session = null, config = null, dirty = false, pendingMutation = null, saving = false, ticket = null, poll = null;
-const draftKey = 'nook-dashboard-draft-v1';
-function status(message) { $('status').textContent = message; }
-async function request(path, method = 'GET', body) {
-  const headers = {'X-Nook-Client':'editor-v1'};
-  if (session) { headers.Authorization = `Bearer ${session.token}`; headers['X-Nook-CSRF'] = session.csrf; }
-  if (body) headers['Content-Type'] = 'application/json';
-  const response = await fetch(path, {method, headers, body: body ? JSON.stringify(body) : undefined, signal: AbortSignal.timeout(8000), cache:'no-store'});
-  const data = await response.json();
-  if (!response.ok) { const e = new Error(data.error || 'TV request failed.'); e.status = response.status; throw e; }
-  return {data, status:response.status};
+const $=id=>document.getElementById(id), draftKey='nook-dashboard-draft-v2';
+let session=null, config=null, inventory=[], dirty=false, pending=null, saving=false, poll=null;
+const rowNames={resume:'Continue watching',apps:'Favorite apps',saved:'Saved for later',collections:'Personal collections',recent:'Recently opened',samples:'Playback samples'};
+function status(message){$('status').textContent=message;}
+function stash(){try{localStorage.setItem(draftKey,JSON.stringify(config));}catch(_){} }
+function clearDraft(){try{localStorage.removeItem(draftKey);}catch(_){} }
+function id(){const bytes=new Uint8Array(16);crypto.getRandomValues(bytes);return [...bytes].map(b=>b.toString(16).padStart(2,'0')).join('');}
+function changed(){dirty=true;pending=null;stash();preview();status('Draft changes | Not saved to TV.');}
+function element(tag,text){const e=document.createElement(tag);if(text!==undefined)e.textContent=text;return e;}
+function button(text,fn){const b=element('button',text);b.type='button';b.className='secondary';b.onclick=fn;return b;}
+function label(text,input){const l=element('label',text);l.append(input);return l;}
+function input(value,max,onchange){const e=element('input');e.value=value;e.maxLength=max;e.oninput=()=>{onchange(e.value);changed();};return e;}
+async function request(path,method='GET',body){const headers={'X-Nook-Client':'editor-v1'};if(session){headers.Authorization=`Bearer ${session.token}`;headers['X-Nook-CSRF']=session.csrf;}if(body)headers['Content-Type']='application/json';const response=await fetch(path,{method,headers,body:body?JSON.stringify(body):undefined,cache:'no-store',signal:AbortSignal.timeout(12000)});const data=await response.json();if(!response.ok){const error=new Error(data.error||'TV request failed');error.status=response.status;throw error;}return {data,status:response.status};}
+function move(list,index,offset){const next=index+offset;if(next<0||next>=list.length)return;[list[index],list[next]]=[list[next],list[index]];changed();render();}
+function removeRefs(ref){for(const g of config.collections)g.items=g.items.filter(v=>v!==ref);}
+function preview(){if(!config)return;const p=$('preview');p.replaceChildren();p.append(element('strong',config.title));for(const r of config.sections.filter(s=>s.visible)){p.append(element('p',rowNames[r.id]));if(r.id==='collections')for(const g of config.collections)p.append(element('small',`${g.label}: ${g.items.length} items `));}}
+function render(){
+  $('pair').hidden=true;$('editor').hidden=false;$('title').value=config.title;$('accent').value=config.accent;$('revision').textContent=`TV revision ${config.revision}`;
+  $('sections').replaceChildren();config.sections.forEach((row,index)=>{const wrap=element('div');wrap.className='toolbar';const visible=element('input');visible.type='checkbox';visible.checked=row.visible;visible.onchange=()=>{row.visible=visible.checked;changed();};wrap.append(label(rowNames[row.id],visible),button('Up',()=>move(config.sections,index,-1)),button('Down',()=>move(config.sections,index,1)));$('sections').append(wrap);});
+  $('links').replaceChildren();config.links.forEach((link,index)=>{const wrap=element('div');wrap.className='link';const fields=element('div');fields.className='fields';const routes=element('select');for(const [value,name]of [['browser','External browser'],['web','Web player'],['native','Native media'],['youtube','YouTube'],['catalog','Movie / series details']]){const option=element('option',name);option.value=value;routes.append(option);}routes.value=link.route;routes.onchange=()=>{link.route=routes.value;changed();};fields.append(label('Label',input(link.label,100,v=>{link.label=v;})),label('HTTPS URL',input(link.url,2048,v=>{link.url=v;})),label('Open using',routes));wrap.append(fields,button('Up',()=>move(config.links,index,-1)),button('Down',()=>move(config.links,index,1)),button('Remove',()=>{removeRefs(link.id);config.links.splice(index,1);changed();render();}));$('links').append(wrap);});
+  $('apps').replaceChildren();const all=new Map(inventory.map(a=>[a.component,a.label]));for(const c of config.apps)if(!all.has(c))all.set(c,`${c.split('/')[0]} | Not installed`);
+  const sorted=[...all].sort((a,b)=>{const ai=config.apps.indexOf(a[0]),bi=config.apps.indexOf(b[0]);return (ai<0?999:ai)-(bi<0?999:bi)||a[1].localeCompare(b[1]);});for(const[c,name]of sorted){const wrap=element('div');wrap.className='toolbar';const check=element('input');check.type='checkbox';check.checked=config.apps.includes(c);check.onchange=()=>{if(check.checked)config.apps.push(c);else{config.apps=config.apps.filter(v=>v!==c);removeRefs(`app:${c}`);}changed();render();};wrap.append(label(name,check));if(check.checked){const index=config.apps.indexOf(c);wrap.append(button('Up',()=>move(config.apps,index,-1)),button('Down',()=>move(config.apps,index,1)));}$('apps').append(wrap);}
+  $('collections').replaceChildren();const refs=[...config.links.map(l=>[l.id,l.label]),...config.apps.map(c=>[`app:${c}`,all.get(c)||c])];config.collections.forEach((group,index)=>{const wrap=element('div');wrap.className='link';wrap.append(label('Collection name',input(group.label,80,v=>{group.label=v;})));const selected=element('div');for(const[ref,name]of refs){const check=element('input');check.type='checkbox';check.checked=group.items.includes(ref);check.onchange=()=>{group.items=check.checked?[...group.items,ref]:group.items.filter(v=>v!==ref);changed();};selected.append(label(name,check));}wrap.append(selected,button('Up',()=>move(config.collections,index,-1)),button('Down',()=>move(config.collections,index,1)),button('Remove collection',()=>{if(confirm('Remove this collection? Saved items will stay.')){config.collections.splice(index,1);changed();render();}}));$('collections').append(wrap);});preview();
 }
-function draft() {
-  if (!config) return;
-  config.title = $('title').value;
-  config.links = [...$('links').children].map(row => ({id:row.dataset.id,label:row.querySelector('[data-field="label"]').value,url:row.querySelector('[data-field="url"]').value,route:row.querySelector('[data-field="route"]').value}));
-  dirty = true; pendingMutation = null;
-  try { localStorage.setItem(draftKey, JSON.stringify(config)); } catch (_) { /* Storage can be disabled. Editing still works. */ }
-  status('Draft changes • Not yet saved to TV.');
-}
-function button(label, click) { const b=document.createElement('button'); b.type='button'; b.className='secondary'; b.textContent=label; b.onclick=click; return b; }
-function render() {
-  $('title').value = config.title; $('revision').textContent = `TV revision ${config.revision}`; $('links').replaceChildren();
-  config.links.forEach((link,index) => {
-    const row=document.createElement('div'); row.className='link'; row.dataset.id=link.id;
-    const fields=document.createElement('div'); fields.className='fields';
-    for (const [field,label] of [['label','Tile label'],['url','HTTPS URL'],['route','Open using']]) {
-      const holder=document.createElement('label'); holder.textContent=label;
-      const input=document.createElement(field==='route'?'select':'input'); input.dataset.field=field;
-      if(field==='route') for(const [value,label] of [['browser','External browser'],['youtube','YouTube app'],['web','Web player'],['native','Native media']]) { const o=document.createElement('option'); o.value=value; o.textContent=label; input.append(o); }
-      else { input.maxLength=field==='url'?2048:100; input.required=true; if(field==='url') input.type='url'; }
-      input.value=link[field]; input.addEventListener('input',draft); holder.append(input); fields.append(holder);
-    }
-    row.append(fields); const actions=document.createElement('div'); actions.className='toolbar';
-    actions.append(button('Move up',()=>{ draft(); if(index>0) [config.links[index-1],config.links[index]]=[config.links[index],config.links[index-1]]; render(); draft(); }),button('Move down',()=>{ draft(); if(index<config.links.length-1) [config.links[index+1],config.links[index]]=[config.links[index],config.links[index+1]]; render(); draft(); }),button('Remove',()=>{ draft(); config.links.splice(index,1); render(); draft(); })); row.append(actions); $('links').append(row);
-  });
-  $('pair').hidden=true; $('editor').hidden=false;
-}
-async function loadLatest(offerDraft = false) {
-  const latest=(await request('/api/config')).data;
-  let saved=null; try { saved=JSON.parse(localStorage.getItem(draftKey)); } catch (_) {}
-  config=latest; dirty=false; pendingMutation=null;
-  if(offerDraft && saved && Array.isArray(saved.links) && confirm('Restore the unsaved dashboard draft in this browser? The current TV revision will still be checked before saving.')) { config=saved; dirty=true; }
-  render(); status(dirty?'Draft restored. Review it; if TV data changed, save will report a conflict.':`Connected • Revision ${config.revision}.`);
-}
-$('pair-form').onsubmit=async event=> {
-  event.preventDefault(); clearInterval(poll); session=null;
-  try {
-    ticket=(await request('/api/pair','POST',{code:$('code').value,name:$('device-name').value})).data.ticket; status('Check your TV and approve this browser.');
-    const until=Date.now()+120000;
-    poll=setInterval(async()=>{ if(Date.now()>until) { clearInterval(poll); status('Pairing expired. Generate a new code on TV.'); return; } try { const result=await request('/api/claim','POST',{ticket}); if(result.status===200) { clearInterval(poll); session=result.data; ticket=null; await loadLatest(true); } } catch(e) { clearInterval(poll); status('Disconnected. Open Nook on TV and pair again.'); } },2000);
-  } catch(e) { status(e.message || 'Cannot reach the TV. Open Nook and check your home network.'); }
-};
-$('title').addEventListener('input',draft);
-$('add').onclick=()=>{ draft(); if(config.links.length>=40) { status('M1 supports up to 40 saved links.'); return; } config.links.push({id:cryptoId(),label:'',url:'https://',route:'browser'}); render(); draft(); };
-function cryptoId() { const b=new Uint8Array(16); crypto.getRandomValues(b); return [...b].map(x=>x.toString(16).padStart(2,'0')).join(''); }
-$('save').onclick=async()=> {
-  if(saving) return;
-  // An uncertain save keeps its mutation ID and exact payload for an explicit retry.
-  if(!pendingMutation) { draft(); pendingMutation={mutationId:cryptoId(),expectedRevision:config.revision,config:JSON.parse(JSON.stringify(config))}; }
-  if(!config.title.trim() || config.links.some(l=>!l.label.trim() || !/^https:\/\//i.test(l.url))) { status('Enter a welcome line, tile labels and HTTPS URLs.'); pendingMutation=null; return; }
-  saving=true; $('save').disabled=true;
-  try { const result=(await request('/api/config','POST',pendingMutation)).data; config=result; dirty=false; pendingMutation=null; localStorage.removeItem(draftKey); render(); status(`Saved to TV • Revision ${config.revision}.`); }
-  catch(e) { status(e.status===409?'Conflict: your TV changed elsewhere. Your draft is retained. Export it, then reload latest and reapply changes.':e.status===401?'Session revoked or TV restarted. Pair again; your draft is retained.':'Disconnected or save failed. Your draft is retained. Reopen Nook; Reload latest checks whether the TV received your save.'); if(e.status===409) pendingMutation=null; }
-  finally { saving=false; $('save').disabled=false; }
-};
-$('reload').onclick=async()=>{ if(dirty&&!confirm('Reload current TV data? Export your draft first if you want to keep it.')) return; try { await loadLatest(); } catch(e) { status('Disconnected. Reopen Nook on TV. Your draft is retained.'); } };
-$('export').onclick=()=>{ draft(); const blob=new Blob([JSON.stringify(config,null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='nook-dashboard-v1.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000); status('Exported this dashboard draft. No pairing credentials or viewing history included.'); };
-$('disconnect').onclick=()=>{ session=null; config=null; $('pair').hidden=false; $('editor').hidden=true; status('Credentials forgotten in this tab. Revoke browsers on TV to invalidate existing sessions.'); };
-window.addEventListener('beforeunload',e=>{ if(dirty) { e.preventDefault(); e.returnValue=''; } });
+async function loadLatest(offerDraft=false){const latest=(await request('/api/config')).data;inventory=(await request('/api/inventory')).data.apps;config=latest;dirty=false;pending=null;render();if(offerDraft)status(`Connected at revision ${config.revision}. Use Restore browser draft if you have unsaved work.`);else status(`Connected | Revision ${config.revision}.`);}
+$('pair-form').onsubmit=async e=>{e.preventDefault();clearInterval(poll);session=null;try{const ticket=(await request('/api/pair','POST',{code:$('code').value,name:$('device-name').value})).data.ticket;status('Approve this browser on your TV.');let busy=false;const until=Date.now()+120000;poll=setInterval(async()=>{if(busy)return;if(Date.now()>until){clearInterval(poll);status('Pairing expired. Generate a new TV code.');return;}busy=true;try{const result=await request('/api/claim','POST',{ticket});if(result.status===200){clearInterval(poll);session=result.data;await loadLatest(true);}}catch(error){clearInterval(poll);status('Disconnected. Reopen Nook on TV and pair again.');}finally{busy=false;}},2000);}catch(error){status(error.message||'Cannot reach the TV. Check your home network.');}};
+$('title').oninput=()=>{config.title=$('title').value;changed();};$('accent').oninput=()=>{config.accent=$('accent').value;changed();};
+$('add').onclick=()=>{if(config.links.length>=200){status('Maximum 200 saved items.');return;}config.links.push({id:id(),label:'',url:'https://',route:'browser'});changed();render();};
+$('add-collection').onclick=()=>{if(config.collections.length>=20){status('Maximum 20 collections.');return;}config.collections.push({id:id(),label:'New collection',items:[]});changed();render();};
+$('clear-photo').onclick=()=>{config.background='';$('photo').value='';changed();};
+$('photo').onchange=async()=>{const file=$('photo').files[0];if(!file)return;if(file.size>12*1024*1024){status('Choose an image under 12 MB.');return;}let image;try{image=await createImageBitmap(file);if(image.width>20000||image.height>20000)throw new Error();const scale=Math.min(1,1920/image.width,1080/image.height),canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(image.width*scale));canvas.height=Math.max(1,Math.round(image.height*scale));canvas.getContext('2d').drawImage(image,0,0,canvas.width,canvas.height);const data=canvas.toDataURL('image/jpeg',.75);if(data.length>680000){status('Image remains too large; choose a simpler or smaller image.');return;}config.background=data;changed();}catch(_){status('Could not decode this photo. Try JPEG or PNG.');}finally{image?.close();}};
+function valid(){return config&&config.title.trim()&&config.links.every(l=>l.label.trim()&&/^https:\/\//i.test(l.url))&&config.collections.every(g=>g.label.trim());}
+$('save').onclick=async()=>{if(saving)return;if(!valid()){status('Add a welcome line, names and valid HTTPS URLs before saving.');return;}if(!pending)pending={config:JSON.parse(JSON.stringify(config)),expectedRevision:config.revision,mutationId:id()};saving=true;$('save').disabled=true;try{config=(await request('/api/config','POST',pending)).data;dirty=false;pending=null;clearDraft();render();status(`Saved to TV | Revision ${config.revision}.`);}catch(error){if(error.status===409)pending=null;status(error.status===409?'Conflict: TV changed elsewhere. Your draft is retained. Export it before Reload latest.':error.status===401?'Session expired or revoked. Pair again; your browser draft is retained.':error.status===400?'Invalid dashboard. Check item limits, collection references, URLs and photo size.':'Disconnected or save failed. Draft retained. Reopen Nook; Reload latest checks whether your save arrived.');}finally{saving=false;$('save').disabled=false;}};
+$('reload').onclick=async()=>{if(dirty&&!confirm('Reload current TV data? Export your draft first to preserve it.'))return;try{await loadLatest();}catch(_){status('Cannot reach TV. Reopen Nook. Draft retained.');}};
+$('restore-draft').onclick=()=>{let saved;try{saved=JSON.parse(localStorage.getItem(draftKey));}catch(_){}if(!saved||saved.schemaVersion!==2){status('No compatible browser draft.');return;}if(confirm('Restore browser draft? Its original revision is retained to prevent overwriting newer TV changes.')){config=saved;dirty=true;pending=null;render();status('Draft restored. A stale revision will be rejected on save.');}};
+$('export').onclick=()=>{const blob=new Blob([JSON.stringify(config,null,2)],{type:'application/json'}),a=element('a');a.href=URL.createObjectURL(blob);a.download='nook-dashboard-v2.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);status('Exported this dashboard draft. No credentials, sources or viewing history included.');};
+$('import').onchange=async()=>{const file=$('import').files[0];$('import').value='';if(!file)return;if(file.size>900000){status('Backup exceeds 900 KB.');return;}try{const backup=JSON.parse(await file.text());if(![1,2].includes(backup.schemaVersion)||!Array.isArray(backup.links)||!Array.isArray(backup.apps))throw new Error('Unsupported backup schema.');if(!confirm(`Replace TV dashboard with ${backup.links.length} saved items, ${backup.apps.length} app favorites and ${backup.collections?.length||0} collections? A pre-import recovery snapshot will be kept. Unsaved browser changes will be replaced.`))return;const response=await request('/api/import','POST',{config:backup,expectedRevision:config.revision,mutationId:id()});config=response.data;dirty=false;pending=null;clearDraft();render();status('Dashboard restored. Undo import is available in TV Settings.');}catch(error){status(error.status===409?'Conflict: TV changed. Reload latest before importing.':error.message||'Invalid backup. Original TV dashboard was not changed.');}};
+$('disconnect').onclick=()=>{session=null;config=null;$('pair').hidden=false;$('editor').hidden=true;status('Tab credentials forgotten. Revoke browsers on TV to invalidate their sessions.');};
+setInterval(async()=>{if(!session||saving)return;try{const latest=(await request('/api/config')).data;if(dirty)status(latest.revision!==config.revision?'TV changed elsewhere. Draft retained; export before reloading.':'Connected | Unsaved draft changes.');else status(latest.revision!==config.revision?'TV changed. Reload latest to see changes.':`Connected | Revision ${config.revision}.`);}catch(error){status(error.status===401?'Access revoked or TV restarted. Pair again. Draft retained.':'Disconnected. Reopen Nook on TV. Draft retained; no changes are sent automatically.');}},12000);
+window.addEventListener('beforeunload',e=>{if(dirty){e.preventDefault();e.returnValue='';}});

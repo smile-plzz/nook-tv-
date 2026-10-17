@@ -24,7 +24,9 @@ The owner's explicit instructions take precedence. PRD owns current scope and ac
 | D12 | No background editor server initially | Proposed scope/performance tradeoff | External-app handoff disconnects editor |
 | D13 | Explicit personal choices rather than imported profile data | Product privacy default | Start with editable collections; no silent account or personal-context ingestion |
 | D14 | Build only when the owner says to start | Released: owner said “initiate the build accordingly” on 2026-10-17 | Implementation and APK work are now authorized |
-| D15 | M1 uses Java native Views, platform VideoView and atomic JSON config | Temporary engineering choice under unavailable shell downloads | Builds with installed SDK only; Media3/DASH, Room and full history remain tracked; this is not the final stack decision |
+| D15 | M1 used Java native Views, platform VideoView and atomic JSON config | Historical compatibility choice | Preview 0.2 replaces VideoView with Media3; atomic versioned JSON remains authoritative instead of Room |
+| D16 | Continue later phases without current TV access | Explicit owner instruction on 2026-10-17 | Use hosted builds/emulator tests; retain all physical-device gates as pending |
+| D17 | Dashboard schema v2 plus independent viewing ledger | Engineering implementation | Backward migration, persistent receipt/recovery envelope, per-media native progress; no invented external progress |
 
 ## Release vocabulary
 

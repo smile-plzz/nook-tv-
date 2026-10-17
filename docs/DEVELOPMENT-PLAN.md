@@ -1,6 +1,6 @@
 # Development plan and verification gates
 
-2026-10-17 | Documentation baseline v1.0 finalized. **The owner has authorized implementation. M1 preview is built; device gate is pending.** See [build status](BUILD-STATUS.md).
+2026-10-17 | **Owner authorized proceeding with later phases while TV testing is unavailable.** M2 dashboard/editor and M3 playback implementations have advanced; M4 native catalog and source contracts have started. Physical-device gates remain pending. See [build status](BUILD-STATUS.md) for executed checks rather than assuming an entire milestone has passed.
 
 ## Delivery policy
 

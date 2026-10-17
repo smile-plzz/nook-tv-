@@ -1,54 +1,40 @@
 package com.ismail.nooktv;
-
 import android.content.Context;
 import android.util.AtomicFile;
 import org.json.*;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.util.HashSet;
 
-/** M1 atomic configuration. Room and migrations remain a later milestone. */
+/** Config, receipts and recovery snapshot commit in one atomic envelope. */
 public final class DashboardStore {
     private final AtomicFile file;
-    private JSONObject state;
-    private final java.util.LinkedHashMap<String, String> receipts = new java.util.LinkedHashMap<>();
+    private JSONObject state,receipts=new JSONObject(),recovery;
+    private boolean damaged;
     public DashboardStore(Context context) {
-        file = new AtomicFile(new File(context.getFilesDir(), "dashboard-v1.json"));
-        try { state = new JSONObject(new String(file.readFully(), StandardCharsets.UTF_8)); validate(state); }
-        catch (FileNotFoundException e) { state = defaults(); }
-        catch (Exception e) { state = defaults(); /* Leave unreadable file untouched until explicit save. */ }
+        file=new AtomicFile(new File(context.getFilesDir(),"dashboard-v1.json"));
+        try { JSONObject disk=new JSONObject(new String(file.readFully(),StandardCharsets.UTF_8));
+            if(disk.has("config")) { state=DashboardDocument.migrate(disk.getJSONObject("config")); receipts=disk.optJSONObject("receipts"); if(receipts==null) receipts=new JSONObject(); recovery=disk.optJSONObject("recovery"); }
+            else state=DashboardDocument.migrate(disk);
+        } catch(FileNotFoundException e) { fresh(); } catch(Exception e) { damaged=true; fresh(); }
     }
-    private JSONObject defaults() { try { return new JSONObject("{\"schemaVersion\":1,\"revision\":0,\"title\":\"Your space. Your screen.\",\"links\":[],\"apps\":[]}"); } catch (JSONException e) { throw new AssertionError(e); } }
+    private void fresh() { try { state=DashboardDocument.defaults(); } catch(JSONException e) { throw new AssertionError(e); } }
+    public synchronized boolean damaged() { return damaged; }
     public synchronized JSONObject read() throws JSONException { return new JSONObject(state.toString()); }
-    public synchronized JSONObject save(JSONObject input, long expected, String mutation) throws Exception {
-        if (!mutation.matches("[a-zA-Z0-9-]{16,80}")) throw new IllegalArgumentException("Invalid mutation ID");
-        String fingerprint = expected + ":" + input.toString();
-        if (receipts.containsKey(mutation)) {
-            if (!receipts.get(mutation).equals(fingerprint)) throw new IllegalArgumentException("Mutation ID reused for another edit");
-            return read();
-        }
-        if (expected != state.getLong("revision")) throw new java.util.ConcurrentModificationException();
-        validate(input);
-        JSONObject next = new JSONObject(input.toString()); next.put("revision", expected + 1);
-        byte[] bytes = next.toString().getBytes(StandardCharsets.UTF_8);
-        FileOutputStream out = file.startWrite();
-        try { out.write(bytes); file.finishWrite(out); } catch (Exception e) { file.failWrite(out); throw e; }
-        state = next; receipts.put(mutation, fingerprint);
-        if (receipts.size() > 128) receipts.remove(receipts.keySet().iterator().next());
-        return read();
+    public synchronized JSONObject save(JSONObject input,long expected,String mutation) throws Exception { return apply(input,expected,mutation,false); }
+    public synchronized JSONObject restore(JSONObject input,long expected,String mutation) throws Exception { return apply(DashboardDocument.migrate(input),expected,mutation,true); }
+    private JSONObject apply(JSONObject input,long expected,String mutation,boolean importing) throws Exception {
+        if(damaged) throw new IllegalStateException("Saved dashboard could not be read; it has not been overwritten.");
+        if(!mutation.matches("[a-zA-Z0-9-]{16,80}")) throw new IllegalArgumentException("Invalid mutation ID");
+        String digest=digest(expected+":"+input.toString()+":"+importing);
+        if(receipts.has(mutation)) { if(!receipts.getJSONObject(mutation).getString("digest").equals(digest)) throw new IllegalArgumentException("Reused mutation ID"); return read(); }
+        if(expected!=state.getLong("revision")) throw new java.util.ConcurrentModificationException(); DashboardDocument.validate(input);
+        JSONObject next=new JSONObject(input.toString()).put("revision",expected+1),newReceipts=new JSONObject(receipts.toString()); newReceipts.put(mutation,new JSONObject().put("digest",digest).put("revision",expected+1));
+        while(newReceipts.length()>128) newReceipts.remove(newReceipts.keys().next()); JSONObject snapshot=importing?state:recovery;
+        JSONObject envelope=new JSONObject().put("config",next).put("receipts",newReceipts); if(snapshot!=null) envelope.put("recovery",snapshot);
+        FileOutputStream out=file.startWrite(); try { out.write(envelope.toString().getBytes(StandardCharsets.UTF_8)); file.finishWrite(out); } catch(Exception e) { file.failWrite(out); throw e; }
+        state=next; receipts=newReceipts; recovery=snapshot; return read();
     }
-    public static void validate(JSONObject s) throws JSONException {
-        if (s.getInt("schemaVersion") != 1 || s.toString().length() > 16000) throw new IllegalArgumentException("Unsupported schema or size");
-        if (s.length() != 5 || !s.has("revision")) throw new IllegalArgumentException("Unknown fields");
-        String title = s.getString("title").trim(); if (title.isEmpty() || title.length() > 80) throw new IllegalArgumentException("Title must be 1–80 characters");
-        JSONArray links = s.getJSONArray("links"), apps = s.getJSONArray("apps");
-        if (links.length() > 40 || apps.length() > 40) throw new IllegalArgumentException("M1 allows 40 links and 40 apps");
-        HashSet<String> ids = new HashSet<>();
-        for (int i=0;i<links.length();i++) {
-            JSONObject l=links.getJSONObject(i); String id=l.getString("id"), label=l.getString("label"), route=l.getString("route");
-            if (l.length()!=5 || !id.matches("[a-zA-Z0-9-]{1,80}") || !ids.add(id) || label.trim().isEmpty() || label.length()>100 || !(route.equals("browser")||route.equals("web")||route.equals("native")||route.equals("youtube"))) throw new IllegalArgumentException("Invalid link");
-            String url=l.getString("url"); Targets.https(url); if (route.equals("youtube")&&!Targets.youtube(url)) throw new IllegalArgumentException("YouTube route needs a YouTube URL");
-        }
-        for(int i=0;i<apps.length();i++) if(!apps.getString(i).matches("[a-zA-Z0-9_.]+/[a-zA-Z0-9_.$]+")) throw new IllegalArgumentException("Invalid app component");
-    }
+    public synchronized boolean canRecover() { return recovery!=null; }
+    public synchronized void undoImport() throws Exception { if(recovery==null) throw new IllegalStateException(); restore(recovery,state.getLong("revision"),java.util.UUID.randomUUID().toString()); }
+    private static String digest(String s) throws Exception { byte[] bytes=java.security.MessageDigest.getInstance("SHA-256").digest(s.getBytes(StandardCharsets.UTF_8)); StringBuilder r=new StringBuilder(); for(byte b:bytes) r.append(String.format(java.util.Locale.ROOT,"%02x",b&255)); return r.toString(); }
 }
