@@ -15,7 +15,7 @@
 | YouTube | Try official TV/mobile handlers, then browser; no fabricated playback history | Installed handler and actual URL behavior; richer validation/discovery remains |
 | PC editor | Foreground-only port 8765; short-lived code plus TV approval; high-entropy bearer/CSRF credentials, Host/Origin checks, bounded threads/headers/body, revocation, revision conflict | Actual home-network connectivity; transport is HTTP, not encrypted |
 | Saved state | Atomic JSON dashboard, welcome line, up to 40 HTTPS links and 40 pinned app components; editor reorder/remove; dashboard-only export | Full layout/collections/backgrounds/import and Room migrations remain |
-| CI | Workflow builds APK and checks core + actual editor handler; upload artifact | First GitHub workflow execution not verified locally |
+| CI | Hosted Windows build, core/handler checks and APK artifact upload passed on commit `0b822b60c08812613b9916cf78eb7eb6a508b53a` | No device/runtime result is implied |
 
 ## Executed locally
 
@@ -26,6 +26,8 @@
 - 22 core assertions passed: code expiry, explicit approval, single-use claims, credentials, immediate revocation, lockout, URL schemes/credential/host rejection and exact editor hosts.
 - 17 actual editor-handler assertions passed using in-memory request/response streams and the SDK's AOSP JSON implementation: authenticated reads/writes, no credential before TV approval, origin/host checks, JSON/body limits, conflicts and revocation. These do not test a live LAN socket or Android lifecycle.
 - Browser editor JavaScript syntax checked with Node.
+
+GitHub Actions independently repeated the SDK-only build, core checks and editor-handler tests and uploaded the APK in [run 39010354732](https://github.com/smile-plzz/nook-tv-/actions/runs/39010354732). The initial setup failed because the setup action requested a removed `tools` package; the workflow now explicitly requests `platform-tools` and the rerun passed the build/test/upload steps.
 
 No app runtime, emulator, target-TV, media-source, LAN pairing, two-hour playback, provider, performance or accessibility result is claimed. ADB could not start its local service in this execution environment. Shell downloads failed DNS resolution; GitHub connector access worked.
 
