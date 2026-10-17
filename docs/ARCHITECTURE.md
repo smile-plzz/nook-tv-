@@ -1,6 +1,6 @@
 # Proposed architecture
 
-2026-10-17 | Decision status: proposed until compatibility milestone.
+2026-10-17 | Documentation baseline v1.0. Technical choices remain proposed until the compatibility milestone, which begins only after owner authorization.
 
 ## Components
 
@@ -46,6 +46,8 @@ Start with packages inside one Android app module if Gradle-module overhead adds
 
 - DashboardConfig: revision, schemaVersion, section order/visibility, theme, background asset.
 - Section: stable ID, type, label, position, settings.
+- Collection: stable ID, owner-edited name, ordered typed item references, optional interest tags; no inferred private data.
+- SeriesSelection: parent media ID, selected season/episode, source preference and updatedAt; independent of watched/progress state.
 - Tile: stable ID, kind, label, target, sourceId, image reference.
 - MediaIdentity: internal ID, provider namespace/ID, IMDb ID and actual optional TMDB ID.
 - EpisodeIdentity: parent media ID, season, episode, provider-specific episode ID when available.
@@ -84,7 +86,7 @@ Finite VOD uses a configurable watched threshold, default 95%. Unknown-duration/
 
 ## Browser editor and pairing
 
-Initial availability: while Nook is in the foreground. PC on same LAN. Server address shown on TV; no port forwarding.
+Initial availability: while Nook is in the foreground, including Nook-owned player screens. PC on same LAN. Server address shown on TV; no port forwarding. Stop accepting editor requests when Nook leaves the foreground; resume with an updated address on return. The browser preserves unsaved draft text locally, shows Disconnected, and requires a fresh revision before retrying a save. It must not silently replay a mutation after reconnect.
 
 1. User opens Pair on TV.
 2. TV creates short-lived, rate-limited pairing code.
@@ -129,3 +131,33 @@ Do not claim Android WebView loads desktop extensions or automatically uses Brav
 ## Distribution
 
 Versioned sideload APK first. Establish stable application ID and signing identity before regular user installation. Keep signing secrets outside source control and preserve them across releases. GitHub CI should build and test from pinned toolchain/dependencies; a release is not considered device-tested just because CI passes.
+
+## Schema and configuration contract
+
+The TV is authoritative. Config writes use expectedRevision, a unique mutation ID and a validated complete transaction. Repeated mutation IDs return the prior result rather than duplicate an item. The server increments revision only after persistence; a response lost in transit is resolved by reading revision/mutation status. Unknown schema versions are rejected without changing existing state.
+
+Export format includes schemaVersion, export timestamp, configuration, collections, watchlist, recent opens and optionally viewing history. Portable background assets are included within a bounded package or explicitly reported missing. Exclude pairing credentials, API keys, browser cookies and provider tokens. Import previews counts, validates limits/URLs, stages assets, and replaces supported data atomically after explicit user choice; keep a pre-import recovery snapshot. Initial import mode is Replace, not an undefined merge algorithm.
+
+App package targets remain favorites even when absent, marked Not installed. Background/cache deletion does not remove collection or history records. Empty/unavailable sources remain editable. Expiring media URLs are not stable identity: resolve fresh playback targets when the source offers that capability.
+
+## Local server contract (design only)
+
+Separate pairing, device-session, config, library-list, background-asset, and backup operations. Require authentication for all user-state reads and writes. Validate methods, content types, schema sizes, target schemes and allowed operations. No remote shell, arbitrary filesystem endpoint, executable script upload, or arbitrary proxy is part of the editor.
+
+Suggested initial limits, to be tuned by device evidence: 6-digit pairing code valid 2 minutes; at most 5 failures per pending pairing session before requiring a new TV-created code; 1 MiB configuration/import JSON; 10 MiB background upload followed by dimension/decode checks; 250 tiles/collection references per dashboard. These are engineering defaults, not owner-requested product limits. Document any adjustment.
+
+A local-network address may change. Display the current address, offer an optional QR code, and show reconnection help without assuming multicast discovery. An IP address, MAC address or matching Wi-Fi name is not authentication.
+
+## Credential boundary
+
+Metadata API-key entry is performed on the TV settings screen for the initial HTTP editor design. Do not send keys in URL query strings, exports or logs. A later secure provisioning route requires a documented transport decision; session authentication alone does not encrypt LAN traffic. Optional YouTube credentials are evaluated separately; no shared hard-coded secret is shipped.
+
+## Metadata and recommendation semantics
+
+OMDb metadata is not a streaming availability API. Seeded rows must be labeled as curated picks, not real-time Trending. A popularity/trending claim requires an actual dated source. Mood suggestions reuse inspected upstream behavior only after review; explain matches by genres/interests. Native catalog search and remote layout are independent from whether a player exposes progress.
+
+## Android lifecycle and launcher contract
+
+Verify actual API/ABI, required features and package visibility during the authorized spike; do not equate Android version branding with certified Android TV capability. Keep normal app launch available when a HOME alias is enabled. Request only permissions justified by implemented features. Do not depend on boot autostart, unrestricted background execution, root, accessibility-service interception or device-owner privileges.
+
+Persist user state before handing off externally. Restore the dashboard position on return; do not overwrite progress with zero when the external app provides no result. Keep title/episode selection if a provider fails or an embedded page reloads.
