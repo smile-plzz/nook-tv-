@@ -47,10 +47,10 @@ jobs:
           script: |
             adb install upgrade-baseline/android/app/build/outputs/apk/debug/app-debug.apk
             adb install android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
-            adb shell am instrument -w -e mode seed com.ismail.nooktv.compat.test/com.ismail.nooktv.UpgradeInstrumentation | tee upgrade-seed.txt
+            adb shell am instrument -w -e upgradeMode seed com.ismail.nooktv.compat.test/com.ismail.nooktv.SmokeInstrumentation | tee upgrade-seed.txt
             grep 'PASS:' upgrade-seed.txt
             adb install -r android/app/build/outputs/apk/debug/app-debug.apk
-            adb shell am instrument -w -e mode verify com.ismail.nooktv.compat.test/com.ismail.nooktv.UpgradeInstrumentation | tee upgrade-result.txt
+            adb shell am instrument -w -e upgradeMode verify com.ismail.nooktv.compat.test/com.ismail.nooktv.SmokeInstrumentation | tee upgrade-result.txt
             grep 'PASS:' upgrade-result.txt
             adb logcat -c
             adb shell am instrument -w com.ismail.nooktv.compat.test/com.ismail.nooktv.SmokeInstrumentation | tee smoke-result.txt

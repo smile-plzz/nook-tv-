@@ -12,6 +12,7 @@ import java.util.concurrent.TimeUnit;
 
 /** Platform-only instrumentation: real Android storage, activity and TV input smoke checks. */
 public final class SmokeInstrumentation extends Instrumentation {
+    private String upgradeMode="";
     private int assertions;
     private void check(boolean condition,String description) { assertions++; if(!condition) throw new AssertionError(description); }
     private void onMain(Runnable run) { final Throwable[] failure={null}; runOnMainSync(()->{ try { run.run(); } catch(Throwable e) { failure[0]=e; } }); if(failure[0]!=null) throw new AssertionError("Main-thread test operation failed",failure[0]); }
@@ -39,10 +40,11 @@ public final class SmokeInstrumentation extends Instrumentation {
         check(response.startsWith("HTTP/1.1 200"),"real Android socket upload acknowledged after saving");check(new ReceivedMediaStore(context).playable(id).length()==fixture.length,"HTTP pipeline commits retained copy");
         onMain(()->{try{java.lang.reflect.Field player=MainActivity.class.getDeclaredField("player");player.setAccessible(true);check(player.get(activity)==null,"receiving a file does not start playback");}catch(Exception e){throw new RuntimeException(e);}});pairing.revoke();
     }
-    @Override public void onCreate(Bundle arguments) { super.onCreate(arguments); start(); }
+    @Override public void onCreate(Bundle arguments) { super.onCreate(arguments); upgradeMode=arguments==null?"":arguments.getString("upgradeMode",""); start(); }
     @Override public void onStart() {
         Bundle result=new Bundle();
         try {
+            if(!upgradeMode.isEmpty()){int count=UpgradeChecks.run(this,upgradeMode);result.putString("stream","PASS: "+upgradeMode+" upgrade continuity ("+count+" assertions)\n");finish(Activity.RESULT_OK,result);return;}
             Context context=getTargetContext();retiredSettings(context); DashboardStore store=new DashboardStore(context); JSONObject original=store.read(); long revision=original.getLong("revision");
             JSONObject input=new JSONObject(original.toString()).put("title","নুক | Android storage test"); String mutation="instrumentation-save-0001";
             JSONObject saved=store.save(input,revision,mutation); check(saved.getLong("revision")==revision+1,"acknowledgement follows persistence");
