@@ -1,6 +1,6 @@
 # Requirements analysis
 
-2026-10-17 | Baseline: user discussion and NowShowing-Stream source inspection.
+2026-10-17 | Finalized documentation baseline v1.0. User discussion and targeted NowShowing-Stream source inspection; no device tests or implementation.
 
 ## Confirmed versus proposed
 
@@ -88,3 +88,30 @@ One active playback context, no background autoplay, resized artwork, pagination
 - [TV product listing](https://sonyplusbd.com/product/43-inch-frameless-voice-smart-android-led-tv/) — contradictory Android versions; owner reports 14.
 
 These references inform planning. Recheck current integration documentation when implementing each adapter.
+
+## Thread-to-scope reconciliation
+
+| Conversation evidence | Final requirement treatment |
+|---|---|
+| Personal space tailored to interests, not a public platform | PERS-01 collections are P0; single-owner local-first default; no mandatory account |
+| Customize from a PC browser and reflect on TV | PC-01/PC-02 plus SEND-01; transactional Save, conflict handling and visible connection state |
+| Standalone app with launcher support | Standalone delivery first; launcher stays tracked rather than dropped |
+| Native YouTube support | Native browsing plus official app handoff proposed initially; embedded route remains evaluated; clarify capability before full-scope closure |
+| Continue Watching | True timestamps only when observable; selected episode and Recently opened supported independently |
+| Other sites and native online streaming | Native catalog/player where source supports it; isolated embed/browser route otherwise |
+| Brave ad blocker support | Brave handoff plus separately evaluated filtering; no Shields inheritance assumption |
+| Explicitly use NowShowing-Stream | Sole streaming baseline; no CineVault or V2 substitution |
+| Owner will say when to start building | Documentation-only hold, recorded in README and implementation handoff |
+
+## Review corrections in v1.0
+
+- Moved explicit personal collections into P0; recommendations remain later so basic personalization is not delayed.
+- Distinguished first usable release from completion of the broader requested scope.
+- Clarified that native YouTube handoff is a proposed interpretation rather than an owner-approved substitute for in-app playback.
+- Added usable first run without a PC, save-from-PC behavior and no automatic playback interruption.
+- Defined foreground editor disconnect/reconnect behavior and lost-save recovery.
+- Separated series selection, recent playback attempts and measured playback progress.
+- Clarified offline dashboard versus online video, current metadata versus source availability, and curated rows versus real-time trending.
+- Added portable backup boundaries and TV-only API-key entry for the initial HTTP editor.
+
+Personal context informs the preference for a lightweight, polished and manageable product. It does not authorize importing private history, relationship details, health information or account content into a TV visible to others. Interest collections start with owner-selected content.
