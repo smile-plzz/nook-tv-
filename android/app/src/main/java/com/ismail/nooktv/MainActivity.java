@@ -298,7 +298,8 @@ public final class MainActivity extends Activity implements EditorServer.Host {
         player.addListener(new Player.Listener() {
             @Override public void onPlaybackStateChanged(int state) {
                 if(player==null) return;
-                prepared=state==Player.STATE_READY||state==Player.STATE_ENDED;
+                // Once a timeline is ready, buffering during a seek must not discard its position.
+                if(state==Player.STATE_READY||state==Player.STATE_ENDED)prepared=true;
                 if(state==Player.STATE_READY) saveProgress();
                 if(state==Player.STATE_ENDED) { saveProgress(); playerStatus.setText("Finished"); }
                 if(state==Player.STATE_BUFFERING) playerStatus.setText("Buffering...");
@@ -307,6 +308,7 @@ public final class MainActivity extends Activity implements EditorServer.Host {
                 prepared=false; try { viewing.ledger.failed(id); persistViewing(); } catch(Exception ignored) {}
                 if(playerStatus!=null) playerStatus.setText("Could not play this source ("+error.getErrorCodeName()+"). Retry or choose another link.");
             }
+            @Override public void onPositionDiscontinuity(Player.PositionInfo before,Player.PositionInfo after,int reason) { if(reason==Player.DISCONTINUITY_REASON_SEEK)saveProgress(); }
             @Override public void onIsPlayingChanged(boolean active) { if(prepared) saveProgress(); }
         });
         player.setMediaItem(new MediaItem.Builder().setUri(url).setMediaId(id).build());
