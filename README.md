@@ -1,36 +1,50 @@
 # Nook TV
 
-A personal Android TV dashboard for Ismail: Continue Watching, favorite apps, YouTube, movies and series through NowShowing-Stream, and customization from a PC browser.
+Your personal space on the big screen: apps, Continue Watching, YouTube, NowShowing movies and series, and collections tailored by you from a PC browser.
 
-## Project status
+## Status
 
-**Planning baseline — 17 October 2026.** This repository currently contains requirements and an implementation plan. No APK, device validation, or completed integrations are claimed.
+**Documentation v1.0 finalized — 17 October 2026. Implementation has not started.**
+The owner will explicitly say when to start building. Do not treat this planning baseline as permission to scaffold, install dependencies, configure CI, build an APK or deploy anything.
 
-Primary device: Sony Plus SP43SFV product listing; the owner reports **Android 14 and 2 GB RAM**. Actual Android API level, CPU ABI, WebView, codecs, DRM, and launcher behavior must be checked on the device.
+Primary target: the owner's Sony Plus TV, reported **Android 14 / 2 GB RAM**. Actual API level, ABI, WebView, codecs and launcher behavior await device testing.
 
-## Product direction
+## Product
 
-- Standalone TV application with optional home-launcher support.
-- Native, remote-friendly dashboard and content browsing.
-- Continue Watching with accurate timestamps only where playback progress is observable.
-- YouTube app handoff initially; embedded playback evaluated separately.
-- **[NowShowing-Stream](https://github.com/smile-plzz/NowShowing-Stream) is the sole existing streaming reference.** CineVault/CineGemini-Stream and NowShowing-Stream-V2 are not implementation baselines.
-- PC browser editor on the home network; settings and history live on the TV.
-- Optional Brave handoff and separately implemented web filtering, subject to device/source tests.
-- No mandatory cloud account or always-on PC.
+- Standalone Android APK with optional launcher support.
+- Native TV dashboard and content browsing, fully usable with a remote.
+- Personal collections, favorite apps, watchlist and saved links.
+- Genuine Resume when progress is available; Recently opened when it is not.
+- YouTube favorites and native browsing, with official-app playback proposed initially.
+- **[NowShowing-Stream](https://github.com/smile-plzz/NowShowing-Stream) is the only existing streaming baseline.**
+- Browser customization on the home network; ordinary TV use does not need the PC running.
+- Brave handoff and separate web filtering subject to compatibility tests.
+- No mandatory cloud account; online video still needs internet.
 
-## Planning documents
+The first usable release and full requested scope are distinct. Launcher/web-protection outcomes and the native YouTube experience stay tracked until implemented or specific limitations are accepted by the owner.
 
-| Document | Purpose |
+## Documentation map
+
+| Read | Purpose |
 |---|---|
-| [Product requirements](docs/PRD.md) | Scope, user stories, priorities, acceptance criteria, success targets |
-| [Requirements analysis](docs/REQUIREMENTS-ANALYSIS.md) | Confirmed decisions, verified source findings, integration limits, unknowns |
-| [Architecture](docs/ARCHITECTURE.md) | Proposed components, data model, pairing and playback contracts |
-| [Development plan](docs/DEVELOPMENT-PLAN.md) | Implementation order, deliverables, quality gates |
-| [Source audit](docs/NOWSHOWING-AUDIT.md) | Evidence from the selected upstream repository |
+| [Decisions and scope](docs/DECISIONS.md) | Confirmed requirements, proposals, outstanding decisions |
+| [PRD](docs/PRD.md) | Priorities, requirement IDs, success targets and release scope |
+| [TV and browser UX](docs/UX-SPEC.md) | First run, remote navigation, collections, editing and error flows |
+| [Requirements analysis](docs/REQUIREMENTS-ANALYSIS.md) | Thread reconciliation, feasibility and tradeoffs |
+| [NowShowing source audit](docs/NOWSHOWING-AUDIT.md) | Verified code findings and limits of review |
+| [Architecture](docs/ARCHITECTURE.md) | Data, playback, local editor and lifecycle design |
+| [Development plan](docs/DEVELOPMENT-PLAN.md) | Milestones and dependencies after authorization |
+| [Acceptance scenarios](docs/ACCEPTANCE.md) | Requirement coverage and actual-device test protocol |
+| [Implementation handoff](docs/IMPLEMENTATION-HANDOFF.md) | Starting instructions, implementation hold and readiness |
 
-## First implementation milestone
+## Key feasibility facts
 
-An installable compatibility APK: D-pad navigation, sample native playback, an isolated web-player test, YouTube handoff, and paired browser access. Run it on the actual TV before expanding the dashboard.
+NowShowing's inspected Continue Watching implementation records opened titles, not playback timestamps. Nook needs separate series selection, launch history and measured playback state.
 
-See the development plan for the sequence. Product intent is established; technical choices marked proposed remain subject to the compatibility milestone.
+A website embed is not automatically a native media stream. Brave Shields is not inherited by Nook's WebView. YouTube account-wide history is not promised. Provider and device capabilities must be demonstrated rather than inferred from labels.
+
+## Documentation verification
+
+All relative document links and requirement-to-acceptance mappings are checked during finalization. No application tests, provider playback tests or real-TV tests have been run.
+
+When authorized, the first milestone is an installable compatibility APK testing remote navigation, sample playback, web-player isolation, YouTube handoff and PC pairing.
