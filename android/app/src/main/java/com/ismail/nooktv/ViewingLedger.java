@@ -14,8 +14,13 @@ public final class ViewingLedger {
     public synchronized void clear() throws JSONException { data.put("entries",new JSONArray()); }
     public synchronized JSONObject find(String id) throws JSONException { JSONArray a=data.getJSONArray("entries"); for(int i=0;i<a.length();i++) if(a.getJSONObject(i).getString("id").equals(id)) return new JSONObject(a.getJSONObject(i).toString()); return null; }
     public synchronized void opened(String id,String label,String url,String route) throws JSONException { if(paused()) return; Targets.https(url); JSONObject e=find(id); if(e==null) e=new JSONObject().put("id",id).put("position",0).put("duration",0).put("status","opened"); e.put("label",label).put("url",url).put("route",route).put("updatedAt",System.currentTimeMillis()); put(e); }
+    public synchronized void openedLocal(String mediaId,String label) throws JSONException {
+        if(!mediaId.matches("[a-f0-9]{32}"))throw new IllegalArgumentException("Invalid local media");
+        if(paused())return;String id="local:"+mediaId;JSONObject e=find(id);if(e==null)e=new JSONObject().put("id",id).put("position",0).put("duration",0).put("status","opened");e.put("label",label).put("url","nook-media://"+mediaId).put("route","local").put("updatedAt",System.currentTimeMillis());put(e);
+    }
+    private static boolean nativeRoute(JSONObject e){return e.optString("route").equals("native")||e.optString("route").equals("local");}
     public synchronized void observe(String id,long position,long duration,boolean live,boolean ended) throws JSONException {
-        if(paused()||position<0) return; JSONObject e=find(id); if(e==null||!e.optString("route").equals("native")) return;
+        if(paused()||position<0) return; JSONObject e=find(id); if(e==null||!nativeRoute(e)) return;
         if(live||duration<=0) e.put("position",0).put("duration",0).put("status","live");
         else { long p=Math.min(position,duration); e.put("position",p).put("duration",duration).put("status",ended||p>=(long)(duration*.95)?"watched":"progress"); }
         e.put("updatedAt",System.currentTimeMillis()); put(e);
@@ -24,5 +29,5 @@ public final class ViewingLedger {
     public synchronized void mark(String id,boolean watched) throws JSONException { JSONObject e=find(id); if(e!=null) { e.put("status",watched?"watched":"opened").put("position",0); if(!watched) e.put("duration",0); put(e); } }
     public synchronized void remove(String id) throws JSONException { JSONArray a=data.getJSONArray("entries"),next=new JSONArray(); for(int i=0;i<a.length();i++) if(!a.getJSONObject(i).getString("id").equals(id)) next.put(a.getJSONObject(i)); data.put("entries",next); }
     private void put(JSONObject e) throws JSONException { remove(e.getString("id")); JSONArray old=data.getJSONArray("entries"),next=new JSONArray(); next.put(e); for(int i=0;i<Math.min(old.length(),99);i++) next.put(old.getJSONObject(i)); data.put("entries",next); }
-    public static boolean resumable(JSONObject e) { return e.optString("route").equals("native")&&e.optString("status").equals("progress")&&e.optLong("duration")>0&&e.optLong("position")>0; }
+    public static boolean resumable(JSONObject e) { return nativeRoute(e)&&e.optString("status").equals("progress")&&e.optLong("duration")>0&&e.optLong("position")>0; }
 }

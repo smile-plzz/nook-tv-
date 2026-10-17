@@ -19,10 +19,12 @@ public final class EditorBoundaryTests {
         @Override public synchronized void close() {}
     }
     static final class Host implements EditorServer.Host {
-        int saves, approvals; long revision;
+        int saves, approvals,uploads,uploadedBytes; long revision;
         public byte[] asset(String name) { return "fixture".getBytes(StandardCharsets.UTF_8); }
         public JSONObject config() throws Exception { return new JSONObject().put("revision",revision); }
         public JSONObject save(JSONObject c,long expected,String mutation) throws Exception { if(expected!=revision) throw new ConcurrentModificationException(); saves++; revision++; return config(); }
+        public JSONObject media() throws Exception { return new JSONObject().put("items",new JSONArray()); }
+        public JSONObject upload(InputStream in,long length,String name,String id,java.util.function.BooleanSupplier allowed)throws Exception{uploads++;if(!allowed.getAsBoolean())throw new AssertionError("Upload auth");for(int n=0;n<length;n++){if(in.read()<0)throw new EOFException();uploadedBytes++;}return new JSONObject().put("id",id).put("label",name);}
         public void approve(String name) { approvals++; }
     }
     static String invoke(EditorServer server,String method,String path,String headers,String body) throws Exception {
@@ -54,7 +56,16 @@ public final class EditorBoundaryTests {
         check(invoke(server,"POST","/api/config",base+origin+auth,"{bad").startsWith("HTTP/1.1 400"),"malformed JSON error");
         check(invoke(server,"POST","/api/config",base+origin+auth,String.join("",Collections.nCopies(1000001,"x"))).startsWith("HTTP/1.1 413"),"bounded request body");
         check(invoke(server,"GET","/api/config",base+auth+"Transfer-Encoding: chunked\r\n","").startsWith("HTTP/1.1 403"),"ambiguous body framing blocked");
-        pairing.revoke(); check(invoke(server,"POST","/api/config",base+origin+auth,save).startsWith("HTTP/1.1 401")&&host.saves==1,"revoke prevents writes");
+        String raw="0000ftyp0000data",binary=origin.replace("application/json","application/octet-stream")+"X-Nook-Filename: holiday%20video.mov\r\nX-Nook-Upload-Id: 0123456789abcdef0123456789abcdef\r\n";
+        check(invoke(server,"GET","/api/media",base+auth,"").startsWith("HTTP/1.1 200"),"authenticated media listing");
+        check(invoke(server,"POST","/api/media/upload",base+binary,raw).startsWith("HTTP/1.1 401")&&host.uploads==0,"raw upload authenticates before host body ingestion");
+        check(invoke(server,"POST","/api/media/upload",base+binary+auth,raw).startsWith("HTTP/1.1 200")&&host.uploads==1&&host.uploadedBytes==raw.length(),"raw body streamed without JSON parsing");
+        check(invoke(server,"POST","/api/media/upload",base+binary.replace("http://192.168.1.2:8765","https://evil.example")+auth,raw).startsWith("HTTP/1.1 403")&&host.uploads==1,"raw upload foreign origin rejected");
+        check(invoke(server,"POST","/api/media/upload",base+origin+auth,raw).startsWith("HTTP/1.1 415"),"raw route rejects JSON upload content type");
+        check(invoke(server,"POST","/api/media/upload",base+binary+auth,"tiny").startsWith("HTTP/1.1 413"),"raw route validates file size");
+        check(invoke(server,"POST","/api/media/upload",base+binary+auth+"Transfer-Encoding: chunked\r\n",raw).startsWith("HTTP/1.1 403"),"raw route rejects ambiguous chunk framing");
+        pairing.revoke();check(invoke(server,"POST","/api/media/upload",base+binary+auth,raw).startsWith("HTTP/1.1 401")&&host.uploads==1,"revoked upload blocked");
+        check(invoke(server,"POST","/api/config",base+origin+auth,save).startsWith("HTTP/1.1 401")&&host.saves==1,"revoke prevents writes");
         System.out.println("PASS: "+count+" actual editor-handler assertions (in-memory transport; no device/network claim)");
     }
 }
