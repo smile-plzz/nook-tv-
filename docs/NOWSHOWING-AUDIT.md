@@ -1,5 +1,7 @@
 # NowShowing-Stream source audit
 
+> Scope after the 17 October 2026 pivot: NowShowing-Stream remains the selected streaming reference, but catalog/provider work is secondary to default Home, the Apple TV-style app grid and iPhone sharing/reopen. The source findings below are historical inspection evidence, not proof of launcher, receiver, Drive or provider support. Current priorities are in [PRD](PRD.md).
+
 Reviewed: 2026-10-17.
 Selected upstream: https://github.com/smile-plzz/NowShowing-Stream
 Scope: README and four core files, fetched from the default branch. This is a targeted requirements audit, not full code review or live-provider testing.

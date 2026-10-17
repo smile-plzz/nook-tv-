@@ -1,5 +1,7 @@
 # Implementation status — 0.1.0-m1
 
+> Historical M1 evidence, preserved after the 17 October 2026 launcher pivot. The current product is a default Home with Apple TV-style aesthetics and iPhone-media convenience; see [PRD](PRD.md). Any standalone-first or optional-launcher wording below describes the old milestone, not current scope. No historical result proves the new launcher.
+
 2026-10-17. The owner explicitly authorized implementation after documentation finalization. This is the compatibility milestone, not a P0 or full-product release.
 
 ## Implemented

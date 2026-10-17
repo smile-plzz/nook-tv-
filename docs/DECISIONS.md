@@ -1,59 +1,56 @@
-# Product decisions and scope record
+# Decisions and scope record
 
-Documentation baseline 1.0 — 2026-10-17.
+Baseline 2.0 | 17 October 2026 | Supersedes dashboard-first baseline
 
-## Authority
+Owner instructions govern; [PRD](PRD.md) is current scope. A design proposal is not an implemented capability. This task updates documentation only.
 
-The owner's explicit instructions take precedence. PRD owns current scope and acceptance requirements; other documents explain how to deliver and verify it. Finalized documentation is not owner acceptance of every proposal and is not authorization to start implementation.
+## Confirmed direction
 
-## Decisions
-
-| ID | Decision | Status / basis | Consequence |
-|---|---|---|---|
-| D01 | Nook TV is a personal dashboard, not only an app launcher | Owner-confirmed | Collections and layout customization are core |
-| D02 | Standalone APK with optional launcher support | Owner-confirmed | Normal launch must always work; launcher is separately tested |
-| D03 | Use NowShowing-Stream | Owner-confirmed correction | Do not substitute CineVault, CineGemini-Stream or V2 |
-| D04 | PC browser customization | Owner-confirmed | Editor manages TV-owned data |
-| D05 | Continue Watching, YouTube and online streaming | Owner-confirmed outcomes | Source-specific capability handling |
-| D06 | Brave/ad-blocking support desired | Owner-confirmed outcome | Test Brave handoff and separate filtering; no universal promise |
-| D07 | Android 14 / 2 GB target | Owner-reported | Actual API/ABI/decoders still pending |
-| D08 | Local-first, same-LAN editor, no required cloud | Proposed engineering default | PC can be off during ordinary TV use |
-| D09 | Native catalog, Media3 for direct streams, isolated web embeds | Proposed architecture | Avoid treating all sites as direct media URLs |
-| D10 | YouTube official-app handoff first | Proposed staged interpretation | Native browsing yes; embedded playback evaluated; owner acceptance required for scope reduction |
-| D11 | Kotlin, Compose candidate, Room and vanilla TypeScript editor | Proposed implementation | Validate hardware/toolchain before committing to versions |
-| D12 | No background editor server initially | Proposed scope/performance tradeoff | External-app handoff disconnects editor |
-| D13 | Explicit personal choices rather than imported profile data | Product privacy default | Start with editable collections; no silent account or personal-context ingestion |
-| D14 | Build only when the owner says to start | Released: owner said “initiate the build accordingly” on 2026-10-17 | Implementation and APK work are now authorized |
-| D15 | M1 used Java native Views, platform VideoView and atomic JSON config | Historical compatibility choice | Preview 0.2 replaces VideoView with Media3; atomic versioned JSON remains authoritative instead of Room |
-| D16 | Continue later phases without current TV access | Explicit owner instruction on 2026-10-17 | Use hosted builds/emulator tests; retain all physical-device gates as pending |
-| D17 | Dashboard schema v2 plus independent viewing ledger | Engineering implementation | Backward migration, persistent receipt/recovery envelope, per-media native progress; no invented external progress |
-
-## Release vocabulary
-
-- Documentation complete: specification reviewed for consistency and committed.
-- Compatibility APK: limited test build after authorization; not a completed product.
-- First usable release: all P0 criteria verified on target hardware.
-- Full requested scope: P0 plus resolution of launcher, web protection and native YouTube experience; unachievable behavior requires documented owner acceptance of the limitation.
-- P2 ideas: optional, not implied obligations.
-
-P1 timing is a delivery proposal. It must not be used to silently remove an explicit request.
-
-## Open decisions and default actions
-
-| Topic | Default | Evidence needed / when |
+| ID | Decision | Basis and consequence |
 |---|---|---|
-| Specific interests/channels/playlists | Empty customizable collections and optional sample labels | Owner fills these during onboarding; not a build blocker |
-| YouTube stays inside Nook? | App handoff for first release | Evaluate embedded route during integration; revisit if owner requires in-app playback |
-| Brave viability | Optional handler, other browser fallback | Real TV install/input test |
-| Accurate web progress | None until provider proves support | Documented events plus observed resume |
-| Source availability and IDs | Unverified | Provider-by-provider integration checks |
-| Local HTTPS | HTTP with bounded non-secret editor scope initially | Transport review before adding credential-bearing controls |
-| Play Now from PC / remote control | Not part of P0; Save for later only | Add only if owner requests or approves added scope |
-| Multiple household profiles | P2 | Later owner request |
-| Toolchain and UI toolkit | Preferred candidates, no version pins yet | Authorized compatibility milestone |
-| Upstream code reuse | Behavioral reference until license checked | Before copying code/assets |
+| D01 | Personal default TV home with media convenience | Updated by owner after BlueStacks use; launcher is core, not a late add-on |
+| D02 | Default screen when pressing Home | Explicit answer; LAUNCH-01 becomes P0; keep normal app entry for recovery |
+| D03 | NowShowing-Stream remains selected upstream | Original owner correction retained; catalog is secondary to launcher/phone workflows |
+| D04 | PC browser customization | Existing requirement retained; phone-responsive companion proposed for sharing |
+| D05 | YouTube and phone-shared video are principal activities | Explicit answer; prioritize direct app access and Shared & Recent |
+| D06 | Brave/filtering remains requested later scope | Rare browser use reduces priority; no implied cancellation or universal ad-block promise |
+| D07 | Android 14 / 2 GB TV | Owner-reported, actual capabilities still unverified |
+| D08 | Apple TV-style aesthetics and overall experience | Explicit answer; app artwork/grid, readable spacing, predictable focus; no Apple asset copying |
+| D09 | Easier return to media shared/watched from phone | Explicit answer; durable replay when available, honest reconnect state otherwise |
+| D10 | Spotify is tentative, browser rare | Optional shortcut; do not assume Spotify account client |
+| D11 | Google Drive desired if possible | Conditional integration with feasibility/authentication gate, not mandatory sign-in |
+| D12 | BlueStacks boots and allows light exploration | Owner observation only; no thorough test or TV acceptance claim |
 
-## Change discipline
+## Engineering proposals and boundaries
 
-Record the trigger, affected requirement IDs, new behavior, acceptance changes and implementation impact. Update PRD and relevant companion documents together. External constraints should be reported as constraints, not attributed to an owner decision. No calendar or budget commitments have been supplied.
+| ID | Decision / proposal | Status |
+|---|---|---|
+| E01 | Retain Java/native Views, Media3 and versioned AtomicFile stores | Existing implementation; replaces earlier default Compose/Room proposal |
+| E02 | Redesign Home before more catalog expansion | New sequencing proposal reflecting confirmed priorities |
+| E03 | One-OK app launch, hold OK/context alternative for management | UX design; not yet implemented throughout |
+| E04 | Local-first core; same-LAN companion, no always-on PC/account | Retained design; Drive/services optional |
+| E05 | Retained Safari file-transfer prototype plus receiver capability assessment | Proposed first durable phone path; not owner acceptance of upload instead of AirPlay |
+| E06 | Home alias/system default selection with restore path | Proposed implementation, firmware-dependent; no automatic package disabling |
+| E07 | Foreground editor retained; background receiving separately assessed | No assumption that launcher status changes server lifecycle |
+| E08 | Drive selected-file access first; scope/picker proof before folders | Conditional design; tokens never through editor HTTP |
+| E09 | Native progress vs external opens vs live phone sessions | Required truthfulness; no universal cross-app history |
+| E10 | No private context/account/Photos import by default | Privacy boundary retained |
+| E11 | No upstream code/assets copied without reuse rights | Existing unresolved NowShowing license |
+| E12 | Full-product closure requires actual core outcomes | Build/emulator pass or standalone fallback is insufficient |
 
+## Superseded wording
+
+- Standalone dashboard first, optional launcher later: replaced by default-home-first product.
+- Personal dashboard as a counterpart to an app launcher: replaced by an app launcher with personal media convenience.
+- NowShowing completion before Home quality: replaced by launcher, phone sharing and return-to-media sequence.
+- Text-button operational dashboard as usable release: rejected by owner feedback.
+- Room/Kotlin/Compose as assumed next implementation: no longer a commitment.
+- Spotify/Drive as fixed mandatory services: never confirmed; remain optional/conditional.
+
+## Authorization and next work
+
+Earlier owner messages authorized implementation and continuing without immediate TV testing. The current instruction explicitly requests documentation updates reflecting the pivot. This change produces no new APK or receiver/account connection. Next build work follows [development plan](DEVELOPMENT-PLAN.md), starting with a reviewable launcher visual/interaction prototype rather than repeating broad infrastructure work.
+
+## Open implementation decisions
+
+Exact iPhone source/gesture (AirPlay, Photos, Files, app cast or URL), actual receiver/TV support, selected Drive authorization UX, transfer storage/transport limits and exact launcher layout metrics need validation. They do not block documenting or prototyping the confirmed default-home and Apple TV direction. Any narrower substitute for a core outcome must be explicit and owner-accepted.

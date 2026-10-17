@@ -1,69 +1,68 @@
 # Nook TV
 
-Your personal space on the big screen: apps, Continue Watching, YouTube, NowShowing movies and series, and collections tailored by you from a PC browser.
+Your default TV home, inspired by Apple TV: favorite apps, YouTube and media shared from your iPhone, with an easier way back to what you were watching.
 
-## Status
+## Direction and current state
 
-**0.2.0 preview built and emulator-checked - 17 October 2026.**
-The owner asked to continue while TV testing is unavailable. This preview expands the dashboard/editor, adds Media3 playback and begins native movie/series browsing. Target-TV acceptance remains pending; this is not a completed P0 or full-product release.
+**Launcher pivot confirmed, 17 October 2026.** Ismail wants Nook to open when he presses Home, with Apple TV-style aesthetics and navigation. Priorities are YouTube, iPhone video sharing and return to shared media. Spotify is optional, browser use is rare, and Google Drive access is requested if feasible.
 
-Start with [build and installation](docs/BUILD-AND-INSTALL.md), [current implementation status](docs/BUILD-STATUS.md), and the [TV test checklist](docs/DEVICE-TEST.md).
+The delivered **0.2.0-preview is infrastructure**, with dashboard/editor/storage/player/catalog features. It is not the redesigned launcher. The owner installed it in BlueStacks and briefly explored it: boot worked, but the experience missed the intended product. No thorough BlueStacks or actual-TV acceptance is claimed.
 
-### What this APK can do
+This documentation update changes the product baseline and next delivery order. It does not add Home selection, an iPhone receiver, video upload, Drive authorization or a new APK.
 
-- Remote-friendly native Home, Apps, Settings and diagnostics.
-- Discover, pin, launch and unpin installed apps.
-- Organize apps, saved links/titles and personal collections; reorder/hide Home rows and customize colors/photos from the paired browser editor.
-- Export/import versioned dashboards, with revision checks, persistent mutation receipts and a pre-import recovery snapshot.
-- Play native MP4/HLS/DASH using Media3, with multiple measured resume entries and supported audio/subtitle controls.
-- Search movie/series metadata natively using an optional owner-entered OMDb key; save titles, choose episodes, and use owner-configured web source contracts.
-- Hand off YouTube to its installed app or an external browser.
-- Open an isolated web screen with visible exit/browser controls and a controlled test page.
+## Intended daily experience
 
-### What remains
+- Recognizable app artwork in a spacious Apple TV-inspired grid.
+- One OK opens YouTube or another favorite; editing is a secondary action.
+- From iPhone provides a clear, tested receiving route.
+- Shared & Recent returns to retained videos or tells you when the phone must reconnect.
+- Continue Watching shows genuine progress where available.
+- PC/phone browser customization supports the launcher; pairing and diagnostics live in Settings.
+- Default Home behavior includes safe setup and restoring the original launcher.
 
-Provider URL contracts/playback and actual TV operation remain unverified. No provider is enabled by default. Richer catalog artwork/episode browsing, native YouTube discovery, Brave-specific routing, filtering, widgets and launcher replacement remain future work. Durable bounded state currently uses atomic versioned JSON rather than Room; this deviation is recorded in build status. The full [PRD](docs/PRD.md) remains the delivery scope.
+Nook remains an Android app with its own branding, not tvOS. AirPlay, Cast, live mirroring and saved-file transfer are different capabilities. See [phone and Drive feasibility](docs/PHONE-AND-DRIVE.md) before making support claims.
 
-Primary target: the owner's Sony Plus TV, reported **Android 14 / 2 GB RAM**. Actual API level, ABI, WebView, codecs and launcher behavior await device testing.
+## What exists in 0.2
 
-## Product
+- Installed-app discovery, pinning and launch; text-button dashboard with saved links/collections/background customization.
+- Paired local browser editor, revision conflicts, persistent mutation receipts and dashboard import/recovery.
+- Media3 direct-stream player and independent native progress/history.
+- Initial OMDb metadata search, series selection and owner-configured web templates.
+- YouTube external-app/browser handoff.
 
-- Standalone Android APK with optional launcher support.
-- Native TV dashboard and content browsing, fully usable with a remote.
-- Personal collections, favorite apps, watchlist and saved links.
-- Genuine Resume when progress is available; Recently opened when it is not.
-- YouTube favorites and native browsing, with official-app playback proposed initially.
-- **[NowShowing-Stream](https://github.com/smile-plzz/NowShowing-Stream) is the only existing streaming baseline.**
-- Browser customization on the home network; ordinary TV use does not need the PC running.
-- Brave handoff and separate web filtering subject to compatibility tests.
-- No mandatory cloud account; online video still needs internet.
+Hosted build, 74 contract assertions, editor checks and 15 Android emulator smoke assertions passed for the recorded code. Those tests do not prove the new launcher, iPhone integration or actual-TV behavior. [Build status](docs/BUILD-STATUS.md) preserves exact evidence.
 
-The first usable release and full requested scope are distinct. Launcher/web-protection outcomes and the native YouTube experience stay tracked until implemented or specific limitations are accepted by the owner.
+## Next delivery order
 
-## Documentation map
+1. Reviewable launcher visual/interaction prototype.
+2. Default Home and direct favorite-app access.
+3. Tested iPhone workflow plus durable, honest return to media.
+4. Companion alignment, migrations, remote polish and actual-device performance.
+5. Conditional Drive integration and optional service improvements.
+6. Remaining NowShowing/YouTube/protection scope.
 
-| Read | Purpose |
+The owner's TV is reported as Sony Plus Android 14 / 2 GB; actual API/firmware/receiver services remain unverified. Ordinary app entry stays for recovery. A standalone fallback is not a completed default-home outcome.
+
+[NowShowing-Stream](https://github.com/smile-plzz/NowShowing-Stream) remains the sole selected streaming baseline, as a secondary destination. Existing Brave/filtering and richer YouTube requests remain tracked. Catalog expansion and optional widgets do not displace the core launcher/phone workflow. No provider is enabled or verified by default.
+
+## Documentation
+
+| Document | Purpose |
 |---|---|
-| [Decisions and scope](docs/DECISIONS.md) | Confirmed requirements, proposals, outstanding decisions |
-| [PRD](docs/PRD.md) | Priorities, requirement IDs, success targets and release scope |
-| [TV and browser UX](docs/UX-SPEC.md) | First run, remote navigation, collections, editing and error flows |
-| [Requirements analysis](docs/REQUIREMENTS-ANALYSIS.md) | Thread reconciliation, feasibility and tradeoffs |
-| [NowShowing source audit](docs/NOWSHOWING-AUDIT.md) | Verified code findings and limits of review |
-| [Architecture](docs/ARCHITECTURE.md) | Data, playback, local editor and lifecycle design |
-| [Development plan](docs/DEVELOPMENT-PLAN.md) | Milestones and dependencies after authorization |
-| [Acceptance scenarios](docs/ACCEPTANCE.md) | Requirement coverage and actual-device test protocol |
-| [Implementation handoff](docs/IMPLEMENTATION-HANDOFF.md) | Authorization, starting instructions and remaining work |
-| [Build status](docs/BUILD-STATUS.md) | Executed checks, limitations and milestone coverage |
-| [Build and installation](docs/BUILD-AND-INSTALL.md) | Repeatable builds, signing, install/update/rollback |
-| [Device test](docs/DEVICE-TEST.md) | Owner TV checklist and evidence template |
+| [PRD](docs/PRD.md) | Current launcher scope, priorities, requirement IDs and release gates |
+| [UX specification](docs/UX-SPEC.md) | App grid, remote actions, From iPhone and Shared & Recent |
+| [Decisions](docs/DECISIONS.md) | Owner confirmations, proposals and superseded assumptions |
+| [Requirements analysis](docs/REQUIREMENTS-ANALYSIS.md) | Why the preview missed the goal and research lessons |
+| [Phone and Drive feasibility](docs/PHONE-AND-DRIVE.md) | Protocol, replayability, OAuth and storage constraints |
+| [Architecture](docs/ARCHITECTURE.md) | Existing foundation and proposed launcher/integration boundaries |
+| [Development plan](docs/DEVELOPMENT-PLAN.md) | New L0-L5 sequence and gates |
+| [Acceptance](docs/ACCEPTANCE.md) | Observable launcher, phone and integration scenarios |
+| [Implementation handoff](docs/IMPLEMENTATION-HANDOFF.md) | Next-build starting instructions |
+| [Build status](docs/BUILD-STATUS.md) | Delivered code versus future design and executed evidence |
+| [Build/install](docs/BUILD-AND-INSTALL.md) | Existing APK, toolchain, upgrade and recovery instructions |
+| [Device checklist](docs/DEVICE-TEST.md) | Actual TV/iPhone observations |
+| [NowShowing audit](docs/NOWSHOWING-AUDIT.md) | Historical upstream findings, not current launcher scope |
+| [M1 archive](docs/M1-STATUS.md) | Preserved historical compatibility evidence |
+| [Third-party notices](THIRD-PARTY-NOTICES.md) | Actual dependencies and reuse boundaries |
 
-## Key feasibility facts
-
-NowShowing's inspected Continue Watching implementation records opened titles, not playback timestamps. Nook needs separate series selection, launch history and measured playback state.
-
-A website embed is not automatically a native media stream. Brave Shields is not inherited by Nook's WebView. YouTube account-wide history is not promised. Provider and device capabilities must be demonstrated rather than inferred from labels.
-
-## Documentation verification
-
-The initial documentation baseline was reviewed before implementation. Current executable checks and unrun tests are recorded in [build status](docs/BUILD-STATUS.md). A successful APK build is not evidence of provider playback or real-TV compatibility.
-
+Core Home needs no mandatory cloud account or always-on PC. Optional services need their own access/network. Personal media, account credentials and private history are not silently imported or included in dashboard backups.

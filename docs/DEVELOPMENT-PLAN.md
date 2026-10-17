@@ -1,139 +1,67 @@
-# Development plan and verification gates
+# Launcher development plan
 
-2026-10-17 | **Owner authorized proceeding with later phases while TV testing is unavailable.** M2 dashboard/editor and M3 playback implementations have advanced; M4 native catalog and source contracts have started. Physical-device gates remain pending. See [build status](BUILD-STATUS.md) for executed checks rather than assuming an entire milestone has passed.
+Baseline 2.0 | 17 October 2026 | Supersedes old M1-M6 delivery order
 
-## Delivery policy
+## Starting position
 
-Build the smallest complete household workflow first, then expand integrations. Standalone operation is the primary path. Actual-TV observations decide compatibility claims. No calendar deadline has been agreed.
+M1 compatibility and 0.2 dashboard/editor/player/catalog infrastructure exist. The owner briefly used 0.2 in BlueStacks, confirmed boot but rejected the overall experience as the intended launcher. Do not restart storage/pairing work or extend catalogs before correcting the home experience.
 
-## Milestone 0 — Documentation baseline (this change)
+The current task is documentation only. Future build work follows these stages; no deadline is assumed. Physical TV tests remain pending, but design and independent checks can proceed.
 
-Deliverables:
-- README, PRD, requirements analysis, architecture, this plan and selected-source audit.
-- Explicit NowShowing-Stream baseline.
-- Capability-aware Continue Watching and source requirements.
+## L0 - Reviewable launcher prototype
 
-Gate: document links resolve, priorities and measurable acceptance criteria present, unsupported integration promises removed.
+Deliver Apple TV-inspired Home with app grid/artwork, YouTube priority, From iPhone entry, optional Spotify/Drive/browser, Shared & Recent and Settings. Include empty/offline/missing-app/focus/menu states. Remove samples/pairing/configuration tools from normal Home.
 
-## Milestone 1 — Device compatibility APK
+Gate: owner can assess the actual first screen and remote task flow before integration expansion. Do not treat a technically functioning button grid as design acceptance. Exact layout is proposed until reviewed.
 
-Tasks:
-1. Inspect repository instructions, available Android SDK/JDK/build tooling and current official library documentation.
-2. Inspect upstream license before copying source/assets.
-3. Create Gradle wrapper, stable app ID, normal TV entry and build CI.
-4. Diagnostic screen: actual API level, ABI, memory class, WebView version, codec availability and app handlers; redact identifiers from exports.
-5. D-pad focus demo with rows, detail screen and Back restoration.
-6. Sample native MP4, HLS and DASH from known permitted test sources.
-7. Isolated web screen using a controlled test page, then user-selected provider trial.
-8. YouTube URL handoff.
-9. Foreground LAN editor proof: pair with TV approval, authenticated read/write, revoke.
-10. Optional home-intent discovery only; do not replace stock launcher during compatibility tests.
+## L1 - Default Home and direct app access
 
-Gate: APK installs on the owner's TV; diagnostics and remote checklist captured; sample playback and pairing exercised. Record failures and fallback decisions.
+Implement system-supported HOME entry/setup/recovery, one-OK app launch, favorites management, All Apps, focus restoration and root Back behavior. Keep normal app entry and original-launcher recovery. Migrate 0.2 favorites/layout without losing data.
 
-## Milestone 2 — Personal dashboard and editor
+Gate: Home from another app opens Nook; reboot/wake/task reuse behave predictably; original default restored successfully on target TV. BlueStacks validates visuals/navigation only. Firmware blockage is recorded as blocked core functionality, not a completed launcher.
 
-Tasks:
-- Durable layout, favorite apps, links, background, editable personal collections and empty states.
-- Remote-only first run, pin first app, browser Save for later without interrupting playback.
-- Browser editing, preview, Save acknowledgement and revision conflicts.
-- Typed config validation and versioned import/export.
-- History privacy controls, paired-device management and cache quotas.
-- Return-to-item focus/scroll restoration.
+## L2 - iPhone workflow and Shared & Recent
 
-Gate: PC customizes a layout; TV reflects it; restart/offline preserves it; browser revocation works; no mouse needed for core TV flows.
+Assess actual TV AirPlay/Cast/receiver support and owner sending gesture. Prototype a paired Safari retained-file path and stable-link submission without claiming AirPlay. Add a truthful From iPhone route selector, transfer progress/cancel/storage errors and replayability-aware media records.
 
-## Milestone 3 — Native playback and viewing state
+Native retained files play/resume after phone disconnect and TV restart. External/live sessions show reconnect or open-app actions, with no invented progress. Define thumbnail/privacy/data deletion and backup boundaries. New file upload is separate from existing JSON editor.
 
-Tasks:
-- Media3 controls, audio/subtitles when present, media buttons.
-- Canonical movie/episode identities and playback state machine.
-- Native resume, watched/remove/start-over actions.
-- Separate Recently opened for unobservable/external playback.
-- Error/retry behavior and network interruption recovery.
+Gate: one real iPhone video workflow tested end-to-end, with documented receiver dependency/retention and replay limitations. Test interruption, low space, unsupported codec, app restart and history controls. A desktop upload test is insufficient.
 
-Gate: progress survives normal exit and process death; resume within PRD tolerance; unknown progress never shown as a percentage; live/unknown-duration cases behave correctly.
+## L3 - Cohesive launcher polish
 
-## Milestone 4 — NowShowing-Stream integration
+Bring PC companion preview/editing into the new grid model; phone Safari layout works. Verify contrast, long names, safe margins, reduced motion, missing artwork, remote context alternatives and responsive startup. Keep diagnostics in Settings. Test schema migrations, backup/restore and key continuity.
 
-Tasks:
-- Reimplement/port verified metadata and source-building behavior subject to license.
-- Native search, detail, watchlist, season/episode selection.
-- Explicit source capability and ID-format registry.
-- Validate every enabled provider's movie/series URL contracts.
-- Embed screen with remote-accessible source/retry/browser controls.
-- Documented player-event adapters only where available.
-- User-configured OMDb key, caching, request deduplication and quota states.
-- Optional versioned migration from upstream lists; imports classified as recent opens unless real progress exists.
+Gate: all launcher P0 scenarios pass on actual TV/iPhone; owner confirms the daily experience fits. Performance and two-hour testing use representative media/artwork. Only then label first usable launcher ready.
 
-Gate: chosen providers tested individually on actual TV; every row has accurate state; no generic iframe-success claim. Disabled/unverified providers clearly identified.
+## L4 - Conditional Drive and optional services
 
-## Milestone 5 — YouTube and web protection
+Prove Drive OAuth client/scopes and existing-file selection before folder-browser implementation. Build selected-media access/playback, stable references, range seeking, refresh/reconnect and disconnect privacy. Do not promise full Drive through TV device-code scopes or pass tokens through HTTP companion.
 
-Tasks:
-- Polished video/channel/playlist favorites and app/browser handoff.
-- Evaluate official API browsing, credentials/quota and embedded player separately.
-- Brave detection/handoff and input compatibility.
-- Separate filter-engine proof, license/memory review and test rules.
-- Per-site exceptions, popup/redirect controls, last-good ruleset.
-- Provider compatibility matrix including filtering off/on.
+Spotify is optional app access; richer account/music features require a separate request. Evaluate Android TV channels/Watch Next only against accessible platform data and participating apps, without universal history claims.
 
-Gate: no claim of account-wide YouTube history sync, universal ad blocking or inherited Brave Shields. Filtering can be disabled without resetting user data.
+Gate: chosen Drive workflow demonstrated with a real authorized file and truthful limits; scope decision recorded if it cannot meet the intended experience. Drive is requested conditional scope, not silently dropped.
 
-## Milestone 6 — Personalization, launcher and release
+## L5 - Remaining entertainment scope
 
-Tasks:
-- NowShowing-derived mood discovery and suggestions built on the existing editable P0 collections.
-- Optional weather/photos, bounded refresh and offline states.
-- Explicit opt-in home-launcher test with documented rollback.
-- Accessibility and 2 GB performance profiling.
-- Stable signed APK; update/data migration; install/update/rollback docs.
-- Release notes, screenshots, source capability matrix and known issues.
+Retain NowShowing-Stream catalog/episode/source work, richer YouTube browsing, Brave routing and separately evaluated filtering. Each provider/app route must pass remote/playback checks before support claims. No iframe-success or inherited-Shields assumptions. Optional mood/weather/widgets follow core quality; PC media/profile/cloud-sync work stays separate future scope.
 
-Gate: owner acceptance on actual TV, repeatable build, signing continuity, no critical unresolved crash/navigation/data-loss issue.
+Gate: record each requested integration's supported behavior or owner-accepted limitation. Full product is not closed by L3 alone.
 
-## Test strategy
+## Verification by layer
 
-| Area | Meaningful tests |
+| Layer | Evidence |
 |---|---|
-| Source URLs | IMDb/TMDB separation, missing IDs, encoding, season/episode bounds, provider-specific formats |
-| Progress | Pause/seek/end, duration unknown, live stream, duplicate events, episode/source switch, process death |
-| Metadata | Quota, timeout, bad JSON, stale cache, deduplication, missing posters, pagination |
-| Pairing | Expiry, brute-force throttling, TV denial, revocation, origin/host rejection, unauthenticated mutation |
-| Editor | Invalid config, oversized upload, stale revision, import rollback, concurrent saves |
-| Web boundary | Unexpected schemes/popups, invalid event origin/session, no privileged bridge, Back escape |
-| Lifecycle | Leaving/reopening app, external player return, network loss, reboot, low-memory recovery |
-| UI | D-pad reachability, focus restoration, long labels, 1080p safe margins, disabled/empty/error states |
-| Performance | 20 cold starts, representative artwork-heavy home, 2-hour playback, repeated player open/close |
-| Release | Upgrade old data, signed APK identity, export/import and rollback instructions |
+| Documentation | Valid links, requirement/scenario coverage, no stale optional-launcher claims outside history |
+| Models/storage | Migration, atomic recovery, stable file/source identity, history-vs-file deletion, schema limits |
+| App/remote UI | Grid focus, one-click launch, context alternative, Home/Back task behavior, return state |
+| Transfer | Auth, quotas, streaming memory, cancellation, cleanup, permission/MIME/path validation |
+| Phone integration | Actual iPhone sending, receiver capability, disconnect/replay and codec behavior |
+| Drive | Granted-file access, refresh, range seek, revocation, changed/deleted media and redacted logs |
+| Device/release | Home default/reboot/rollback, 2 GB performance, two-hour playback, same-key upgrade |
 
-Do not add tests that only repeat implementation details. Unit tests prove contracts; instrumentation and device checks prove actual focus/playback behavior.
+Preserve existing 74 contract assertions, editor state checks and 15 Android smoke assertions as regression coverage; they do not validate the new launcher UX or receiving integrations. Add meaningful tests for changed contracts when implementing, not artificial tests during this docs-only task.
 
-## Release evidence template
+## Dependencies and completion
 
-- APK version, commit and build environment:
-- TV actual API level/ABI/WebView:
-- Remote model/buttons exercised:
-- Native sample formats passed/failed:
-- Selected provider movie and episode results:
-- Resume and restart results:
-- Pair/edit/revoke results:
-- Filter/Brave results (if included):
-- Startup samples and playback/memory observations:
-- Launcher result and rollback (if tested):
-- Known limitations and owner acceptance:
-
-Until populated, these are pending checks, not passed tests.
-
-## Release boundaries and dependencies
-
-M1 proves compatibility; it is not a production release. M2-M4 plus the P0 YouTube handoff from M1/M5 form the first usable release. M5 web protection and M6 launcher resolve broader requested scope. Do not label the project complete simply because a P0 APK is available.
-
-Implementation sequence may bring YouTube favorites forward into M2. P0 YouTube does not wait for optional API browsing or embedded-player research. P0 collections likewise do not wait for the mood engine.
-
-No third-party source is marked supported before successful actual-TV playback and D-pad checks. Device-test results may narrow supported sources, but any change to the user's core requested experience must be recorded and discussed rather than hidden behind a fallback.
-
-## Handoff and acceptance
-
-Read [implementation handoff](IMPLEMENTATION-HANDOFF.md) before execution. [Acceptance scenarios](ACCEPTANCE.md) map requirement IDs to observable checks. The docs-only review validates these documents; it does not execute any milestone above or populate device evidence.
-
+Read [handoff](IMPLEMENTATION-HANDOFF.md), [PRD](PRD.md), [UX](UX-SPEC.md), [architecture](ARCHITECTURE.md) and [phone/Drive feasibility](PHONE-AND-DRIVE.md). Track actual results in [build status](BUILD-STATUS.md), never infer milestone acceptance from green CI. Record version/commit/device/route/expected/actual/evidence for each gate.

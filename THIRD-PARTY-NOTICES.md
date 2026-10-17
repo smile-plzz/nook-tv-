@@ -18,3 +18,9 @@ The app links, without bundling, to Big Buck Bunny on Google's public sample buc
 ## Upstream behavioral reference
 
 NowShowing-Stream at commit `5fc8b1870a028b2ee84bf324a11f6529e85f22a1`: https://github.com/smile-plzz/NowShowing-Stream. No root LICENSE was present in the inspected tree. Until reuse rights are established, implement behavior independently and do not copy upstream source/assets. This restriction does not silently remove the planned integration.
+
+## Launcher pivot references and future integrations
+
+The 17 October 2026 documentation pivot introduces no new runtime dependency or copied code/assets. Apple TV is a visual/interaction reference, not an Apple product integration; use Nook branding and licensed artwork, not copied Apple assets. Projectivy, FLauncher and Dispatch are research references, not incorporated dependencies.
+
+AirPlay/Cast receiver code, transfer libraries, Google Drive/Google sign-in SDKs, Spotify clients, icon packs and filtering engines are not added by the documentation change. Review actual dependency licenses, protocol/service requirements and distribution terms before selecting or bundling any integration. No receiver certification, Apple/Google affiliation or universal interoperability is claimed.

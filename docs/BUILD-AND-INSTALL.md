@@ -1,6 +1,12 @@
 # Build and install | 0.2.0-preview
 
-Compatibility app ID remains `com.ismail.nooktv.compat`, version code 2. This app remains a standalone preview; it does not replace the stock launcher.
+## Scope of this APK
+
+The 17 October launcher pivot is documented in [PRD](PRD.md). These commands build the existing 0.2 foundation. It does not yet provide default-Home setup, the Apple TV-style launcher grid, iPhone receiving/file transfer or Google Drive. Do not look for a Home setup control or receiver in this APK. Documentation changes do not require reinstalling it.
+
+The owner reports brief successful boot/exploration in BlueStacks; use that for preliminary visual/function checks only. Target-TV Home/wake/remote/receiver behavior needs actual hardware and real iPhone tests.
+
+Compatibility app ID remains `com.ismail.nooktv.compat`, version code 2. The current APK remains a standalone preview. The next product requires default-home behavior; that implementation is still pending.
 
 ## Build
 
@@ -65,3 +71,9 @@ For a site you can use, TV Settings accepts its documented HTTPS movie/series UR
 ## Rollback
 
 Leave/uninstall the preview and return to the unchanged original launcher. A lower-version-code APK may require uninstalling. Export your dashboard first if preserving it matters. Full target-TV acceptance remains pending; CI and emulator results are recorded separately from physical-device evidence.
+
+## Planned launcher setup and recovery
+
+Future builds must offer a system-supported Home/default choice, retain normal app entry and explain restoring the original default. Exact settings vary by TV; do not execute speculative package-disabling/ADB commands or assume BlueStacks settings match the TV. Record Home from other apps, wake/reboot and successful rollback before launcher acceptance.
+
+The future From iPhone flow must state whether it uses AirPlay/Cast, an external receiver, saved URL or retained-file transfer. Current pairing/link Save is not a video uploader or AirPlay receiver. Drive sign-in/media access is likewise not present. See [phone and Drive feasibility](PHONE-AND-DRIVE.md).

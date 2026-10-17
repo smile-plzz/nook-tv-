@@ -1,164 +1,95 @@
-# Proposed architecture
+# Launcher architecture and implementation boundaries
 
-2026-10-17 | Implementation authorized. Preview 0.2 uses Java/native Views, Media3 ExoPlayer, atomic configuration/viewing envelopes and a bounded foreground HTTP server. Dashboard schema v2 and persisted mutation receipts provide migration/concurrency protection. Room remains a documented deviation from the proposed architecture below; no target-TV performance measurement has been made. See [build status](BUILD-STATUS.md).
+Baseline 2.0 | 17 October 2026 | Current foundation plus proposed launcher design
 
-## Components
+## Current implementation versus target
 
-| Component | Responsibility |
+Delivered 0.2 uses one Java/native-Views Android app, Media3 1.11.1, AtomicFile JSON dashboard/viewing stores, native OMDb client, and a foreground paired HTTP editor. It has no default-Home flow, iPhone receiver/file transfer or Drive integration. The new launcher is a design target, not a description of the existing APK.
+
+Keep working persistence, migrations, validation, pairing and playback. Do not rewrite in Kotlin/Compose or migrate to Room solely for appearance. The earlier Room/Compose proposal is superseded by retaining the current stack unless evidence justifies a separate change. Refactor MainActivity into clear responsibilities as needed for the launcher; module proliferation is not a goal.
+
+## Responsibilities
+
+| Component | Target responsibility |
 |---|---|
-| Android application | Native TV shell, focus/navigation, activities and lifecycle |
-| Dashboard feature | Rows, collections, tiles, personal layout |
-| Catalog feature | NowShowing-style metadata, search, detail, seasons/episodes, mood discovery |
-| Player feature | Media3 playback, tracks, progress, media session |
-| Web-player feature | One isolated WebView for a selected source; no editor privileges |
-| Source adapters | URL construction, ID requirements, capability declarations, event validation |
-| Local data | Room database, schema migrations, DataStore preferences |
-| Editor service | Foreground LAN server, pairing, configuration reads/writes, asset upload |
-| Browser editor | Small TypeScript UI; no UI-framework requirement, static assets bundled in APK |
-| External-app router | YouTube/browser/Brave launch, unsupported-handler states |
-| Launcher alias | Opt-in HOME entry, independently testable from normal app launch |
+| Launcher shell | Default-home entry, app grid, artwork, focus/navigation, header/dock and root Back behavior |
+| App inventory/router | TV/sideloaded launchable activities, artwork, installed state, one-press launch, optional YouTube/Spotify/browser |
+| Home model | Favorites/grid order, optional rows, collections, availability and stable focus IDs |
+| Shared media repository | Received file/source identity, origin, replay capability, availability and storage ownership |
+| Receive coordinator | Supported phone routes, transfer/receiver UI, lifecycle and cancellation |
+| Player | One Media3 player, tracks, progress observations and resume |
+| Viewing store | Separate measured playback, opaque opens and expired phone sessions |
+| Drive adapter, conditional | Scoped authorization, file discovery/selection, fresh resolution, revocation and seek behavior |
+| Editor | Foreground pairing, revision-safe layout mutations, portable dashboard backup |
+| Settings/diagnostics | Home setup/recovery, sources/accounts, data controls and compatibility tools |
+| Catalog/web adapters | Optional NowShowing/YouTube discovery and source-specific web routes; lower priority |
 
-Kotlin and Compose for TV are preferred candidates. Profile early on the actual 2 GB TV; use native Views where a measured issue warrants it. Do not choose library versions until build tooling and current official documentation are checked.
+## Android Home contract
 
-The browser editor does not require React; a small vanilla TypeScript implementation matches the selected upstream's lightweight direction. Reuse code only after license review.
+Plan a HOME-capable entry/alias alongside ordinary app/TV app-list launch. Inspect supported role/default-home settings and request via system UI where available. See [RoleManager](https://developer.android.com/reference/android/app/role/RoleManager#ROLE_HOME). API support and TV vendor behavior must be checked; never assume ROLE_HOME is universally requestable on TVs or BlueStacks.
 
-## Suggested repository structure
+The owner has chosen Nook as default Home. Do not auto-disable system packages, require root/device-owner privileges, or introduce accessibility interception merely to force selection. Record previous default and provide restore/open-settings instructions. Standalone entry remains recovery, not satisfaction of the core launcher requirement.
 
-```
-android/
-  app/
-  core/model/
-  core/data/
-  core/network/
-  feature/dashboard/
-  feature/catalog/
-  feature/player/
-  feature/webplayer/
-  feature/settings/
-  feature/editorservice/
-editor/
-docs/
-```
+Treat root Home as persistent launcher surface: Back does not finish into a blank screen. Home reentry starts at predictable first-favorite focus; Back return from external activities restores originating focus/scroll. Test cold/reused tasks, wake/reboot, process death and system-settings return. Launcher status does not bypass Android service restrictions.
 
-Start with packages inside one Android app module if Gradle-module overhead adds no benefit. Extract modules when boundaries justify it.
+## Presentation and performance
 
-## Data model
+Use recyclable/lazy grid/rows, asynchronous resized app artwork/thumbnails, explicit fallback icons and a lightweight focus treatment. Load installed favorites before network content. Avoid repeated full Home rebuilds on every focus event or receiver result. Preserve stable IDs during editor updates.
 
-- DashboardConfig: revision, schemaVersion, section order/visibility, theme, background asset.
-- Section: stable ID, type, label, position, settings.
-- Collection: stable ID, owner-edited name, ordered typed item references, optional interest tags; no inferred private data.
-- SeriesSelection: parent media ID, selected season/episode, source preference and updatedAt; independent of watched/progress state.
-- Tile: stable ID, kind, label, target, sourceId, image reference.
-- MediaIdentity: internal ID, provider namespace/ID, IMDb ID and actual optional TMDB ID.
-- EpisodeIdentity: parent media ID, season, episode, provider-specific episode ID when available.
-- PlaybackState: identity, sourceId, route, positionMs?, durationMs?, status, progressCapability, observationOrigin, updatedAt.
-- LaunchRecord: target, source, openedAt, selected season/episode, no implied watch progress.
-- WatchlistEntry: canonical identity or validated link, savedAt.
-- SourceConfig: stable ID, enabled, required ID format, playback route, allowed origins, capability version, lastSelectedAt, lastConfirmedPlayingAt?.
-- PairedDevice: ID, display name, credential verifier, issuedAt, lastSeenAt, revokedAt.
-- CachedMetadata/CachedAsset: cache key, timestamps, bounded size, stale state.
+No background autoplay or full-screen live blur. Bound image disk/memory caches and Media3 buffers; release inactive WebViews/players. One active playback context. Profile actual 2 GB device before selecting final layout and cache/buffer limits.
 
-Canonical identities prevent source switching from duplicating a movie. Episode identity prevents one episode overwriting another. Progress for different edits/cuts must not be combined solely by title.
+## Durable data and migration
 
-## Playback contract
+Current dashboard schema v2 has title/accent/background, ordered visible sections, apps, links and collections. Current limits: 200 links, 80 apps, 20 collections, 400 references. Viewing state is separate, bounded to 100 entries. Dashboard mutation receipts are bounded to 128 fingerprints.
 
-Each adapter declares:
-- route: nativeDirect | webEmbed | externalApp | externalBrowser
-- accepts: imdb | tmdb | youtube | directUrl | siteUrl
-- progress: timestamp | episodeOnly | none
-- canSeekToResume: true/false
-- permitted event origins and event schema, if any
-- live/DVR support and authentication requirements
+Design new launcher fields and media records through explicit versioned migration; do not call a new schema implemented yet. Preserve existing favorites, backgrounds, links, collection references and per-item progress. Map old sections to optional new rows; test disabled sections and empty states. Unknown schema/corrupt files stay preserved; do not replace user data with defaults.
 
-The adapter returns a typed playback target; an embed URL is never passed to Media3 as if it were a direct stream.
+Proposed additions:
+- Launcher preferences: grid order/style, first-focus policy and optional destination visibility.
+- Source identity: opaque stable ID, origin (retained phone file, saved URL, app, Drive, session), availability and replay capability.
+- Media record: title, safe local storage ID or canonical remote reference, MIME/size, fingerprint/version, thumbnail and timestamps.
+- Playback record: position/duration only when observed, observation provenance and compatible content identity.
+- Session record: connection lifetime, external handler and reconnect action; no fictional replay target.
+- Drive account reference separate from private credentials.
 
-Events: Requested, Loading, PlayingConfirmed, ProgressObserved, Paused, Ended, Failed, TimedOut, Handoff.
-An external handoff or iframe load never emits PlayingConfirmed without evidence.
-Timeout means unknown/inconclusive, not proven outage.
+Retained media is durable data, not an LRU cache. Separate history removal, collection removal, thumbnail cache clear and media deletion. No signed URL/token is canonical identity. Different versions/cuts/files must not share progress merely because titles match.
 
-For documented web progress messages, validate exact origin, expected session, media ID, numeric bounds and message schema. Do not trust arbitrary postMessage payloads. No privileged addJavascriptInterface bridge in third-party pages. Do not inject cross-origin scraping as a substitute for an event contract.
+## Phone receiving and storage
 
-## Progress lifecycle
+See [feasibility](PHONE-AND-DRIVE.md) for protocol distinctions. Prefer a first self-contained retained-file prototype while assessing actual AirPlay/Cast/receiver options; this engineering proposal must not silently redefine system AirPlay.
 
-Native player persists approximately every 5 seconds and on pause/seek/stop. Room transactions protect committed state. A force-stop can lose time since the last save; the app does not claim impossible shutdown guarantees.
+Current editor has no file-transfer endpoint. New transfers must use authenticated, bounded streaming to app-private temporary files, atomic finalization, free-space checks, content validation, cancellation and cleanup. Keep requests separate from 1 MiB config JSON. Never ingest full videos into RAM, accept arbitrary paths or auto-play on an unauthenticated request.
 
-Finite VOD uses a configurable watched threshold, default 95%. Unknown-duration/live streams do not receive completion percentages. Native resume seeks to the recorded point; source changes retain the episode but apply timestamps only when supported and compatible.
+Receive UI is foreground by default; if transfer must survive an external receiver/app handoff, design a compliant service/notification and security lifecycle explicitly. Default Home does not mean permanently foreground. Mirroring does not persist a recording. External receivers expose progress only through verified documented contracts.
 
-## Browser editor and pairing
+## Drive source adapter
 
-Initial availability: while Nook is in the foreground, including Nook-owned player screens. PC on same LAN. Server address shown on TV; no port forwarding. Stop accepting editor requests when Nook leaves the foreground; resume with an updated address on return. The browser preserves unsaved draft text locally, shows Disconnected, and requires a fresh revision before retrying a save. It must not silently replay a mutation after reconnect.
+Not implemented. Resolve stable file IDs/resource keys with authorized HTTPS requests. Confirm selected-file access and OAuth scope/client flow before building a folder browser. Limited-input device flow is not whole-account Drive authorization.
 
-1. User opens Pair on TV.
-2. TV creates short-lived, rate-limited pairing code.
-3. Browser submits code and device name; TV displays request for explicit approval.
-4. Approval issues a high-entropy revocable session credential.
-5. Subsequent mutations require authenticated session, CSRF protection and matching origin/host.
-6. Save includes expectedRevision; server atomically validates/applies and returns the new revision.
-7. UI observes config change immediately; stale saves receive conflict responses.
+Keep tokens in a private credential store with Keystore-backed protection, separate from dashboard/history. Refresh tokens without logging them; support disconnect/revoke. Re-resolve authorized range-capable media requests for playback/seek. Validate origin on redirects; never forward Google authorization to arbitrary URLs or players. No credential proxy through LAN HTTP. Bound discovery/cache work and handle permission loss, changed files and quota. Official references and gating decisions are in [PHONE-AND-DRIVE](PHONE-AND-DRIVE.md).
 
-Bind only intended local interfaces; validate Host and Origin against the displayed address to reduce DNS rebinding and cross-site requests. Reject arbitrary origins and wildcard CORS. Keep read operations authenticated except minimal pairing/status endpoints. Rate-limit pairing and expire pending requests.
+## Editor and backup contract
 
-LAN HTTP alone cannot provide confidentiality from an on-path attacker. Initial editor must not collect third-party passwords, cookies or provider sessions. Present the actual transport state; evaluate TLS/pinning-assisted setup before broader credential-bearing control. Session tokens are excluded from exports/logs and can be revoked from TV.
+TV remains authoritative. Same-LAN code plus explicit TV approval, authenticated reads/writes, Host/Origin validation, CSRF defense, rate limits and revocable in-memory sessions remain. Mutations include expected revision and a unique fingerprint; the atomic envelope persists configuration and bounded receipts together. Retry verifies fingerprint and returns current state; no unlimited journal guarantee.
 
-Background images: bounded upload size, decode/type validation, resized derivative, filename sanitization; never arbitrary filesystem paths or remote code.
+Stop listener/clients on leaving foreground. Browser preserves drafts, displays disconnected and re-reads revision before an explicit retry. No automatic mutation replay. A default launcher returning often does not justify a hidden background server.
 
-## Web-player isolation
+Current dashboard backup is schema-v1/v2 JSON only: layout/links/apps/collections/background. It excludes viewing history, source templates, episode selections, credentials and media bytes. Import previews/replaces after confirmation and keeps a pre-import recovery snapshot. Any new export schema must explicitly state included references, absent local media and account reconnection; it must not falsely imply copying phone video payloads.
 
-One active WebView; release it on close/memory pressure. Separate from editor content and internal assets. Disable file/content access unless a documented trusted flow requires it. Block unexpected schemes, automatic external intents, downloads and popup windows. User-approved navigation and provider-required redirects are handled by explicit policies, not silently allowed wholesale.
+HTTP is not encrypted; pairing does not provide on-path confidentiality. Do not provision provider or Google secrets through it. Evaluate protected transport before a credential-bearing extension. Background images remain bounded JPEG derivatives decoded off main thread.
 
-Website login happens in the relevant player/browser, not the LAN editor. Per-site data clearing must not erase Room-backed lists.
+## Playback, history and external sources
 
-## Filtering
+Native player saves about every 5 seconds and on pause/seek/stop where allowed. Force-stop can lose uncommitted progress. Default finite-VOD watched threshold is 95%; unknown/live duration has no percentage.
 
-Brave handoff uses installed eligible activities and user choice; no guarantee of Android TV support.
-Embedded filtering uses a separately evaluated engine/list format and updater. Review licenses, rule provenance, memory cost and update integrity. Keep a last-known-good ruleset, per-site exceptions and a reset action.
+Route contract: nativeDirect, retainedLocal, Drive-authorized, webEmbed, externalApp/browser or phoneSession. Declare canReplay, canObservePosition, canSeek and whether a sender/account/receiver is required. Handoff or iframe load is not PlayingConfirmed. TimedOut is inconclusive. Validate any web event's exact origin/session/media identity; no privileged bridge or cross-origin scraping.
 
-Do not claim Android WebView loads desktop extensions or automatically uses Brave Shields. Some browser/service-worker/media requests and server-inserted ads may not be covered. Record measured coverage and failures. YouTube official player is a separate integration.
+NowShowing remains selected upstream behavior reference. No automatic provider enablement or copied code/assets while license is unresolved. YouTube/Spotify playback remains with actual eligible handlers initially; richer integration requires its own tested contract.
 
-## Performance and resilience
+## Isolation, privacy and distribution
 
-- No automatic video previews.
-- Lazy rows and resized artwork; avoid loading every poster.
-- One media engine or website player at a time.
-- Conservative buffers sized through device tests.
-- Bounded LRU artwork cache; separate durable state from disposable cache.
-- Request deduplication, timeouts, backoff and quota-aware metadata cache.
-- Stale cached content remains visible with clear offline state.
-- Redacted rolling logs; no default remote telemetry.
-- Database migration test and backup before schema-changing upgrade.
-- Full-screen reboot/power loss tests on actual hardware.
+One isolated WebView with no editor privileges, unexpected scheme/popup/download blocking and a remote-accessible exit. Brave Shields is not inherited; filtering remains a later independent engine decision.
 
-## Distribution
+No silent account/history/Photos import. Shared media visibility is owner-controlled; exports omit private credentials. Logs redact addresses/tokens/session URLs and device identifiers. No default telemetry or new cloud service.
 
-Versioned sideload APK first. Establish stable application ID and signing identity before regular user installation. Keep signing secrets outside source control and preserve them across releases. GitHub CI should build and test from pinned toolchain/dependencies; a release is not considered device-tested just because CI passes.
-
-## Schema and configuration contract
-
-The TV is authoritative. Config writes use expectedRevision, a unique mutation ID and a validated complete transaction. Repeated mutation IDs return the prior result rather than duplicate an item. The server increments revision only after persistence; a response lost in transit is resolved by reading revision/mutation status. Unknown schema versions are rejected without changing existing state.
-
-Export format includes schemaVersion, export timestamp, configuration, collections, watchlist, recent opens and optionally viewing history. Portable background assets are included within a bounded package or explicitly reported missing. Exclude pairing credentials, API keys, browser cookies and provider tokens. Import previews counts, validates limits/URLs, stages assets, and replaces supported data atomically after explicit user choice; keep a pre-import recovery snapshot. Initial import mode is Replace, not an undefined merge algorithm.
-
-App package targets remain favorites even when absent, marked Not installed. Background/cache deletion does not remove collection or history records. Empty/unavailable sources remain editable. Expiring media URLs are not stable identity: resolve fresh playback targets when the source offers that capability.
-
-## Local server contract (design only)
-
-Separate pairing, device-session, config, library-list, background-asset, and backup operations. Require authentication for all user-state reads and writes. Validate methods, content types, schema sizes, target schemes and allowed operations. No remote shell, arbitrary filesystem endpoint, executable script upload, or arbitrary proxy is part of the editor.
-
-Suggested initial limits, to be tuned by device evidence: 6-digit pairing code valid 2 minutes; at most 5 failures per pending pairing session before requiring a new TV-created code; 1 MiB configuration/import JSON; 10 MiB background upload followed by dimension/decode checks; 250 tiles/collection references per dashboard. These are engineering defaults, not owner-requested product limits. Document any adjustment.
-
-A local-network address may change. Display the current address, offer an optional QR code, and show reconnection help without assuming multicast discovery. An IP address, MAC address or matching Wi-Fi name is not authentication.
-
-## Credential boundary
-
-Metadata API-key entry is performed on the TV settings screen for the initial HTTP editor design. Do not expose keys in editor URLs, exports or logs. OMDb requires its key in the HTTPS API query; CatalogClient confines it to that API endpoint and disables redirects. A later secure provisioning route requires a documented transport decision; session authentication alone does not encrypt LAN traffic. Optional YouTube credentials are evaluated separately; no shared hard-coded secret is shipped.
-
-## Metadata and recommendation semantics
-
-OMDb metadata is not a streaming availability API. Seeded rows must be labeled as curated picks, not real-time Trending. A popularity/trending claim requires an actual dated source. Mood suggestions reuse inspected upstream behavior only after review; explain matches by genres/interests. Native catalog search and remote layout are independent from whether a player exposes progress.
-
-## Android lifecycle and launcher contract
-
-Verify actual API/ABI, required features and package visibility during the authorized spike; do not equate Android version branding with certified Android TV capability. Keep normal app launch available when a HOME alias is enabled. Request only permissions justified by implemented features. Do not depend on boot autostart, unrestricted background execution, root, accessibility-service interception or device-owner privileges.
-
-Persist user state before handing off externally. Restore the dashboard position on return; do not overwrite progress with zero when the external app provides no result. Keep title/episode selection if a provider fails or an embedded page reloads.
-
+Keep app ID com.ismail.nooktv.compat and signing continuity unless a separately justified migration is approved. Build remains pinned Gradle 8.13 / AGP 8.13.2 / SDK 36, target 35, min 26. Same-key upgrades must preserve user state. CI is evidence of build/contracts; real TV and iPhone decide integration acceptance.

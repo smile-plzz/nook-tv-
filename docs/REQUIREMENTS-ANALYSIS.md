@@ -1,118 +1,69 @@
-# Requirements analysis
+# Requirements analysis and launcher pivot
 
-2026-10-17 | Finalized documentation baseline v1.0. User discussion and targeted NowShowing-Stream source inspection; no device tests or implementation.
+Baseline 2.0 | 17 October 2026 | Reconciles original intent, 0.2 implementation and BlueStacks feedback
 
-## Confirmed versus proposed
+## What changed
 
-| Item | Status |
-|---|---|
-| Personal TV dashboard, standalone APK with launcher support | Owner decision |
-| 2 GB RAM, Android 14 | Owner-reported, device capabilities pending |
-| PC browser customization | Owner requirement |
-| Continue Watching, YouTube, online video and Brave-style blocking | Owner requirements with capability-specific limits |
-| NowShowing-Stream as streaming baseline | Explicit owner correction |
-| Kotlin, Compose for TV, Room, Media3 | Proposed architecture |
-| Local-network editor, no required cloud | Proposed default consistent with household use |
-| Native catalog with web embeds when needed | Proposed interpretation of native support |
-| CineVault/CineGemini-Stream/V2 reuse | Excluded by selected baseline |
+The owner briefly tried 0.2 in BlueStacks: installation/boot worked, but the product did not feel like the desired launcher. He then explicitly selected default Home and Apple TV-style aesthetics, prioritizing YouTube, iOS video sharing and return to previously shared media, with possible Spotify, rare browser use and conditional Google Drive access.
 
-## Source findings and implications
+The implementation optimized infrastructure and editable dashboard breadth before the daily home experience. Text buttons, app options before launch, test samples and configuration-heavy empty states reinforced that mismatch. These are interaction/product gaps; passing storage/player tests cannot prove a satisfying launcher.
 
-1. The selected repo is vanilla JavaScript ES modules and CSS, not React. A native TV shell should reuse domain behavior, not copy desktop DOM layouts into a full-screen wrapper.
-2. Continue Watching stores metadata and updatedAt in localStorage, capped at 20. Entries are added when opening details. The inspected modal does not persist selected season/episode or playback position. Migration must treat these as recently opened, never accurate progress.
-3. The source preference is global and updated on selection. Its comment claims last-working/per-title behavior that the implementation does not provide. Nook needs explicit selected versus confirmed-working states.
-4. The source registry includes 11 configured providers. Configuration is evidence of intended integration, not evidence any provider is live, playable or compatible.
-5. URL building uses provider-name/domain heuristics and IMDb IDs. Each provider needs explicit ID-format requirements and test fixtures; real TMDB mapping is required where numeric IDs are needed.
-6. Web playback is iframe-based. A 12-second blank-screen hint is a timeout hint, not playback verification.
-7. The inspected player has no documented progress event bridge. Adding a generic DOM listener will not make cross-origin playback observable.
-8. The README identifies a public OMDb demo key. Do not reuse it as a production dependency; provide owner-configured credentials, caching and quota errors.
-9. Modal focus handling is Tab/Escape-oriented, not proof of TV D-pad support.
-10. Existing browser localStorage does not automatically appear on the TV. Any migration must use an explicit versioned export/import route.
+## Confirmed, proposed and unknown
 
-See [source audit](NOWSHOWING-AUDIT.md) for reviewed paths and blob identifiers.
-
-## Feasibility matrix
-
-| Capability | Assessment | Required proof |
+| Topic | Classification | Treatment |
 |---|---|---|
-| Native dashboard and app tiles | Feasible target | Actual-TV focus, launch and performance |
-| Native direct-media playback/resume | Feasible for supported formats | Device codec and stream tests |
-| Native browsing of NowShowing catalog | Feasible target | API, identifiers, metadata caching |
-| All existing embeds inside native player | Not established | Direct-media support or documented provider integration |
-| Timestamp resume for opaque embeds | Unavailable without cooperation | Validated player events and resume command |
-| YouTube app handoff | Feasible target | Installed handler and remote tests |
-| Account-wide YouTube history import | Not offered through public Data API | Keep outside promised scope |
-| Embedded official YouTube | Conditional | Current official requirements and device WebView/input tests |
-| Brave opening links | Conditional | Installation, handler and navigation |
-| Brave Shields inside ordinary Nook WebView | Not inherited | Separate filtering implementation needed |
-| Home-launcher replacement | Conditional | Vendor firmware behavior |
-| LocalFlix TV playback | Future integration | PC server/API and reachable media URLs |
+| Default Home | Confirmed | LAUNCH-01 promoted to P0 |
+| Apple TV-style aesthetics and experience | Confirmed | App grid, artwork and remote focus central; exact layout proposed |
+| YouTube | Confirmed main use | One-click app access first, richer integration retained later |
+| iPhone video sharing | Confirmed core use | From iPhone plus at least one tested route; protocol not yet selected |
+| Returning to phone-shared media | Confirmed core use | Durable identity, replayability and progress capability |
+| Spotify | Tentative | Optional shortcut; no assumed account integration |
+| Browser | Rare use | Secondary access; avoid browser-first Home |
+| Google Drive | Requested if possible | Feasibility gate and scoped authorized media integration |
+| PC editing/collections | Existing requirement retained | Companion management supports launcher |
+| NowShowing-Stream | Existing selected reference retained | Optional discovery destination, later priority |
+| Exact iPhone sending gesture/apps | Unknown | Verify AirPlay vs Photos/file transfer vs links; do not block design |
+| Actual TV Home/Cast/AirPlay support | Unknown | Real-device checks; BlueStacks cannot establish these |
+| Existing Java/Views/AtomicFile | Delivered engineering choice | Keep unless measured needs justify replacement |
 
-## Requirements conflicts and decisions
+## Priority reconciliation
 
-### Native versus web sources
-Keep dashboard, search, details and owned playback native. Render website-only sources in one isolated web-player screen. Offer browser fallback rather than label unsupported embeds as native streams.
+The earlier standalone-first baseline made launcher support P1 and placed discovery before everyday navigation. That ordering is superseded. Launcher, recognizable app grid and phone-media return are P0. NowShowing/provider work, richer YouTube and Brave/filtering remain requested P1 work. Mood/weather/widgets become optional P2. Spotify/Drive do not become mandatory accounts for Home.
 
-### Continue Watching versus launch history
-Store progress capability and provenance. A video title opened is not a video watched. Keep resume entries distinct from recently opened entries.
+The user requested all documentation updates in this turn. No launcher code, new APK, receiver or Drive connection is being added in this documentation change. Earlier build authorization is historical context; future work must follow the new sequence.
 
-### Blocking versus player reliability
-Filtering is opt-in and site-specific. Site exceptions are saved separately from source selection. Report observed success/failure, never universal ad-block guarantees. YouTube official-player integration follows its own requirements.
+## Feasibility and evidence
 
-### PC control versus local security
-A nearby device must pair before edits. TV approval, rate limits, revocable sessions, origin/host validation, revision checks and a foreground-only server form the initial boundary. LAN HTTP is not confidential against an on-path attacker; no provider-password entry through the editor. Evaluate TLS before broader credential-bearing controls.
+AirPlay, Google Cast, mirroring and local transfer solve different tasks. Apple describes AirPlay to compatible receivers; Google describes iPhone casting from participating apps with local-network permission. Neither proves this TV supports either route. An external receiver can provide immediate access, but replay/history require a documented integration or a retained copy. No universal cross-app progress is assumed.
 
-### Rich home versus 2 GB RAM
-One active playback context, no background autoplay, resized artwork, pagination/lazy rows, cache quotas and graceful low-memory recovery take priority over visual effects.
+Google Drive supports authorized binary media download and byte-range requests. This makes a media source plausible, not already integrated. Google's limited-input device flow currently permits drive.file and drive.appdata; it does not automatically authorize browsing an entire existing Drive. File selection/scopes/authentication need a verified design before promising folders. See [phone and Drive assessment](PHONE-AND-DRIVE.md) for sources and implementation gates.
 
-## Primary risks
+The full launcher can be feasible while system Home behavior is firmware-dependent. A blocked Home selection is a core product issue requiring a decision; do not silently declare the standalone fallback accepted.
 
-| Risk | Mitigation | Fallback |
-|---|---|---|
-| Vendor Android differs from advertised features | Inspect actual APIs/ABI/WebView | Standalone compatible build |
-| Provider changes or refuses embeds | Versioned source adapters, capability matrix | Open original site / source selection |
-| Remote cannot operate third-party player | Real-TV tests with visible fallback | External app/browser, optional pointer mode later |
-| Filter breaks video/login | Per-site off switch and clear diagnostics | Unfiltered route by explicit choice |
-| Metadata quota exhausted | Bounded cache, request de-duplication, backoff | Cached catalog and manual links |
-| Stale PC changes overwrite newer state | Versioned atomic updates | Reload/reapply conflict flow |
-| Power loss corrupts user state | Transactional persistence and import staging | Last committed database |
-| Upstream license not established | License review before copying | Independent implementation of behavior |
+## Existing source findings retained
 
-## Evidence references
+The targeted NowShowing-Stream audit found that recent-title entries are added on detail open without timestamp progress; season/episode and confirmed-working source semantics are incomplete. Its iframe sources are not native media URLs. Keep independent identity/episode/progress records, no iframe-load success claims and no fake timestamps. No upstream copying until reuse rights are established. See [source audit](NOWSHOWING-AUDIT.md).
 
-- [Android Media3 format support](https://developer.android.com/media/media3/exoplayer/supported-formats)
-- [YouTube public API history limitations](https://developers.google.com/youtube/data/revision_history) — January 28, 2021 entry.
-- [YouTube embedded-player requirements](https://developers.google.com/youtube/terms/required-minimum-functionality)
-- [YouTube developer policies](https://developers.google.com/youtube/terms/developer-policies)
-- [Brave Shields](https://brave.com/shields/)
-- [TV product listing](https://sonyplusbd.com/product/43-inch-frameless-voice-smart-android-led-tv/) — contradictory Android versions; owner reports 14.
+## Research references and lessons
 
-These references inform planning. Recheck current integration documentation when implementing each adapter.
-
-## Thread-to-scope reconciliation
-
-| Conversation evidence | Final requirement treatment |
+| Reference | Lesson, not a reuse decision |
 |---|---|
-| Personal space tailored to interests, not a public platform | PERS-01 collections are P0; single-owner local-first default; no mandatory account |
-| Customize from a PC browser and reflect on TV | PC-01/PC-02 plus SEND-01; transactional Save, conflict handling and visible connection state |
-| Standalone app with launcher support | Standalone delivery first; launcher stays tracked rather than dropped |
-| Native YouTube support | Native browsing plus official app handoff proposed initially; embedded route remains evaluated; clarify capability before full-scope closure |
-| Continue Watching | True timestamps only when observable; selected episode and Recently opened supported independently |
-| Other sites and native online streaming | Native catalog/player where source supports it; isolated embed/browser route otherwise |
-| Brave ad blocker support | Brave handoff plus separately evaluated filtering; no Shields inheritance assumption |
-| Explicitly use NowShowing-Stream | Sole streaming baseline; no CineVault or V2 substitution |
-| Owner will say when to start building | Hold released by explicit instruction on 2026-10-17; M1 implementation tracked in BUILD-STATUS.md |
+| [Projectivy developer listing](https://play.google.com/store/apps/details?id=com.spocky.projengmenu) | Personal categories/shortcuts and launcher utility; not the selected visual style |
+| [FLauncher developer listing](https://play.google.com/store/apps/details?id=me.efesser.flauncher) | Useful app access and straightforward organization |
+| [Dispatch developer listing](https://play.google.com/store/apps/details?id=com.spauldhaliwal.dispatch) | Content artwork and media entry points; Plex dependency does not fit core Nook |
+| [Reddit Watch Next discussion](https://www.reddit.com/r/AndroidTV/comments/1cgc4x7/projectivity_launcher_continue_watching/) | Anecdotal reports of inconsistent app participation; not a compatibility guarantee |
+| [Android TV channels](https://developer.android.com/training/tv/discovery/recommendations-channel) | Apps publish content via platform mechanisms; cross-app reading and available data must be verified |
 
-## Review corrections in v1.0
+Research supports the pivot; it does not authorize copying launcher code/assets or guarantee every service's recommendations. Apple TV is the owner's chosen aesthetic reference.
 
-- Moved explicit personal collections into P0; recommendations remain later so basic personalization is not delayed.
-- Distinguished first usable release from completion of the broader requested scope.
-- Clarified that native YouTube handoff is a proposed interpretation rather than an owner-approved substitute for in-app playback.
-- Added usable first run without a PC, save-from-PC behavior and no automatic playback interruption.
-- Defined foreground editor disconnect/reconnect behavior and lost-save recovery.
-- Separated series selection, recent playback attempts and measured playback progress.
-- Clarified offline dashboard versus online video, current metadata versus source availability, and curated rows versus real-time trending.
-- Added portable backup boundaries and TV-only API-key entry for the initial HTTP editor.
+## Risks and decisions before implementation
 
-Personal context informs the preference for a lightweight, polished and manageable product. It does not authorize importing private history, relationship details, health information or account content into a TV visible to others. Interest collections start with owner-selected content.
+- TV default-home restrictions: inspect actual firmware and test selection/restoration; never silently disable stock Home.
+- Ephemeral phone media: store replay capability explicitly; retained transfer is distinct from live sharing.
+- iPhone codec variability: use owner-selected representative files, including HEVC when relevant; no transcoding assumption.
+- Drive authorization: validate selected-file access and token handling; no password collection or credential proxy through LAN HTTP.
+- Large transfers on 2 GB TV: stream to disk, enforce quotas/free-space checks, clean cancellation and do not buffer whole videos in memory.
+- Visual richness: lazy artwork/grid, no autoplay, bounded caches, reduced-motion mode.
+- Privacy: shared media can be personal; explicit display/storage/delete controls, no silent Photos/library import.
 
+Design decisions remain in [DECISIONS](DECISIONS.md), measurable outcomes in [PRD](PRD.md), and delivery order in [plan](DEVELOPMENT-PLAN.md).
