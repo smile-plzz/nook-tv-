@@ -56,3 +56,39 @@
   - `gradlew.bat assembleDebug`: SUCCESS (built `app-debug.apk`, copied to `outputs/nook-tv-0.4.2-f2-visual-refinement.apk`).
   - `gradlew.bat compileDebugAndroidTestJavaWithJavac`: SUCCESS.
 
+## 2026-10-17T21:20:00+06:00 — F3 Companion & Dynamic Content Complete
+- Implemented `SourceDocument.java`:
+  - Enforces schema bounds for dynamic sources (max 6 sources, max 20 items each).
+  - Validates public HTTPS URLs, canonicalizes YouTube channel/playlist URLs to official XML feeds.
+  - Hardens host validation to reject loopback, link-local, wildcard, and RFC 1918 private LAN IP addresses.
+- Implemented `FeedParser.java`:
+  - Secure parser for RSS 2.0, Atom 1.0, and YouTube feeds.
+  - Disabled DOCTYPE declaration and external entities (XXE defense).
+  - Bounded feed streaming (max 2 MiB) with HTML tag stripping in titles and summaries.
+  - Extracts canonical YouTube video IDs, 16:9 thumbnails, and publication timestamps.
+- Implemented `SourceStore.java`:
+  - Atomic persistence (`sources-v1.json`) using `AtomicFile` with revision tracking and SHA-256 mutation receipts.
+  - Completely separates source configurations from `DashboardDocument` to strictly preserve schema v2 integrity.
+- Implemented `ContentSourceManager.java`:
+  - Bounded concurrency with 2-worker executor pool.
+  - 30-minute throttled background refresh, 10-second connect/read timeouts, max 3 public redirects.
+  - Caches feed results atomically (`source-cache-v1.json`) with truthful stale/offline status labeling.
+- Enhanced `EditorServer.java`:
+  - Added authenticated routes for `GET /api/sources`, `POST /api/sources`, and `POST /api/sources/test`.
+- Enhanced Companion UI (`editor.html`, `editor.js`):
+  - Added Content Sources management section with guided setup for YouTube and RSS feeds.
+  - Interactive "Test feed on TV" action validating feeds before applying.
+  - Mobile/desktop responsive layout with 44px min touch targets, move up/down, enabled toggle, and explicit Save to TV.
+- Enhanced TV UI (`MainActivity.java`):
+  - Renders dynamic content shelves below favorite apps with custom "youtube" and "rss" glyphs.
+  - Exact YouTube video launch without invented resume progress.
+  - Plain-text article preview dialog with "Open article" action.
+  - Focus identity preservation: active D-pad focus tags and scroll positions do not jump when feeds refresh.
+- Build & Verification:
+  - `scripts/test-core.ps1`: PASSED (45 Java assertions + node editor and media transfer tests).
+  - `scripts/test-editor.ps1`: PASSED (96 Java assertions across EditorBoundaryTests, DocumentTests, and SourceTests).
+  - Total Java assertions passing: 141 assertions.
+  - `gradlew.bat assembleDebug`: SUCCESS (built `app-debug.apk`, copied to `outputs/nook-tv-0.4.3-f3-dynamic-sources.apk`).
+  - `gradlew.bat compileDebugAndroidTestJavaWithJavac`: SUCCESS.
+
+

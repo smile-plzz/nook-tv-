@@ -29,6 +29,9 @@ public final class MainActivity extends Activity implements EditorServer.Host {
     private final Handler handler=new Handler(Looper.getMainLooper());
     private final Pairing pairing=new Pairing();
     private DashboardStore store;
+    private SourceStore sourceStore;
+    private ContentSourceManager sourceManager;
+    private LinearLayout sourceShelvesHost;
     private EditorServer server;
     private LinearLayout root, content;
     private String screen="home", focusKey="", returnFocus="", playingUrl="", playingLabel="";
@@ -59,7 +62,9 @@ public final class MainActivity extends Activity implements EditorServer.Host {
 
     @Override public void onCreate(Bundle b) {
         super.onCreate(b); getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-        store=new DashboardStore(this); history=getSharedPreferences("nook",MODE_PRIVATE); focusKey=history.getString("lastFocus",""); homeScrollY=history.getInt("homeScroll",0); viewing=new ViewingStore(this); received=new ReceivedMediaStore(this); server=new EditorServer(pairing,this);
+        store=new DashboardStore(this); history=getSharedPreferences("nook",MODE_PRIVATE); focusKey=history.getString("lastFocus",""); homeScrollY=history.getInt("homeScroll",0); viewing=new ViewingStore(this); received=new ReceivedMediaStore(this);
+        sourceStore=new SourceStore(this); sourceManager=new ContentSourceManager(this,sourceStore); sourceManager.setListener(()->{if(screen.equals("home"))renderSourceShelves();});
+        server=new EditorServer(pairing,this);
         io.execute(()->RetiredFeatureCleanup.run(this));
         if(getIntent().hasCategory(Intent.CATEGORY_HOME)) { focusKey=""; homeScrollY=0; } home();
     }
@@ -78,6 +83,7 @@ public final class MainActivity extends Activity implements EditorServer.Host {
         if(videoStopped) { videoStopped=false; home(); }
         if(screen.equals("home")) refreshHomeApps();
         if(screen.equals("home-setup")) homeSetup();
+        if(sourceManager!=null) sourceManager.refresh(false);
         try { addresses=server.start(); serverError=""; } catch(IOException e) { addresses=new ArrayList<>(); serverError="Editor could not start. Port 8765 may be in use."; }
         if(pairInfo!=null&&screen.equals("pair")) pairInfo.setText(addressText());
     }
@@ -110,8 +116,10 @@ public final class MainActivity extends Activity implements EditorServer.Host {
         ScrollView scroll=new ScrollView(this); if(name.equals("home")) homeScroll=scroll; scroll.setFillViewport(true); content=vertical(); content.setPadding(0,dp(12),0,dp(20)); scroll.addView(content); root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));
         if(!title.isEmpty())content.addView(text(title,30,Color.WHITE)); if(!subtitle.isEmpty())content.addView(text(subtitle,15,muted)); setContentView(root);
     }
-    private void section(String title) { TextView t=text(title,20,0xfff8fafc); t.setTypeface(Typeface.create("sans-serif-medium",Typeface.NORMAL)); t.setPadding(0,dp(26),0,dp(10)); content.addView(t); }
-    private LinearLayout row() { HorizontalScrollView s=new HorizontalScrollView(this); s.setHorizontalScrollBarEnabled(false); LinearLayout r=new LinearLayout(this); r.setPadding(0,dp(3),0,dp(6)); s.addView(r); content.addView(s); return r; }
+    private void section(String title) { section(content,title); }
+    private void section(LinearLayout host,String title) { TextView t=text(title,20,0xfff8fafc); t.setTypeface(Typeface.create("sans-serif-medium",Typeface.NORMAL)); t.setPadding(0,dp(26),0,dp(10)); (host!=null?host:content).addView(t); }
+    private LinearLayout row() { return row(content); }
+    private LinearLayout row(LinearLayout host) { HorizontalScrollView s=new HorizontalScrollView(this); s.setHorizontalScrollBarEnabled(false); LinearLayout r=new LinearLayout(this); r.setPadding(0,dp(3),0,dp(6)); s.addView(r); (host!=null?host:content).addView(s); return r; }
     private void restore(String key) { root.post(()->{ View v=root.findViewWithTag(key); if(v!=null) v.requestFocus(); }); }
     private JSONObject current() { try { return store.read(); } catch(JSONException e) { throw new IllegalStateException(e); } }
     private LinearLayout homeAppsHost;
@@ -132,8 +140,60 @@ public final class MainActivity extends Activity implements EditorServer.Host {
             if(id.equals("saved")&&config.optJSONArray("links").length()>0){section("Saved for later");LinearLayout r=row();JSONArray links=config.optJSONArray("links");for(int i=0;i<links.length();i++){JSONObject l=links.optJSONObject(i);r.addView(mediaTile(l.optString("label"),"Open saved link","link-"+l.optString("id"),()->openLink(l),()->linkOptions(l)));}}
             if(id.equals("collections")){JSONArray groups=config.optJSONArray("collections");for(int i=0;i<groups.length();i++){JSONObject group=groups.optJSONObject(i);JSONArray members=group.optJSONArray("items");if(members.length()==0)continue;section(group.optString("label"));LinearLayout r=row();for(int j=0;j<members.length();j++){String ref=members.optString(j);if(ref.startsWith("app:")){String component=ref.substring(4);r.addView(mediaTile(appLabel(component),"Open app","group-"+group.optString("id")+"-"+j,()->launchApp(component),()->appOptions(component)));}else{JSONArray links=config.optJSONArray("links");for(int k=0;k<links.length();k++){JSONObject l=links.optJSONObject(k);if(l.optString("id").equals(ref))r.addView(mediaTile(l.optString("label"),"Open saved link","group-"+group.optString("id")+"-"+j,()->openLink(l),()->linkOptions(l)));}}}}}
         }
+        sourceShelvesHost=vertical();sourceShelvesHost.setTag("source-shelves");content.addView(sourceShelvesHost);renderSourceShelves();
         root.post(()->{View found=root.findViewWithTag(oldFocus);if(found!=null)found.requestFocus();else focusFirstHome();homeScroll.scrollTo(0,homeScrollY);});
         refreshHomeApps();
+    }
+    private void renderSourceShelves() {
+        if(sourceShelvesHost==null||!screen.equals("home")) return;
+        View focused=root!=null?root.findFocus():null;
+        String currentTag=focused!=null&&focused.getTag() instanceof String?(String)focused.getTag():"";
+        sourceShelvesHost.removeAllViews();
+        try {
+            JSONObject config=sourceStore.read();
+            JSONArray sources=config.optJSONArray("sources");
+            if(sources==null||sources.length()==0) return;
+            for(int i=0;i<sources.length();i++) {
+                JSONObject src=sources.optJSONObject(i);
+                if(src==null||!src.optBoolean("enabled",true)) continue;
+                String id=src.optString("id");
+                String label=src.optString("label");
+                String type=src.optString("type");
+                ContentSourceManager.CachedSource cs=sourceManager.getCached(id);
+                boolean stale=cs!=null&&cs.stale;
+                String status=cs!=null?cs.status:"";
+                String title=label+(stale&&!status.isEmpty()?" · "+status:status.equals("Updated")?" · Latest":"");
+                section(sourceShelvesHost,title);
+                LinearLayout r=row(sourceShelvesHost);
+                List<FeedParser.FeedItem> items=cs!=null&&cs.feed!=null?cs.feed.items:Collections.emptyList();
+                if(items.isEmpty()) {
+                    r.addView(text(status.isEmpty()?"No items available · Check source in companion":status,15,muted));
+                } else {
+                    for(int j=0;j<Math.min(6,items.size());j++) {
+                        FeedParser.FeedItem item=items.get(j);
+                        String tag="source-"+id+"-"+j;
+                        String sub=label+(item.published.isEmpty()?"":" · "+item.published);
+                        if(type.equals("youtube")) {
+                            r.addView(mediaTile(item.title,sub,"youtube",tag,()->external(item.url,"youtube"),null));
+                        } else {
+                            r.addView(mediaTile(item.title,sub,"rss",tag,()->showArticleDialog(item,label),null));
+                        }
+                    }
+                }
+            }
+        } catch(Exception ignored) {}
+        if(!currentTag.isEmpty()&&root!=null) {
+            View target=root.findViewWithTag(currentTag);
+            if(target!=null) target.requestFocus();
+        }
+    }
+    private void showArticleDialog(FeedParser.FeedItem item,String sourceLabel){
+        new AlertDialog.Builder(this)
+            .setTitle(item.title)
+            .setMessage((item.summary.isEmpty()?"No summary available.":item.summary)+(item.published.isEmpty()?"":"\n\nPublished: "+item.published))
+            .setPositiveButton("Open article",(d,w)->external(item.url,"browser"))
+            .setNegativeButton("Close",null)
+            .show();
     }
     private int gridColumns(){int width=(int)(getResources().getDisplayMetrics().widthPixels/getResources().getDisplayMetrics().density)-96;return Math.max(2,Math.min(6,width/144));}
     private int tileWidth(){int width=getResources().getDisplayMetrics().widthPixels-dp(96);return (width-dp(16)*gridColumns())/gridColumns();}
@@ -145,7 +205,8 @@ public final class MainActivity extends Activity implements EditorServer.Host {
     private LauncherTile makeTile(String label,String detail,String symbol,String tag,int color,Runnable open,Runnable more){
         LauncherTile tile=new LauncherTile(this,label,detail,symbol,color,tileWidth(),!history.getBoolean("reducedMotion",false),open,more);trackTile(tile,tag);return tile;
     }
-    private View mediaTile(String label,String detail,String tag,Runnable open,Runnable more){LauncherTile tile=makeTile(label,detail,"play",tag,0xff283145,open,more);LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(dp(224),dp(140));p.setMargins(dp(4),dp(6),dp(16),dp(8));tile.setLayoutParams(p);return tile;}
+    private View mediaTile(String label,String detail,String tag,Runnable open,Runnable more){return mediaTile(label,detail,"play",tag,open,more);}
+    private View mediaTile(String label,String detail,String symbol,String tag,Runnable open,Runnable more){LauncherTile tile=makeTile(label,detail,symbol,tag,0xff283145,open,more);LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(dp(224),dp(140));p.setMargins(dp(4),dp(6),dp(16),dp(8));tile.setLayoutParams(p);return tile;}
     private void focusFirstHome(){View first=root.findViewWithTag(firstHomeTag);if(first!=null)first.requestFocus();}
     private void renderHomeApps(List<LauncherApps.Entry> available){
         if(homeAppsHost==null||!screen.equals("home"))return;String desired=homeRestore;View focused=root.findFocus();if(!firstHomeTag.isEmpty()&&focused!=null&&focused.getTag() instanceof String)desired=(String)focused.getTag();homeAppsHost.removeAllViews();firstHomeTag="";int index=0;JSONArray pinned=homeConfig.optJSONArray("apps");List<String> favorites=new ArrayList<>();
@@ -491,6 +552,38 @@ public final class MainActivity extends Activity implements EditorServer.Host {
     }
     @Override public JSONObject inventory() throws Exception {
         if(!foreground) throw new IOException(); JSONArray apps=new JSONArray(); Set<String> components=new HashSet<>(); PackageManager pm=getPackageManager(); for(String category:new String[]{Intent.CATEGORY_LEANBACK_LAUNCHER,Intent.CATEGORY_LAUNCHER}) for(ResolveInfo info:pm.queryIntentActivities(new Intent(Intent.ACTION_MAIN).addCategory(category),0)) { String component=new ComponentName(info.activityInfo.packageName,info.activityInfo.name).flattenToString(); if(!info.activityInfo.packageName.equals(getPackageName())&&components.add(component)) apps.put(new JSONObject().put("component",component).put("label",info.loadLabel(pm).toString())); } return new JSONObject().put("apps",apps);
+    }
+    @Override public JSONObject sources() throws Exception {
+        if(!foreground) throw new IOException();
+        JSONObject doc=sourceStore.read();
+        JSONArray arr=doc.optJSONArray("sources");
+        JSONObject items=new JSONObject();
+        if(arr!=null) {
+            for(int i=0;i<arr.length();i++) {
+                JSONObject src=arr.optJSONObject(i);
+                if(src!=null) {
+                    String id=src.optString("id");
+                    ContentSourceManager.CachedSource cs=sourceManager.getCached(id);
+                    if(cs!=null) items.put(id,cs.toJSON());
+                }
+            }
+        }
+        doc.put("cache",items);
+        return doc;
+    }
+    @Override public JSONObject saveSources(JSONObject input,long revision,String mutation) throws Exception {
+        if(!foreground) throw new IOException();
+        JSONObject updated=sourceStore.save(input,revision,mutation);
+        sourceManager.refresh(true);
+        handler.post(()->{if(screen.equals("home"))renderSourceShelves();});
+        return updated;
+    }
+    @Override public JSONObject testSource(JSONObject input) throws Exception {
+        if(!foreground) throw new IOException();
+        String type=input.optString("type");
+        String url=input.optString("url");
+        FeedParser.FeedResult res=sourceManager.testFetch(type,url);
+        return new JSONObject().put("valid",true).put("title",res.title).put("count",res.items.size());
     }
     @Override public void onBackPressed() {
         if(!screen.equals("home")) { home(); return; }

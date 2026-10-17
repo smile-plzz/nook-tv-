@@ -18,6 +18,9 @@ public final class EditorServer {
         default JSONObject restore(JSONObject input,long revision,String mutation) throws Exception { throw new IllegalArgumentException("Import unavailable"); }
         default JSONObject inventory() throws Exception { return new JSONObject().put("apps",new JSONArray()); }
         default JSONObject media() throws Exception { return new JSONObject().put("items",new JSONArray()); }
+        default JSONObject sources() throws Exception { return new JSONObject().put("sources",new JSONArray()); }
+        default JSONObject saveSources(JSONObject input,long revision,String mutation) throws Exception { return sources(); }
+        default JSONObject testSource(JSONObject input) throws Exception { return new JSONObject().put("valid",true); }
         default JSONObject upload(InputStream input,long length,String name,String id,java.util.function.BooleanSupplier allowed) throws Exception { throw new RequestFailure(503,"Video receiving is unavailable."); }
         void approve(String name);
     }
@@ -98,6 +101,9 @@ public final class EditorServer {
                 else if(path.equals("/api/inventory")&&method.equals("GET")) result=host.inventory();
                 else if(path.equals("/api/config")&&method.equals("POST")) result=host.save(data.getJSONObject("config"),data.getLong("expectedRevision"),data.getString("mutationId"));
                 else if(path.equals("/api/import")&&method.equals("POST")) result=host.restore(data.getJSONObject("config"),data.getLong("expectedRevision"),data.getString("mutationId"));
+                else if(path.equals("/api/sources")&&method.equals("GET")) result=host.sources();
+                else if(path.equals("/api/sources")&&method.equals("POST")) result=host.saveSources(data.getJSONObject("config"),data.getLong("expectedRevision"),data.getString("mutationId"));
+                else if(path.equals("/api/sources/test")&&method.equals("POST")) result=host.testSource(data);
                 else { status=404; result.put("error","Not found"); }
             }
             reply(client,status,"application/json",bytes(result.toString()));
