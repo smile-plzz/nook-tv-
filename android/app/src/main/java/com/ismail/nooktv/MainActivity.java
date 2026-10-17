@@ -352,7 +352,7 @@ public final class MainActivity extends Activity implements EditorServer.Host {
         else web.loadUrl(url); restore("web-close");
     }
     private void releaseWeb() { if(web!=null) { web.stopLoading(); web.loadUrl("about:blank"); web.destroy(); web=null; } }
-    private void releasePlayback() { saveProgress(); handler.removeCallbacks(progress); if(playerView!=null) { playerView.setPlayer(null); playerView=null; } if(player!=null) { player.release(); player=null; } prepared=false; playerStatus=null; releaseWeb(); }
+    private void releasePlayback() { saveProgress(); prepared=false; handler.removeCallbacks(progress); if(playerView!=null) { playerView.setPlayer(null); playerView=null; } ExoPlayer closing=player;player=null;if(closing!=null)closing.release();playerStatus=null;releaseWeb(); }
     private String addressText() { return !serverError.isEmpty()?serverError:addresses.isEmpty()?"Connect your TV and PC to the same home network, then reopen this screen.":String.join("\n",addresses)+"\nKeep Nook open on the TV while editing. HTTP local connection; do not enter account passwords."; }
     private void pair() {
         page("pair","Bring your keyboard","Customize from a browser on your home network. Every pairing needs your approval here.");
