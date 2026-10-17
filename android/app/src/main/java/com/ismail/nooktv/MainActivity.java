@@ -238,14 +238,61 @@ public final class MainActivity extends Activity implements EditorServer.Host {
     private void phone(){
         page("phone","From iPhone","Send a video copy, then watch it without your phone.");
         content.addView(text("1. Pair Safari on your iPhone",22,Color.WHITE));content.addView(text("Open the TV address on the same home network, enter the pairing code and approve the request on TV.",16,muted));
+        if(!addresses.isEmpty()){
+            try{
+                Bitmap qr=createQrBitmap(addresses.get(0),dp(150));
+                ImageView qrView=new ImageView(this);qrView.setTag("phone-qr");qrView.setImageBitmap(qr);qrView.setBackground(surface(Color.WHITE));qrView.setPadding(dp(6),dp(6),dp(6),dp(6));
+                LinearLayout.LayoutParams qp=new LinearLayout.LayoutParams(dp(162),dp(162));qp.setMargins(0,dp(8),0,dp(8));qrView.setLayoutParams(qp);content.addView(qrView);
+            }catch(Throwable ignored){}
+        }
         content.addView(action("Pair a browser","phone-pair",this::pair));
         content.addView(text("2. Choose Send a video in the browser",22,Color.WHITE));content.addView(text("Select an MP4 or MOV from Photos or Files. Keep Nook open until Saved on TV appears. Maximum 512 MiB per video; 1 GiB retained storage. No automatic playback.",16,muted));
         content.addView(text("3. Open Shared & Recent",22,Color.WHITE));content.addView(text("Saved copies stay on this TV after the phone disconnects. Playback depends on the TV's video codec support. Clear history keeps files; Delete saved copy removes a file.",16,muted));
         content.addView(action("Shared & Recent","phone-recent",this::shared));content.addView(action("Manage saved videos","phone-storage",this::mediaStorage));
         content.addView(text("AirPlay and live mirroring are separate. This build receives saved file copies through Safari, not system AirPlay. You can still open an existing receiver app from All Apps.",15,muted));content.addView(action("Open All Apps","phone-apps",this::apps));restore("phone-pair");
     }
+    private final android.util.LruCache<String,Bitmap> mediaThumbnails=new android.util.LruCache<String,Bitmap>(4*1024*1024){ @Override protected int sizeOf(String key,Bitmap value){return value.getByteCount();} };
+    private void loadMediaThumbnail(LauncherTile tile,String id){
+        Bitmap cached=mediaThumbnails.get(id);
+        if(cached!=null){tile.artwork(new BitmapDrawable(getResources(),cached));return;}
+        int token=generation;
+        io.execute(()->{
+            try{
+                File thumb=received.thumbnail(id);
+                if(thumb!=null&&thumb.isFile()){
+                    Bitmap bitmap=BitmapFactory.decodeFile(thumb.getAbsolutePath());
+                    if(bitmap!=null){
+                        mediaThumbnails.put(id,bitmap);
+                        handler.post(()->{if(token==generation)tile.artwork(new BitmapDrawable(getResources(),bitmap));});
+                    }
+                }
+            }catch(Throwable ignored){}
+        });
+    }
     private void receivedRow(){
-        try{JSONArray items=received.snapshot().getJSONArray("items");if(items.length()==0)return;section("Saved on this TV");LinearLayout r=row();for(int i=0;i<items.length();i++){JSONObject item=items.getJSONObject(i);JSONObject progress=viewing.ledger.find("local:"+item.getString("id"));String detail=!item.optBoolean("available")?"Unavailable":progress!=null&&ViewingLedger.resumable(progress)?"Resume "+time((int)progress.optLong("position")):"Play saved copy";r.addView(mediaTile(item.getString("label"),detail,"received-"+item.getString("id"),()->playReceived(item.optString("id")),()->receivedOptions(item)));}}catch(Exception e){content.addView(text("Saved video storage could not be read.",16,muted));}
+        try{
+            JSONArray raw=received.snapshot().getJSONArray("items");if(raw.length()==0)return;
+            List<JSONObject> list=new ArrayList<>();
+            for(int i=0;i<raw.length();i++){JSONObject it=raw.getJSONObject(i);if(!it.optBoolean("hidden",false))list.add(it);}
+            if(list.isEmpty())return;
+            list.sort((a,b)->{
+                boolean pa=a.optBoolean("pinned",false),pb=b.optBoolean("pinned",false);
+                if(pa!=pb)return pa?-1:1;
+                return Long.compare(b.optLong("receivedAt"),a.optLong("receivedAt"));
+            });
+            section("Saved on this TV");LinearLayout r=row();
+            for(JSONObject item:list){
+                String id=item.getString("id");
+                JSONObject progress=viewing.ledger.find("local:"+id);
+                String detail=!item.optBoolean("available")?"Unavailable":progress!=null&&ViewingLedger.resumable(progress)?"Resume "+time((int)progress.optLong("position")):"Play saved copy";
+                String col=item.optString("collection","");
+                if(!col.isEmpty())detail=col+" · "+detail;
+                if(item.optBoolean("pinned"))detail="Pinned · "+detail;
+                LauncherTile tile=(LauncherTile)mediaTile(item.getString("label"),detail,"received-"+id,()->playReceived(id),()->receivedOptions(item));
+                r.addView(tile);
+                loadMediaThumbnail(tile,id);
+            }
+        }catch(Exception e){content.addView(text("Saved video storage could not be read.",16,muted));}
     }
     private void shared(){
         page("shared","Shared & Recent","Saved on this TV, plus your links and observed playback.");
@@ -258,16 +305,56 @@ public final class MainActivity extends Activity implements EditorServer.Host {
         catch(Exception e){message("This saved copy is unavailable. Send it again or remove its entry in saved-video storage.");}
     }
     private void receivedOptions(JSONObject item){
-        String id=item.optString("id");new AlertDialog.Builder(this).setTitle(item.optString("label")).setItems(new String[]{"Play / Resume","Start over","Delete saved copy"},(d,n)->{if(n==0)playReceived(id);else if(n==1){try{viewing.ledger.mark("local:"+id,false);persistViewing();playReceived(id);}catch(Exception e){message("Could not reset progress.");}}else confirmDeleteMedia(item);}).show();
+        String id=item.optString("id");boolean isPinned=item.optBoolean("pinned",false),isHidden=item.optBoolean("hidden",false);
+        String[] options=new String[]{"Play / Resume","Start over",isPinned?"Unpin from Home":"Pin to Home","Rename","Set collection",isHidden?"Show on Home":"Hide from Home","Delete saved copy"};
+        new AlertDialog.Builder(this).setTitle(item.optString("label")).setItems(options,(d,n)->{
+            if(n==0) playReceived(id);
+            else if(n==1){try{viewing.ledger.mark("local:"+id,false);persistViewing();playReceived(id);}catch(Exception e){message("Could not reset progress.");}}
+            else if(n==2){io.execute(()->{try{received.update(id,new JSONObject().put("pinned",!isPinned));handler.post(this::home);}catch(Exception e){handler.post(()->message("Could not update pin status."));}});}
+            else if(n==3) promptRenameMedia(item);
+            else if(n==4) promptCollectionMedia(item);
+            else if(n==5){io.execute(()->{try{received.update(id,new JSONObject().put("hidden",!isHidden));handler.post(this::home);}catch(Exception e){handler.post(()->message("Could not update privacy."));}});}
+            else if(n==6) confirmDeleteMedia(item);
+        }).show();
+    }
+    private void promptRenameMedia(JSONObject item){
+        String id=item.optString("id");EditText input=new EditText(this);input.setText(item.optString("label"));input.setSelection(input.getText().length());
+        AlertDialog dialog=new AlertDialog.Builder(this).setTitle("Rename video").setView(input).setPositiveButton("Save",null).setNegativeButton("Cancel",null).create();
+        dialog.setOnShowListener(d->dialog.getButton(-1).setOnClickListener(v->{
+            String text=input.getText().toString().trim();
+            if(text.isEmpty()||text.length()>120){input.setError("Use a title of 1-120 characters.");return;}
+            io.execute(()->{
+                try{
+                    received.update(id,new JSONObject().put("label",text));
+                    try{JSONObject h=viewing.ledger.find("local:"+id);if(h!=null){h.put("label",text);persistViewing();}}catch(Exception ignored){}
+                    handler.post(()->{dialog.dismiss();home();});
+                }catch(Exception e){handler.post(()->input.setError("Could not save name."));}
+            });
+        }));
+        dialog.show();
+    }
+    private void promptCollectionMedia(JSONObject item){
+        String id=item.optString("id");EditText input=new EditText(this);input.setHint("e.g. Family, Vacation, Clips");input.setText(item.optString("collection",""));
+        if(input.getText().length()>0)input.setSelection(input.getText().length());
+        AlertDialog dialog=new AlertDialog.Builder(this).setTitle("Set collection").setView(input).setPositiveButton("Save",null).setNegativeButton("Cancel",null).create();
+        dialog.setOnShowListener(d->dialog.getButton(-1).setOnClickListener(v->{
+            String text=input.getText().toString().trim();
+            if(text.length()>80){input.setError("Collection must be 80 characters or fewer.");return;}
+            io.execute(()->{
+                try{received.update(id,new JSONObject().put("collection",text));handler.post(()->{dialog.dismiss();home();});}
+                catch(Exception e){handler.post(()->input.setError("Could not save collection."));}
+            });
+        }));
+        dialog.show();
     }
     private void confirmDeleteMedia(JSONObject item){
-        new AlertDialog.Builder(this).setTitle("Delete saved copy?").setMessage(item.optString("label")+" will be removed from this TV. Your phone's original is not changed.").setPositiveButton("Delete",(d,n)->io.execute(()->{try{received.delete(item.getString("id"));viewing.ledger.remove("local:"+item.getString("id"));viewing.persist();handler.post(this::mediaStorage);}catch(Exception e){handler.post(()->message("Could not complete deletion. Wait for any transfer and check storage again."));}})).setNegativeButton("Cancel",null).show();
+        new AlertDialog.Builder(this).setTitle("Delete saved copy?").setMessage(item.optString("label")+" will be removed from this TV. Your phone's original is not changed.").setPositiveButton("Delete",(d,n)->io.execute(()->{try{received.delete(item.getString("id"));viewing.ledger.remove("local:"+item.getString("id"));viewing.persist();mediaThumbnails.remove(item.getString("id"));handler.post(()->{if(screen.equals("media-storage"))mediaStorage();else home();});}catch(Exception e){handler.post(()->message("Could not complete deletion. Wait for any transfer and check storage again."));}})).setNegativeButton("Cancel",null).show();
     }
     private String sizeLabel(long bytes){return String.format(Locale.ROOT,"%.1f MiB",bytes/(1024d*1024d));}
     private void mediaStorage(){
         page("media-storage","Saved video storage","These are retained copies. Clearing viewing history does not remove them.");
         try{JSONObject snapshot=received.snapshot();content.addView(text(sizeLabel(snapshot.getLong("usedBytes"))+" used of "+sizeLabel(snapshot.getLong("quotaBytes"))+" · up to 50 videos",17,muted));if(snapshot.optBoolean("damaged"))content.addView(text("The media index is unreadable and has been preserved. New transfers are blocked.",17,muted));
-            JSONArray items=snapshot.getJSONArray("items");for(int i=0;i<items.length();i++){JSONObject item=items.getJSONObject(i);content.addView(action(item.getString("label")+" · "+sizeLabel(item.getLong("size"))+(item.optBoolean("available")?"":" · Unavailable"),"storage-"+item.getString("id"),()->receivedOptions(item)));}
+            JSONArray items=snapshot.getJSONArray("items");for(int i=0;i<items.length();i++){JSONObject item=items.getJSONObject(i);content.addView(action(item.getString("label")+" · "+sizeLabel(item.getLong("size"))+(item.optBoolean("available")?"":" · Unavailable")+(item.optBoolean("pinned")?" · Pinned":"")+(item.optBoolean("hidden")?" · Hidden":""),"storage-"+item.getString("id"),()->receivedOptions(item)));}
             if(items.length()==0)content.addView(text("No saved video copies yet.",19,muted));
             if(snapshot.optLong("unindexedBytes")>0)content.addView(action("Clean unindexed transfer storage","media-clean",()->new AlertDialog.Builder(this).setTitle("Remove unindexed transfer data?").setMessage("Only incomplete or unlisted transfer files will be removed. Listed saved videos stay.").setPositiveButton("Clean",(d,n)->io.execute(()->{try{received.cleanUnindexed();handler.post(this::mediaStorage);}catch(Exception e){handler.post(()->message("Wait for any transfer to finish and try again."));}})).setNegativeButton("Cancel",null).show()));
         }catch(Exception e){content.addView(text("Storage status unavailable.",18,muted));}
@@ -425,9 +512,37 @@ public final class MainActivity extends Activity implements EditorServer.Host {
     private void releaseWeb() { if(web!=null) { web.stopLoading(); web.loadUrl("about:blank"); web.destroy(); web=null; } }
     private void releasePlayback() { saveProgress(); prepared=false; handler.removeCallbacks(progress); if(playerView!=null) { playerView.setPlayer(null); playerView=null; } ExoPlayer closing=player;player=null;if(closing!=null)closing.release();playerStatus=null;releaseWeb(); }
     private String addressText() { return !serverError.isEmpty()?serverError:addresses.isEmpty()?"Connect your TV and PC to the same home network, then reopen this screen.":String.join("\n",addresses)+"\nKeep Nook open on the TV while editing. HTTP local connection; do not enter account passwords."; }
+    private Bitmap createQrBitmap(String text,int size){
+        boolean[][] matrix=QrCode.encode(text);
+        int n=matrix.length,quiet=4,total=n+quiet*2;
+        int scale=Math.max(1,size/total),actualSize=total*scale;
+        int[] pixels=new int[actualSize*actualSize];
+        Arrays.fill(pixels,0xffffffff);
+        for(int r=0;r<n;r++){
+            for(int c=0;c<n;c++){
+                if(matrix[r][c]){
+                    int startY=(r+quiet)*scale,startX=(c+quiet)*scale;
+                    for(int dy=0;dy<scale;dy++){
+                        int rowOffset=(startY+dy)*actualSize;
+                        for(int dx=0;dx<scale;dx++) pixels[rowOffset+startX+dx]=0xff000000;
+                    }
+                }
+            }
+        }
+        return Bitmap.createBitmap(pixels,actualSize,actualSize,Bitmap.Config.ARGB_8888);
+    }
     private void pair() {
         page("pair","Bring your keyboard","Customize from a browser on your home network. Every pairing needs your approval here.");
-        pairInfo=text(addressText(),19,mint); content.addView(pairInfo); content.addView(text("Pairing code:  "+pairing.begin(),36,Color.WHITE)); content.addView(text("Expires in 2 minutes. Five incorrect attempts lock this code.\nApprove only a browser you just requested. Codes and sessions are reset after an app restart.",16,muted));
+        pairInfo=text(addressText(),19,mint); content.addView(pairInfo);
+        if(!addresses.isEmpty()){
+            try{
+                Bitmap qr=createQrBitmap(addresses.get(0),dp(180));
+                ImageView qrView=new ImageView(this);qrView.setTag("pair-qr");qrView.setImageBitmap(qr);qrView.setBackground(surface(Color.WHITE));qrView.setPadding(dp(8),dp(8),dp(8),dp(8));
+                LinearLayout.LayoutParams qp=new LinearLayout.LayoutParams(dp(196),dp(196));qp.setMargins(0,dp(12),0,dp(12));qrView.setLayoutParams(qp);content.addView(qrView);
+                content.addView(text("Scan with your iPhone camera to open Safari",15,muted));
+            }catch(Throwable ignored){}
+        }
+        content.addView(text("Pairing code:  "+pairing.begin(),36,Color.WHITE)); content.addView(text("Expires in 2 minutes. Five incorrect attempts lock this code.\nApprove only a browser you just requested. Codes and sessions are reset after an app restart.",16,muted));
         content.addView(action("Generate a new code","new-code",this::pair)); content.addView(action("Revoke all browsers","revoke",()->{ pairing.revoke(); message("Browser sessions revoked."); pair(); }));
     }
     @Override public void approve(String name) { handler.post(()->{ if(!foreground||!screen.equals("pair")) { pairing.cancel(); return; } new AlertDialog.Builder(this).setTitle("Allow “"+name+"” to edit?").setMessage("Approve only if you just submitted the code from your PC.").setPositiveButton("Allow",(d,n)->pairing.approve()).setNegativeButton("Deny",(d,n)->pairing.cancel()).setOnCancelListener(d->pairing.cancel()).show(); }); }
@@ -435,6 +550,32 @@ public final class MainActivity extends Activity implements EditorServer.Host {
     @Override public JSONObject media() throws Exception { if(!foreground)throw new IOException();return received.snapshot(); }
     @Override public JSONObject upload(InputStream input,long length,String name,String id,java.util.function.BooleanSupplier allowed) throws Exception {
         if(!foreground)throw new IOException();JSONObject item=received.receive(input,length,name,id,()->foreground&&allowed.getAsBoolean());handler.post(()->{if(foreground&&(screen.equals("home")||screen.equals("shared"))) {if(screen.equals("shared"))shared();else home();}message("Video saved on TV. Open Shared & Recent to play.");});return item;
+    }
+    @Override public JSONObject updateMedia(String id,JSONObject patch) throws Exception {
+        if(!foreground)throw new IOException();
+        JSONObject updated=received.update(id,patch);
+        if(patch.has("label")){
+            try{JSONObject h=viewing.ledger.find("local:"+id);if(h!=null){h.put("label",updated.optString("label"));persistViewing();}}catch(Exception ignored){}
+        }
+        handler.post(()->{if(foreground&&(screen.equals("home")||screen.equals("shared")||screen.equals("media-storage"))){if(screen.equals("home"))home();else if(screen.equals("shared"))shared();else mediaStorage();}});
+        return updated;
+    }
+    @Override public void deleteMedia(String id) throws Exception {
+        if(!foreground)throw new IOException();
+        received.delete(id);
+        try{viewing.ledger.remove("local:"+id);persistViewing();}catch(Exception ignored){}
+        mediaThumbnails.remove(id);
+        handler.post(()->{if(foreground&&(screen.equals("home")||screen.equals("shared")||screen.equals("media-storage"))){if(screen.equals("home"))home();else if(screen.equals("shared"))shared();else mediaStorage();}});
+    }
+    @Override public void resetMediaProgress(String id) throws Exception {
+        if(!foreground)throw new IOException();
+        viewing.ledger.mark("local:"+id,false);
+        persistViewing();
+        handler.post(()->{if(foreground&&screen.equals("home"))home();});
+    }
+    @Override public byte[] mediaThumbnail(String id) throws Exception {
+        if(!foreground)throw new IOException();
+        return received.thumbnailBytes(id);
     }
     @Override public JSONObject config() throws Exception { if(!foreground) throw new IOException(); return store.read(); }
     @Override public JSONObject save(JSONObject input,long revision,String mutation) throws Exception { if(!foreground) throw new IOException(); DashboardDocument.validate(input); validateBackground(input); JSONObject result=store.save(input,revision,mutation); handler.post(()->{ if(screen.equals("home")) home(); }); return result; }

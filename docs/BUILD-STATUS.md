@@ -6,7 +6,10 @@ PR #5 merged into main at `247671613c9552fa9f67eda179a67528a680ddcf`. PR #6 merg
 
 Owner reports Home is smooth and closer to the aesthetic, apps launch correctly, and tried remote navigation works. Visual acceptance is incomplete. Home from YouTube and TV restart return to the existing environment: **default-Home outcome failed in the reported test**, cause/setup path unconfirmed. File upload/retained replay were not tested. Reported external YouTube AirPlay use is not evidence of Nook integration. See [feedback](TV-FEEDBACK.md).
 
-F1 implemented: supported RoleManager.ROLE_HOME request on API 29+, settings fallback coordinator, multi-signal verification and safe recovery guards. Planned for subsequent slices: refined design system (F2), YouTube/RSS modules (F3), companion redesign (F3), QR/thumbnails/library refinements (F4). Follow [F1-F6](DEVELOPMENT-PLAN.md); historical build/CI evidence below is preserved.
+F1 implemented: supported RoleManager.ROLE_HOME request on API 29+, settings fallback coordinator, multi-signal verification and safe recovery guards.
+F2 implemented: cohesive Apple TV-inspired dark gradient, responsive 16:9 widescreen card geometry, smooth 1.04x focus animations with elevated depth and 3dp focus borders, and dedicated vector glyphs for YouTube channels and RSS feeds.
+F3 implemented: paired companion YouTube and RSS feed configuration with live on-TV feed testing, SSRF and XXE hardened parsers, responsive TV content shelves with 30-minute background caching, and remote focus identity preservation.
+F4 implemented: offline pure Java QR code generator (Versions 1–4, Byte mode, ECC L) for instant iPhone camera scanning, rotation-aware video thumbnail generation downscaled to 320x180 JPEG, personal video shelf on TV Home with pin priority and collection badges, TV remote context options dialog, and authenticated companion media management APIs with pre-upload storage boundary checks. Follow [F1-F6](DEVELOPMENT-PLAN.md); historical build/CI evidence below is preserved.
 
 Updated 17 October 2026. The owner briefly installed/explored 0.2 in BlueStacks: it boots, but the experience does not match the desired launcher. He confirmed default Home, Apple TV-style aesthetics, YouTube, iPhone video sharing and easier return to shared media; Spotify is tentative, browser rare and Google Drive conditional.
 

@@ -17,6 +17,11 @@ All notable changes to Nook TV are documented in this file.
 - **Exact Video Launch & Plain-text Detail**: One-click direct launch to exact YouTube video with zero fabricated playback progress; concise plain-text dialog with "Open article" action for RSS.
 - **Feed Hardening & SSRF/XXE Protection**: Enforced public HTTPS targets, rejected loopback/LAN/private network hosts, disabled XML DOCTYPE and external entity resolution, and bounded feed body size to 2 MiB.
 - **Lifecycle & Cache Management**: Atomic persistence in `SourceStore`, 30-minute throttled background refresh with 2-worker bounded pool, and clear stale/offline status labeling when disconnected.
+- **F4 Personal Video Shelf & QR Setup**: Retained iPhone video transfers rendered on TV Home screen with pin priority, measured resume indicators, and collection tags.
+- **Pure Java QR Generator**: Self-contained, zero-dependency QR code generator (`QrCode.java`, Versions 1–4, Byte mode, ECC L) rendering pairing URLs on TV for instant iPhone camera scanning into Safari (no tokens embedded in QR).
+- **Off-Main-Thread Video Thumbnails**: Rotation-aware video thumbnail generation (`MediaMetadataRetriever` + `Matrix.postRotate` downsampled to 320x180 JPEG) with LRU caching and vector fallback.
+- **Companion Media Controls**: Authenticated endpoints (`/api/media/thumbnail`, `/api/media/update`, `/api/media/reset`, `/api/media/delete`) and rich cards with pre-upload storage checks in `media.js`.
+- **TV Remote Organization Dialog**: Remote context menu for saved videos offering Play / Resume, Start over, Pin / Unpin, Rename, Set collection, Hide / Show on Home, and Delete copy.
 
 ## [0.4.0-phone-preview] - 2026-10-17
 ### Added

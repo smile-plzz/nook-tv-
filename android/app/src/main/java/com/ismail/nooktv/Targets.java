@@ -17,4 +17,5 @@ public final class Targets {
         return h.equals("youtube.com") || h.equals("www.youtube.com") || h.equals("m.youtube.com") || h.equals("youtu.be");
     }
     public static boolean allowedHost(String host, java.util.Set<String> hosts) { return host != null && hosts.contains(host); }
+    public static boolean validMediaId(String id) { return id != null && id.matches("[a-f0-9]{32}"); }
 }
