@@ -4,7 +4,7 @@ Your personal space on the big screen: apps, Continue Watching, YouTube, NowShow
 
 ## Status
 
-**0.2.0 preview in development — 17 October 2026.**
+**0.2.0 preview built and emulator-checked - 17 October 2026.**
 The owner asked to continue while TV testing is unavailable. This preview expands the dashboard/editor, adds Media3 playback and begins native movie/series browsing. Target-TV acceptance remains pending; this is not a completed P0 or full-product release.
 
 Start with [build and installation](docs/BUILD-AND-INSTALL.md), [current implementation status](docs/BUILD-STATUS.md), and the [TV test checklist](docs/DEVICE-TEST.md).

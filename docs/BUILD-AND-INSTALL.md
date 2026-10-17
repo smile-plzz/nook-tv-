@@ -46,7 +46,9 @@ adb install -r app-debug.apk
 adb shell am start -n com.ismail.nooktv.compat/com.ismail.nooktv.MainActivity
 ```
 
-Same-key upgrades preserve/migrate M1 dashboard and progress. Local M1 builds used a workspace debug key; Gradle/CI debug keys may differ. If Android reports a signature mismatch, export your dashboard before deciding to uninstall/reinstall. Schema-v1 and schema-v2 dashboard imports are supported in the browser editor; viewing history and secrets are not in these exports. Keep the same development keystore for repeated builds where update continuity is needed. Production signing is still a later release gate.
+The delivered `nook-tv-0.2.0-preview.apk` was re-signed from the passing CI build with the same private development key as the delivered M1 APK. Its certificate matches M1, and v2/v3 signatures and alignment were verified. It can update that M1 installation. SHA-256: `43680b094c3f07207f07de325dedb5defac05c1893f5fc8cbed608c75140360d`.
+
+Same-key upgrades preserve/migrate M1 dashboard and progress. Raw Gradle/CI debug artifacts may use different keys from the delivered owner APK. If Android reports a signature mismatch, export your dashboard before deciding to uninstall/reinstall. Schema-v1 and schema-v2 dashboard imports are supported in the browser editor; viewing history and secrets are not in these exports. Keep the same development keystore for repeated builds where update continuity is needed. Production signing is still a later release gate.
 
 ## Browser editing / backup
 

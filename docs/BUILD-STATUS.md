@@ -14,7 +14,7 @@ Updated 17 October 2026. Ismail asked to proceed with the next phases while TV t
 | Viewing state | Up to 100 independent entries; native measured progress; resume/start over/mark watched/remove; recently opened web/app routes; pause and separate clear | No account history, cross-origin progress scraping or external-app timestamps |
 | Metadata | Native OMDb search/pagination/details; saved movie/series entries; independent season/episode selection; 6-hour metadata cache bounded at 150 records / 8 MiB; quota/key/offline states | Owner supplies optional key on TV; OMDb metadata does not establish stream availability |
 | Web sources | Up to ten owner-configured HTTPS IMDb URL templates; movie/series placeholder validation; selection saved separately; opaque web playback never claims timestamps | No provider preenabled or verified; provider contracts and remote input require later tests |
-| Android verification | Added real Android AtomicFile/mutation/recovery/progress and native navigation instrumentation; hosted API-35 emulator workflow | Execution results recorded below when completed; emulator is not the owner's TV |
+| Android verification | Real Android AtomicFile/mutation/recovery/progress, native navigation and Media3 playback instrumentation passed in hosted API-35 emulator | Emulator is not the owner's TV |
 
 ## Verification
 
@@ -22,8 +22,12 @@ Updated 17 October 2026. Ismail asked to proceed with the next phases while TV t
 - 17 actual HTTP-handler assertions passed locally with in-memory transport.
 - 35 new schema/migration/collection/source/viewing assertions passed locally.
 - Editor JavaScript syntax passed.
-- Hosted Gradle build, APK packaging and Android instrumentation: verification in progress during this draft.
-- No owner-TV, physical remote, home LAN, provider, media playback, 2 GB memory or two-hour result is claimed.
+- Editor state tests passed (save/conflict/retry/import/draft/privacy).
+- [Hosted Gradle build and APK packaging](https://github.com/smile-plzz/nook-tv-/actions/runs/39026599814) passed at code commit `1910d09803ede76cf22cef6f977ec77e76a2b428`.
+- [Android runtime smoke](https://github.com/smile-plzz/nook-tv-/actions/runs/39026602016) passed all 15 assertions on an API-35 tablet emulator, including storage recreation, mutation receipts, import recovery, history, navigation and Media3 prepare/progress/seek/pause against a generated local H.264/AAC fixture.
+- Playback instrumentation now waits for measured progress with a bounded timeout instead of assuming decoder startup completes after 900 ms. The earlier failure was this timing assertion.
+- The downloadable owner APK has verified v2/v3 signatures using the same certificate as the M1 APK; alignment and package/version were checked.
+- No owner-TV, physical remote, home LAN, provider playback, real-network media, 2 GB memory or two-hour result is claimed.
 
 The tests fixed a concrete M1 defect: link validation counted five fields even though saved links contain four. Schema-v2 tests now exercise valid saved links and reject malformed/dangling references.
 
@@ -39,4 +43,4 @@ The OMDb key is entered on TV and kept out of browser editing, backups and logs.
 
 ## Next work
 
-Continue resolving findings from hosted tests. When the TV is available, execute [device tests](DEVICE-TEST.md), then validate individual source contracts and network/remote behavior. Remaining full scope includes tested providers, richer metadata/artwork/episode browsing, fully polished native YouTube routes, Brave-specific routing/filtering, optional widgets, optional launcher and signed release continuity. Do not label P0 or the full product accepted merely because CI passes.
+When the TV is available, execute [device tests](DEVICE-TEST.md), then validate individual source contracts and network/remote behavior. Remaining full scope includes tested providers, richer metadata/artwork/episode browsing, fully polished native YouTube routes, Brave-specific routing/filtering, optional widgets, optional launcher and production release signing. Do not label P0 or the full product accepted merely because CI passes.
