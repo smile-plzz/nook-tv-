@@ -16,6 +16,13 @@ public final class SmokeInstrumentation extends Instrumentation {
     private void check(boolean condition,String description) { assertions++; if(!condition) throw new AssertionError(description); }
     private void onMain(Runnable run) { final Throwable[] failure={null}; runOnMainSync(()->{ try { run.run(); } catch(Throwable e) { failure[0]=e; } }); if(failure[0]!=null) throw new AssertionError("Main-thread test operation failed",failure[0]); }
     private View awaitTag(Activity activity,String tag) throws Exception { final View[] found={null};long deadline=System.currentTimeMillis()+10000;while(System.currentTimeMillis()<deadline){onMain(()->found[0]=activity.getWindow().getDecorView().findViewWithTag(tag));if(found[0]!=null)return found[0];Thread.sleep(80);}throw new AssertionError("Missing view: "+tag); }
+    private void loopbackTransfer(Activity activity,Context context,byte[] fixture)throws Exception{
+        java.lang.reflect.Field field=MainActivity.class.getDeclaredField("pairing");field.setAccessible(true);Pairing pairing=(Pairing)field.get(activity);String code=pairing.begin(),ticket=pairing.request(code,"Instrumentation");pairing.approve();String[] session=pairing.claim(ticket);String id="44444444444444444444444444444444";
+        String headers="POST /api/media/upload HTTP/1.1\r\nHost: 127.0.0.1:8765\r\nOrigin: http://127.0.0.1:8765\r\nX-Nook-Client: editor-v1\r\nAuthorization: Bearer "+session[0]+"\r\nX-Nook-CSRF: "+session[1]+"\r\nContent-Type: application/octet-stream\r\nX-Nook-Filename: Loopback%20video.mp4\r\nX-Nook-Upload-Id: "+id+"\r\nContent-Length: "+fixture.length+"\r\n\r\n";
+        String response;try(java.net.Socket socket=new java.net.Socket("127.0.0.1",8765);java.io.ByteArrayOutputStream reply=new java.io.ByteArrayOutputStream()){socket.setSoTimeout(20000);socket.getOutputStream().write(headers.getBytes("UTF-8"));socket.getOutputStream().write(fixture);socket.getOutputStream().flush();byte[] buffer=new byte[4096];int n;while((n=socket.getInputStream().read(buffer))!=-1)reply.write(buffer,0,n);response=reply.toString("UTF-8");}
+        check(response.startsWith("HTTP/1.1 200"),"real Android socket upload acknowledged after saving");check(new ReceivedMediaStore(context).playable(id).length()==fixture.length,"HTTP pipeline commits retained copy");
+        onMain(()->{try{java.lang.reflect.Field player=MainActivity.class.getDeclaredField("player");player.setAccessible(true);check(player.get(activity)==null,"receiving a file does not start playback");}catch(Exception e){throw new RuntimeException(e);}});pairing.revoke();
+    }
     @Override public void onCreate(Bundle arguments) { super.onCreate(arguments); start(); }
     @Override public void onStart() {
         Bundle result=new Bundle();
@@ -32,6 +39,8 @@ public final class SmokeInstrumentation extends Instrumentation {
             ViewingStore viewing=new ViewingStore(context); viewing.ledger.pause(false); viewing.ledger.opened("native-test","Test","https://example.com/sample.mp4","native"); viewing.ledger.observe("native-test",30000,100000,false,false); viewing.persist(); check(new ViewingStore(context).ledger.find("native-test").getLong("position")==30000,"committed progress survives recreation");
             viewing.ledger.remove("native-test");viewing.persist();
             DashboardStore uiStore=new DashboardStore(context);JSONObject uiConfig=new JSONObject(original.toString());String probe=new ComponentName(getContext(),LaunchProbeActivity.class).flattenToString();uiConfig.put("apps",new JSONArray().put(probe));uiConfig.put("title","Make yourself at home.");uiStore.save(uiConfig,uiStore.read().getLong("revision"),"instrumentation-ui-setup");
+            byte[] retainedFixture;try(java.io.InputStream in=getContext().getAssets().open("fixture.mp4");java.io.ByteArrayOutputStream out=new java.io.ByteArrayOutputStream()){byte[] buffer=new byte[4096];int n;while((n=in.read(buffer))!=-1)out.write(buffer,0,n);retainedFixture=out.toByteArray();}
+            assertions+=ReceivedMediaChecks.run(context,retainedFixture);
             Intent intent=new Intent(context,MainActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK); Activity activity=startActivitySync(intent); waitForIdleSync();
             View direct=awaitTag(activity,"app-"+probe);
             onMain(()->{View root=activity.getWindow().getDecorView();check(root.findViewWithTag("favorite-grid")!=null,"artwork app grid reachable");check(root.findViewWithTag("sample-mp4")==null&&root.findViewWithTag("diagnostics")==null&&root.findViewWithTag("nav-pair")==null,"Home excludes samples and pairing clutter");check(direct.isFocusable(),"app tile accepts remote focus");});
@@ -55,6 +64,16 @@ public final class SmokeInstrumentation extends Instrumentation {
             boolean eligible=false;for(android.content.pm.ResolveInfo r:context.getPackageManager().queryIntentActivities(new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME),0))if(r.activityInfo.packageName.equals(context.getPackageName()))eligible=true;check(eligible,"enabled alias advertises HOME");
             context.getPackageManager().setComponentEnabledSetting(alias,android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED,android.content.pm.PackageManager.DONT_KILL_APP);
             sendKeyDownUpSync(KeyEvent.KEYCODE_BACK);waitForIdleSync();
+            loopbackTransfer(activity,context,retainedFixture);waitForIdleSync();
+            View savedVideo=awaitTag(activity,"received-"+ReceivedMediaChecks.ID);onMain(savedVideo::performClick);waitForIdleSync();
+            final ExoPlayer[] retainedPlayer={null};CountDownLatch retainedReady=new CountDownLatch(1);
+            onMain(()->{try{java.lang.reflect.Field field=MainActivity.class.getDeclaredField("player");field.setAccessible(true);retainedPlayer[0]=(ExoPlayer)field.get(activity);retainedPlayer[0].addListener(new Player.Listener(){@Override public void onPlaybackStateChanged(int state){if(state==Player.STATE_READY)retainedReady.countDown();}});if(retainedPlayer[0].getPlaybackState()==Player.STATE_READY)retainedReady.countDown();}catch(Exception e){throw new RuntimeException(e);}});
+            check(retainedReady.await(20,TimeUnit.SECONDS),"production player prepares retained phone video without sender");
+            onMain(()->{check(retainedPlayer[0].getCurrentMediaItem().localConfiguration.uri.getScheme().equals("file"),"retained playback resolves private local file");retainedPlayer[0].seekTo(1200);retainedPlayer[0].pause();});Thread.sleep(250);
+            onMain(()->activity.getWindow().getDecorView().findViewWithTag("player-close").performClick());waitForIdleSync();
+            // AtomicFile instances do not coordinate writers/readers. Drain the app's writer before reopening disk state.
+            java.lang.reflect.Field ioField=MainActivity.class.getDeclaredField("io");ioField.setAccessible(true);((java.util.concurrent.ExecutorService)ioField.get(activity)).submit(()->{}).get(10,TimeUnit.SECONDS);
+            JSONObject lastSaved=new ViewingStore(context).ledger.find("local:"+ReceivedMediaChecks.ID);check(lastSaved!=null&&lastSaved.optLong("position")>=1100,"retained-video progress persists after leaving production player: "+lastSaved);
             java.io.File fixture=new java.io.File(context.getCacheDir(),"fixture.mp4");
             try(java.io.InputStream in=getContext().getAssets().open("fixture.mp4"); java.io.OutputStream out=new java.io.FileOutputStream(fixture)) { byte[] bytes=new byte[4096]; int n; while((n=in.read(bytes))!=-1) out.write(bytes,0,n); }
             final ExoPlayer[] player={null}; final PlayerView[] view={null}; CountDownLatch ready=new CountDownLatch(1); final String[] failure={null};

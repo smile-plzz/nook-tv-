@@ -9,12 +9,16 @@ import java.util.concurrent.*;
 
 /** Bounded HTTP server serving only bundled editor assets and scoped configuration APIs. */
 public final class EditorServer {
+    public static final long MAX_UPLOAD_BYTES=512L*1024*1024;
+    public static final class RequestFailure extends IOException { final int status; RequestFailure(int status,String message){super(message);this.status=status;} }
     public interface Host {
         byte[] asset(String name) throws IOException;
         JSONObject config() throws Exception;
         JSONObject save(JSONObject input, long revision, String mutation) throws Exception;
         default JSONObject restore(JSONObject input,long revision,String mutation) throws Exception { throw new IllegalArgumentException("Import unavailable"); }
         default JSONObject inventory() throws Exception { return new JSONObject().put("apps",new JSONArray()); }
+        default JSONObject media() throws Exception { return new JSONObject().put("items",new JSONArray()); }
+        default JSONObject upload(InputStream input,long length,String name,String id,java.util.function.BooleanSupplier allowed) throws Exception { throw new RequestFailure(503,"Video receiving is unavailable."); }
         void approve(String name);
     }
     private final Pairing pairing;
@@ -56,10 +60,21 @@ public final class EditorServer {
             if(!Targets.allowedHost(authority,hosts) || h.containsKey("transfer-encoding")) { reply(client,403,"text/plain",bytes("Invalid host")); return; }
             boolean api=path.startsWith("/api/");
             if(api && (!"editor-v1".equals(h.get("x-nook-client")) || (h.containsKey("origin")&&!h.get("origin").equals("http://"+authority)) || (method.equals("POST")&&!Objects.equals(h.get("origin"),"http://"+authority)))) { reply(client,403,"text/plain",bytes("Invalid editor origin")); return; }
-            if(!api && method.equals("GET") && (path.equals("/")||path.equals("/editor.js")||path.equals("/editor.css"))) {
+            if(!api && method.equals("GET") && (path.equals("/")||path.equals("/editor.js")||path.equals("/media.js")||path.equals("/editor.css"))) {
                 reply(client,200,path.endsWith(".js")?"application/javascript":path.endsWith(".css")?"text/css":"text/html",host.asset(path.equals("/")?"editor.html":path.substring(1))); return;
             }
             if(!api) { reply(client,404,"text/plain",bytes("Not found")); return; }
+            if(path.equals("/api/media/upload")&&method.equals("POST")){
+                String authorization=h.getOrDefault("authorization",""),uploadToken=authorization.startsWith("Bearer ")?authorization.substring(7):"",csrf=h.get("x-nook-csrf");
+                if(!pairing.authorized(uploadToken,csrf)){reply(client,401,"application/json",bytes("{\"error\":\"Pair this browser again on TV.\"}"));return;}
+                long uploadLength=Long.parseLong(h.getOrDefault("content-length","-1"));
+                if(uploadLength<12||uploadLength>MAX_UPLOAD_BYTES)throw new RequestFailure(413,"Choose a video up to 512 MiB.");
+                if(!"application/octet-stream".equals(h.get("content-type")))throw new RequestFailure(415,"Send an MP4/MOV video as a binary file.");
+                client.setSoTimeout(15000);
+                String filename=URLDecoder.decode(h.getOrDefault("x-nook-filename",""),"UTF-8"),uploadId=h.getOrDefault("x-nook-upload-id","");
+                JSONObject received=host.upload(in,uploadLength,filename,uploadId,()->pairing.authorized(uploadToken,csrf));
+                reply(client,200,"application/json",bytes(new JSONObject().put("item",received).toString()));return;
+            }
             int length=Integer.parseInt(h.getOrDefault("content-length","0"));
             if(length<0||length>1000000) { reply(client,413,"text/plain",bytes("Body too large")); return; }
             if(method.equals("POST")&&!"application/json".equals(h.get("content-type"))) { reply(client,415,"text/plain",bytes("JSON required")); return; }
@@ -79,13 +94,15 @@ public final class EditorServer {
                 String auth=h.getOrDefault("authorization",""); String token=auth.startsWith("Bearer ")?auth.substring(7):"";
                 if(!pairing.authorized(token,h.get("x-nook-csrf"))) { reply(client,401,"application/json",bytes("{\"error\":\"Pair this browser again on the TV.\"}")); return; }
                 if(path.equals("/api/config")&&method.equals("GET")) result=host.config();
+                else if(path.equals("/api/media")&&method.equals("GET")) result=host.media();
                 else if(path.equals("/api/inventory")&&method.equals("GET")) result=host.inventory();
                 else if(path.equals("/api/config")&&method.equals("POST")) result=host.save(data.getJSONObject("config"),data.getLong("expectedRevision"),data.getString("mutationId"));
                 else if(path.equals("/api/import")&&method.equals("POST")) result=host.restore(data.getJSONObject("config"),data.getLong("expectedRevision"),data.getString("mutationId"));
                 else { status=404; result.put("error","Not found"); }
             }
             reply(client,status,"application/json",bytes(result.toString()));
-          } catch(java.util.ConcurrentModificationException e) { reply(client,409,"application/json",bytes("{\"error\":\"Dashboard changed elsewhere. Reload before saving.\"}")); }
+          } catch(RequestFailure e) { reply(client,e.status,"application/json",bytes(new JSONObject().put("error",e.getMessage()).toString())); }
+            catch(java.util.ConcurrentModificationException e) { reply(client,409,"application/json",bytes("{\"error\":\"Dashboard changed elsewhere. Reload before saving.\"}")); }
             catch(IllegalArgumentException|JSONException e) { reply(client,400,"application/json",bytes("{\"error\":\"Invalid configuration or request. Check names, URLs and limits.\"}")); }
             catch(Exception e) { reply(client,503,"application/json",bytes("{\"error\":\"TV unavailable or unable to save. Reopen Nook and reload.\"}")); }
         } catch(Exception ignored) { /* Client disconnect or timed-out connection. No request secrets logged. */ }

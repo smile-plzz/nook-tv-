@@ -1,6 +1,8 @@
 # iPhone media and Google Drive feasibility
 
-17 October 2026 | Planning assessment, not implemented functionality
+17 October 2026 | Feasibility assessment with first retained-file path implemented in 0.4
+
+The [0.4 transfer guide](PHONE-TRANSFER-PREVIEW.md) describes current binary upload, saved-copy playback and storage controls. Other protocol/account routes below remain proposals. No real iPhone/owner-TV acceptance is claimed.
 
 The owner wants native-feeling iPhone video sharing and a simple way back to previously shared media. Google Drive access is requested if feasible. These outcomes are now tracked separately from NowShowing and arbitrary website playback.
 
@@ -12,7 +14,7 @@ The owner wants native-feeling iPhone video sharing and a simple way back to pre
 | External Android receiver app | Potential AirPlay receiver UI | Integration, license, cost, DRM and lifecycle vary | Evaluate independently; no bundled/recommended app established yet |
 | Existing Google Cast receiver | Participating iPhone apps can cast to compatible receiver | Not arbitrary Photos/Share Sheet/AirPlay; Nook may not observe session | Reuse verified device facility; do not advertise a built-in Cast receiver |
 | Paired Safari link submission | Save a supported stable URL and open in intended handler | Link may expire; external progress unavailable | Extend existing companion UX; preserve source identity/capability |
-| Paired Safari file transfer | TV keeps a permitted video copy, plays it through Media3 | Needs disk quota, upload endpoint, codec and interrupted-transfer handling | Preferred first self-contained prototype for durable replay; proposal, not owner-selected replacement for AirPlay |
+| Paired Safari file transfer | TV keeps a permitted video copy, plays it through Media3 | Needs disk quota, upload endpoint, codec and interrupted-transfer handling | Implemented first saved-file path in 0.4, still device-unverified; not a replacement for AirPlay |
 | iOS Share Sheet/Shortcut/companion | Potential shorter sending gesture | Requires a separate integration and privacy/setup design | Evaluate after basic route; no iOS app currently exists |
 
 Sources: [Apple AirPlay instructions](https://support.apple.com/en-us/102661), [Apple local-network permissions](https://support.apple.com/en-us/102229), [Google iPhone casting/local network](https://support.google.com/chromecast/answer/10063094?hl=en). Consulted 17 October 2026. These explain supported platform behavior, not compatibility with the owner's TV.
@@ -29,15 +31,15 @@ Store durable source identity separately from resolved playback URL:
 
 Record position only when observed. A replayable native item may say Resume. An external link says Open again. A phone-only session says Reconnect phone. Mirroring alone does not create a saved recording or playable history item. Do not merge same-named files or apply progress across changed file content.
 
-## Proposed retained-transfer design
+## Retained-transfer design and 0.4 status
 
 TV opens a foreground receive screen, displays a QR/address, and requires pairing/TV approval. Safari chooses one file; TV checks configured size/quota/free space before and during streaming. Use opaque IDs, MIME/content validation, safe metadata and no arbitrary filesystem paths.
 
-This is a new media endpoint, separate from the current 1 MiB JSON editor contract. Stream to app-private temporary disk, enforce request and storage limits, cancel/delete partial files, atomically finalize complete files. Never base64 a video into dashboard JSON or load the entire body into RAM. Initial proposed limits: one transfer at a time, configurable retained-media quota, and an explicit tested per-file maximum; choose numeric defaults only after TV free-space and throughput measurements.
+0.4 implements this as a new raw-binary media endpoint, separate from the existing 1 MB JSON editor contract. Stream to app-private temporary disk, enforce request and storage limits, cancel/delete partial files, atomically finalize complete files. Never base64 a video into dashboard JSON or load the entire body into RAM. 0.4 uses conservative fixed preview limits: one operation, 512 MiB/file, 1 GiB retained quota, 50 listed videos and 128 MiB free-space reserve. These are not maximum-device performance claims; tuning/configurable quotas follow real-TV evidence.
 
 Retained media is durable user data, not disposable cache. History clear preserves files; Delete saved copy explicitly confirms file deletion. Dashboard export excludes media payloads and reports unresolved local references after restore on another device.
 
-Current foreground HTTP editor is paired but not encrypted. Do not present file upload as confidential on untrusted LANs. Decide whether to add authenticated TLS/pinned setup or limit an explicitly described home-LAN prototype; keep Google tokens/passwords outside HTTP. No always-on server is implied by default-home status. Background transfer requires its own lifecycle/notification decision before implementation.
+Current foreground HTTP editor is paired but not encrypted. Do not present file upload as confidential on untrusted LANs. 0.4 explicitly limits this path to the described HTTP home-LAN preview; a protected-transport upgrade remains separate. keep Google tokens/passwords outside HTTP. No always-on server is implied by default-home status. Background transfer requires its own lifecycle/notification decision before implementation.
 
 Real iPhone tests: Photos/Files selection, orientation, large file, interruption, cancellation, low space, HEVC compatibility, phone locking/disconnection, TV restart and resumed replay. Transcoding is not included by assumption.
 

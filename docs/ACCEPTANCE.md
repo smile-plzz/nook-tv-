@@ -97,5 +97,5 @@ For each scenario record commit/APK hash, actual device, sender/receiver/source,
 
 First usable launcher requires all P0 outcomes and explicit owner experience review on target TV/iPhone. Later conditional/requested scope needs delivered behavior or owner-accepted limitations. No unresolved data loss, unauthorized access, launcher lockout or remote navigation trap is acceptable.
 
-Documentation links/coverage were validated. The 0.3 prototype passed 24 Android emulator storage/player/UI assertions; see [build status](BUILD-STATUS.md) for exact coverage. Physical TV/iPhone and full scenario acceptance remain unrun.
+Documentation links/coverage were validated. The 0.3 prototype passed 24 Android emulator storage/player/UI assertions; see [build status](BUILD-STATUS.md) for exact coverage. 0.4 adds retained-file/HTTP/production-player tests; current results are recorded in [build status](BUILD-STATUS.md). Physical TV/iPhone and full scenario acceptance remain unrun.
 

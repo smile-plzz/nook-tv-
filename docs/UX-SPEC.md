@@ -2,6 +2,8 @@
 
 Baseline 2.0 | 17 October 2026 | Proposed implementation of the confirmed Apple TV-style default-home direction
 
+0.4 implements the paired-browser retained-file path and local playback/storage controls; see [current transfer guide](PHONE-TRANSFER-PREVIEW.md). AirPlay, QR setup and Drive account access are not delivered by this slice. The design below still includes planned behavior.
+
 ## Design intent
 
 A calm, recognizable home to use from the sofa. Use an app grid as the visual anchor, generous margins, rounded rectangular banners, legible type and a clear focused tile. Restrained enlargement/shadow and short transitions convey focus; reduced motion removes movement. Wallpaper supports the content rather than dominating it. Avoid dense toolbar buttons, glowing text-only tiles, autoplay heroes and continuous background effects on a 2 GB TV.
@@ -96,3 +98,4 @@ Useful messages include:
 - Your layout changed elsewhere. Reload the latest version.
 
 Technical details, sample players and diagnostics belong in Settings > Help & diagnostics. [Acceptance](ACCEPTANCE.md) verifies these flows; current 0.2 text-button UI does not satisfy this design.
+

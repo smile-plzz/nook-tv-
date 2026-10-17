@@ -11,3 +11,7 @@ if ($LASTEXITCODE -ne 0) { throw 'Core tests failed' }
 if ($LASTEXITCODE -ne 0) { throw 'Editor JavaScript syntax check failed' }
 Push-Location $repo
 try { & node tests/editor-state.test.cjs; if ($LASTEXITCODE -ne 0) { throw 'Editor state tests failed' } } finally { Pop-Location }
+& node --check "$repo\android\app\src\main\assets\media.js"
+if ($LASTEXITCODE -ne 0) { throw 'Media transfer JavaScript syntax check failed' }
+Push-Location $repo
+try { & node tests/media-transfer.test.cjs; if ($LASTEXITCODE -ne 0) { throw 'Media transfer tests failed' } } finally { Pop-Location }

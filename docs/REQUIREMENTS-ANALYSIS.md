@@ -30,7 +30,7 @@ The implementation optimized infrastructure and editable dashboard breadth befor
 
 The earlier standalone-first baseline made launcher support P1 and placed discovery before everyday navigation. That ordering is superseded. Launcher, recognizable app grid and phone-media return are P0. NowShowing/provider work, richer YouTube and Brave/filtering remain requested P1 work. Mood/weather/widgets become optional P2. Spotify/Drive do not become mandatory accounts for Home.
 
-The pivot baseline was documentation-only, then the owner merged it and requested the next steps. The 0.3 [prototype](LAUNCHER-PREVIEW.md) now implements grid/direct-app and initial Home setup. Phone receiving/Drive remain future work. Follow the new sequence.
+The pivot baseline was documentation-only, then the owner merged it and requested the next steps. The 0.3 [prototype](LAUNCHER-PREVIEW.md) now implements grid/direct-app and initial Home setup. 0.4 now adds the [retained-file workflow](PHONE-TRANSFER-PREVIEW.md); real iPhone/Safari acceptance, AirPlay and Drive remain future work. Follow the new sequence.
 
 ## Feasibility and evidence
 

@@ -49,7 +49,7 @@ Owner instructions govern; [PRD](PRD.md) is current scope. A design proposal is 
 
 ## Authorization and next work
 
-Earlier owner messages authorized implementation and continuing without immediate TV testing. The pivot instruction requested documentation updates; after merging, the owner requested the next steps. The 0.3 prototype now delivers the reviewable launcher interface and initial Home setup. No receiver/account connection is implemented. Further work follows [development plan](DEVELOPMENT-PLAN.md).
+Earlier owner messages authorized implementation and continuing without immediate TV testing. The pivot instruction requested documentation updates; after merging, the owner requested the next steps. The 0.3 prototype now delivers the reviewable launcher interface and initial Home setup. 0.4 adds the [paired-browser retained-file path](PHONE-TRANSFER-PREVIEW.md); AirPlay and account connections remain unimplemented. Further work follows [development plan](DEVELOPMENT-PLAN.md).
 
 ## Open implementation decisions
 
