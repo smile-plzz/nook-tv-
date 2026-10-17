@@ -6,7 +6,7 @@ A personal Android TV Home screen with direct app access, selected YouTube/RSS c
 
 The F5 hardening candidate is **0.4.5-f5-hardening**, version code **5**. It includes F1–F4 and the correctness fixes described in [F5 hardening](docs/F5-HARDENING.md). Dashboard schema v2, app ID `com.ismail.nooktv.compat`, native Java Views, Media3 and independent atomic stores are preserved.
 
-**Branch reconciliation:** the initial audit found main at F2 `273755c`. During this task, the owner merged PRs #12/#13; main is now `1bae04d`, with the same F4 source tree as merge `1c65cf8`. PR #14 targets main and contains the F5 repairs. No PR is merged automatically.
+**Merged for owner testing:** [PR #14](https://github.com/smile-plzz/nook-tv-/pull/14) was merged into `main` with explicit owner approval on 17 October 2026, merge `e3b6159`. F1–F4 and F5 repairs are included. Follow the [current device checklist](docs/DEVICE-TEST.md#045-owner-test-session); physical-device acceptance is pending.
 
 Implemented source includes:
 

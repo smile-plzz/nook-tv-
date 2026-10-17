@@ -1,5 +1,12 @@
 # Development Log
 
+## 2026-10-17T23:00:02+06:00 — Owner-authorized merge and testing handoff
+- Merged PR #14 at e3b6159bbec0bcf741dd4e6f14c7d07aad82472b after explicit owner instruction; verified PR closed/merged and main tree 9f41e8da1897b836c639f2363bef2c74d45aa68c includes final evidence docs.
+- Synced main ancestry into the repair branch to resolve GitHub's stale PR head; resulting source tree was unchanged.
+- Reconciled README, build status, F5 notes, implementation handoff and changelog; added a focused owner testing checklist and feedback template.
+- Prior automated results remain 654 Java assertions, both browser suites, hosted APK build, 64 Android runtime assertions and eight same-key upgrade checks. This documentation-only update introduces no application changes or new test claims.
+- Waiting for owner TV/iPhone feedback. F5 device acceptance and F6 integrations remain pending.
+
 ## 2026-10-17T22:50:30+06:00 — F5 verification complete; PR #14 ready for review
 - Verified code/test commit 16118d7bd33f05b81906a665fdbdbe2d4dcb997b.
 - Hosted Compatibility APK run 39050796498 passed; Android runtime run 39050796495 passed 64 storage/activity assertions and eight same-key F4-to-F5 upgrade checks.

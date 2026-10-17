@@ -4,7 +4,7 @@
 
 ## Source reconciliation
 
-The initial audit found main at `273755c` (F2). PR #10/#11 targeted feature branches. During this task the owner merged PRs #12/#13; main is now `1bae04d`, whose tree is identical to F4 merge `1c65cf8`. PR #14 (`fix/f5-launcher-hardening`) contains the F5 repairs and targets main. Never merge without explicit owner instruction.
+PR #14 (`fix/f5-launcher-hardening`) merged into main with explicit owner approval on 17 October 2026 at `e3b6159`. Final verification documentation is included. The owner will test and return feedback; continue from current main and reproduce reported issues before changing behavior. Never merge further PRs without explicit owner instruction.
 
 ## Current candidate
 
@@ -12,7 +12,7 @@ Version `0.4.5-f5-hardening`, version code 5. F1 Home coordinator, F2 visual ref
 
 See build status for executed validation. Do not treat compile success or tablet emulator results as TV/iPhone acceptance. F5 is not fully accepted until actual-device gates pass.
 
-## Next work after PR review
+## Next work after owner testing
 
 1. Record installed version/signing certificate and back up dashboard.
 2. On owner's TV, select Nook as Home; test Home from YouTube, wake/reboot and restoration of the original launcher.

@@ -1,5 +1,40 @@
 # Target-TV and iPhone test checklist
 
+## 0.4.5 owner test session
+
+Status: PR #14 merged into main (`e3b6159`); awaiting owner results. Test **0.4.5-f5-hardening**, version code **5**. [Tested APK build / Artifacts](https://github.com/smile-plzz/nook-tv-/actions/runs/39050796498). Automated evidence is in [build status](BUILD-STATUS.md); the checklist below is not yet passed.
+
+Before updating, export the dashboard and retain original phone videos. Dashboard export does not include saved videos or viewing history. If Android reports a signing mismatch, stop and report it; do not uninstall or clear storage to force the update. CI debug signing may differ from the previously installed owner build.
+
+| Priority | Try | Report |
+|---|---|---|
+| 1 | Open Nook; launch YouTube/apps; navigate with D-pad and Back | Layout, speed, focus traps or wrong targets |
+| 2 | Set default Home; press Home from YouTube; sleep/wake, reboot; restore original Home | Actual system choices, persistence and recovery |
+| 3 | Scan QR in iPhone camera; open Safari on same LAN and approve pairing | Pairing success and clear connection errors |
+| 4 | Save one YouTube source and one RSS source; reopen editor; navigate shelves while refresh completes | Saved values, exact video opening, no focus/scroll jumps |
+| 5 | Send a small MP4/MOV, wait for Saved; play/pause/seek; disconnect phone, restart Nook and resume | Retained copy, actual progress, thumbnail orientation |
+| 6 | Rename, pin, collect and hide a clip; inspect every Home row and Shared/storage; show it again | Organization persists; hidden clip absent from Home but manageable |
+| 7 | Interrupt an upload by leaving Nook or disconnecting Wi-Fi; reopen and retry | No partial listed clip; useful failure and successful retry |
+| 8 | Drop and restore Wi-Fi with configured shelves | Cached/offline feedback, responsive remote and recovery |
+| 9 | Try portrait, HEVC/HDR clips; later use populated Home/playback for two hours | Device codec limits, crashes, slowdown or thumbnail problems |
+
+Do not deliberately fill TV storage; reserve/exhaustion cases have automated coverage and can be reproduced with controlled fixtures if feedback requires it. The companion stops when Nook leaves foreground; return to Nook and reconnect for companion operations.
+
+Send feedback in any format, ideally:
+
+```text
+Nook version / APK source:
+TV model / Android version:
+iPhone / iOS (if relevant):
+What I tried:
+Expected:
+What happened:
+Repeatable?:
+Screenshot/video (optional; hide pairing codes and private content):
+```
+
+Start with priorities 1–5; send blockers immediately. Mark untried items Not tested. Conditional receiver/Drive tests below are future scope, not requirements for this session.
+
 ## Results received 17 October 2026
 
 Brief owner TV trial: Home smooth/closer but design not approved; app launching and tried remote paths work; Home from YouTube and restart return to the existing environment. Upload and retained replay/resume were not tested. External YouTube sharing described as AirPlay worked, but receiver/protocol and Nook involvement are unverified. Exact APK/firmware and setup steps are still needed. See [feedback](TV-FEEDBACK.md).

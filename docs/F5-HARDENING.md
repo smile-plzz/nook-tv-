@@ -4,7 +4,7 @@
 
 ## Reconciled baseline
 
-This PR starts from F4 merge `1c65cf8`. The owner merged the stacked work through PRs #12/#13 while this task ran; main is now `1bae04d` with an identical F4 tree. PR #14 targets main with F5 repairs. No automatic merge is authorized.
+PR #14 merged into main at `e3b6159` on 17 October 2026 with explicit owner approval. F3/F4 consolidation and F5 repairs are included. Automated verification passed; owner TV/iPhone acceptance remains pending. Next action: [owner test session](DEVICE-TEST.md#045-owner-test-session).
 
 ## Correctness fixes
 

@@ -2,7 +2,7 @@
 
 ## Current source: F1–F4 reconciliation and F5 fixes
 
-This candidate starts at F4 merge `1c65cf8`. Main was initially F2 `273755c`; during this task the owner merged PRs #12/#13, moving main to `1bae04d` with the identical F4 tree. PR #14 contains the F5 repairs and targets main. No PR is merged automatically.
+[PR #14](https://github.com/smile-plzz/nook-tv-/pull/14) merged into `main` with explicit owner approval on 17 October 2026 at `e3b6159bbec0bcf741dd4e6f14c7d07aad82472b`. The merge includes the final verification documentation; application/test source remains the verified `16118d7` content. Status: ready for owner testing, awaiting feedback and physical-device acceptance. See [0.4.5 test session](DEVICE-TEST.md#045-owner-test-session).
 
 Version code is 5. Implemented candidate capabilities include Home-role setup, visual refinement, selected-source shelves/companion, QR and retained-video organization. [F5-HARDENING](F5-HARDENING.md) documents the save/refresh/focus/privacy/memory repairs and the unchanged data formats/quotas.
 
