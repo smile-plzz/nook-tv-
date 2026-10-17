@@ -18,7 +18,14 @@ public final class EditorServer {
         default JSONObject restore(JSONObject input,long revision,String mutation) throws Exception { throw new IllegalArgumentException("Import unavailable"); }
         default JSONObject inventory() throws Exception { return new JSONObject().put("apps",new JSONArray()); }
         default JSONObject media() throws Exception { return new JSONObject().put("items",new JSONArray()); }
+        default JSONObject sources() throws Exception { return new JSONObject().put("sources",new JSONArray()); }
+        default JSONObject saveSources(JSONObject input,long revision,String mutation) throws Exception { return sources(); }
+        default JSONObject testSource(JSONObject input) throws Exception { return new JSONObject().put("valid",true); }
         default JSONObject upload(InputStream input,long length,String name,String id,java.util.function.BooleanSupplier allowed) throws Exception { throw new RequestFailure(503,"Video receiving is unavailable."); }
+        default JSONObject updateMedia(String id,JSONObject patch) throws Exception { throw new RequestFailure(503,"Media update unavailable."); }
+        default void deleteMedia(String id) throws Exception { throw new RequestFailure(503,"Media deletion unavailable."); }
+        default void resetMediaProgress(String id) throws Exception { throw new RequestFailure(503,"Media progress reset unavailable."); }
+        default byte[] mediaThumbnail(String id) throws Exception { return null; }
         void approve(String name);
     }
     private final Pairing pairing;
@@ -75,6 +82,15 @@ public final class EditorServer {
                 JSONObject received=host.upload(in,uploadLength,filename,uploadId,()->pairing.authorized(uploadToken,csrf));
                 reply(client,200,"application/json",bytes(new JSONObject().put("item",received).toString()));return;
             }
+            if(path.startsWith("/api/media/thumbnail")&&method.equals("GET")){
+                String authorization=h.getOrDefault("authorization",""),token=authorization.startsWith("Bearer ")?authorization.substring(7):"";
+                if(!pairing.authorized(token,h.get("x-nook-csrf"))){reply(client,401,"application/json",bytes("{\"error\":\"Pair this browser again on TV.\"}"));return;}
+                String queryId="";int q=path.indexOf("?id=");if(q!=-1)queryId=path.substring(q+4);
+                if(!Targets.validMediaId(queryId)){reply(client,400,"application/json",bytes("{\"error\":\"Invalid media identity.\"}"));return;}
+                byte[] thumb=host.mediaThumbnail(queryId);
+                if(thumb==null||thumb.length==0){reply(client,404,"text/plain",bytes("No thumbnail"));return;}
+                reply(client,200,"image/jpeg",thumb);return;
+            }
             int length=Integer.parseInt(h.getOrDefault("content-length","0"));
             if(length<0||length>1000000) { reply(client,413,"text/plain",bytes("Body too large")); return; }
             if(method.equals("POST")&&!"application/json".equals(h.get("content-type"))) { reply(client,415,"text/plain",bytes("JSON required")); return; }
@@ -98,6 +114,12 @@ public final class EditorServer {
                 else if(path.equals("/api/inventory")&&method.equals("GET")) result=host.inventory();
                 else if(path.equals("/api/config")&&method.equals("POST")) result=host.save(data.getJSONObject("config"),data.getLong("expectedRevision"),data.getString("mutationId"));
                 else if(path.equals("/api/import")&&method.equals("POST")) result=host.restore(data.getJSONObject("config"),data.getLong("expectedRevision"),data.getString("mutationId"));
+                else if(path.equals("/api/sources")&&method.equals("GET")) result=host.sources();
+                else if(path.equals("/api/sources")&&method.equals("POST")) result=host.saveSources(data.getJSONObject("config"),data.getLong("expectedRevision"),data.getString("mutationId"));
+                else if(path.equals("/api/sources/test")&&method.equals("POST")) result=host.testSource(data);
+                else if(path.equals("/api/media/update")&&method.equals("POST")) result=host.updateMedia(data.optString("id"),data);
+                else if(path.equals("/api/media/delete")&&method.equals("POST")) { String id=data.optString("id"); host.deleteMedia(id); result=new JSONObject().put("status","deleted").put("id",id); }
+                else if(path.equals("/api/media/reset")&&method.equals("POST")) { String id=data.optString("id"); host.resetMediaProgress(id); result=new JSONObject().put("status","reset").put("id",id); }
                 else { status=404; result.put("error","Not found"); }
             }
             reply(client,status,"application/json",bytes(result.toString()));

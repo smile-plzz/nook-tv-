@@ -25,6 +25,11 @@ public final class EditorBoundaryTests {
         public JSONObject save(JSONObject c,long expected,String mutation) throws Exception { if(expected!=revision) throw new ConcurrentModificationException(); saves++; revision++; return config(); }
         public JSONObject media() throws Exception { return new JSONObject().put("items",new JSONArray()); }
         public JSONObject upload(InputStream in,long length,String name,String id,java.util.function.BooleanSupplier allowed)throws Exception{uploads++;if(!allowed.getAsBoolean())throw new AssertionError("Upload auth");for(int n=0;n<length;n++){if(in.read()<0)throw new EOFException();uploadedBytes++;}return new JSONObject().put("id",id).put("label",name);}
+        int updates, deletes, resets, thumbs;
+        public JSONObject updateMedia(String id,JSONObject patch) throws Exception { updates++; return new JSONObject().put("id",id).put("label",patch.optString("label")); }
+        public void deleteMedia(String id) throws Exception { deletes++; }
+        public void resetMediaProgress(String id) throws Exception { resets++; }
+        public byte[] mediaThumbnail(String id) throws Exception { if("0123456789abcdef0123456789abcdef".equals(id)){thumbs++;return "fake-jpeg".getBytes(StandardCharsets.UTF_8);} return null; }
         public void approve(String name) { approvals++; }
     }
     static String invoke(EditorServer server,String method,String path,String headers,String body) throws Exception {
@@ -64,8 +69,27 @@ public final class EditorBoundaryTests {
         check(invoke(server,"POST","/api/media/upload",base+origin+auth,raw).startsWith("HTTP/1.1 415"),"raw route rejects JSON upload content type");
         check(invoke(server,"POST","/api/media/upload",base+binary+auth,"tiny").startsWith("HTTP/1.1 413"),"raw route validates file size");
         check(invoke(server,"POST","/api/media/upload",base+binary+auth+"Transfer-Encoding: chunked\r\n",raw).startsWith("HTTP/1.1 403"),"raw route rejects ambiguous chunk framing");
+        check(invoke(server,"GET","/api/sources",base+auth,"").startsWith("HTTP/1.1 200"),"authenticated sources listing");
+        String saveSources=new JSONObject().put("expectedRevision",0).put("mutationId","valid-mutation-src").put("config",new JSONObject().put("sources",new JSONArray())).toString();
+        check(invoke(server,"POST","/api/sources",base+origin+auth,saveSources).startsWith("HTTP/1.1 200"),"authenticated sources mutation");
+        String testSource=new JSONObject().put("type","youtube").put("url","https://www.youtube.com/watch?v=dQw4w9WgXcQ").toString();
+        check(invoke(server,"POST","/api/sources/test",base+origin+auth,testSource).startsWith("HTTP/1.1 200"),"authenticated source testing");
+        check(invoke(server,"GET","/api/media/thumbnail?id=0123456789abcdef0123456789abcdef",base,"").startsWith("HTTP/1.1 401"),"thumbnail read requires auth");
+        check(invoke(server,"GET","/api/media/thumbnail?id=bad-id",base+auth,"").startsWith("HTTP/1.1 400"),"invalid thumbnail id rejected");
+        String thumbResp=invoke(server,"GET","/api/media/thumbnail?id=0123456789abcdef0123456789abcdef",base+auth,"");
+        check(thumbResp.startsWith("HTTP/1.1 200")&&thumbResp.contains("image/jpeg")&&host.thumbs==1,"authenticated thumbnail streamed");
+        check(invoke(server,"GET","/api/media/thumbnail?id=00000000000000000000000000000000",base+auth,"").startsWith("HTTP/1.1 404"),"missing thumbnail returns 404");
+        String updateMedia=new JSONObject().put("id","0123456789abcdef0123456789abcdef").put("label","New title").put("pinned",true).toString();
+        check(invoke(server,"POST","/api/media/update",base+origin+auth,updateMedia).startsWith("HTTP/1.1 200")&&host.updates==1,"authenticated media update");
+        String resetMedia=new JSONObject().put("id","0123456789abcdef0123456789abcdef").toString();
+        check(invoke(server,"POST","/api/media/reset",base+origin+auth,resetMedia).startsWith("HTTP/1.1 200")&&host.resets==1,"authenticated media progress reset");
+        String deleteMedia=new JSONObject().put("id","0123456789abcdef0123456789abcdef").toString();
+        check(invoke(server,"POST","/api/media/delete",base+origin+auth,deleteMedia).startsWith("HTTP/1.1 200")&&host.deletes==1,"authenticated media deletion");
         pairing.revoke();check(invoke(server,"POST","/api/media/upload",base+binary+auth,raw).startsWith("HTTP/1.1 401")&&host.uploads==1,"revoked upload blocked");
         check(invoke(server,"POST","/api/config",base+origin+auth,save).startsWith("HTTP/1.1 401")&&host.saves==1,"revoke prevents writes");
+        check(invoke(server,"GET","/api/sources",base+auth,"").startsWith("HTTP/1.1 401"),"revoke prevents sources reads");
+        check(invoke(server,"POST","/api/media/update",base+origin+auth,updateMedia).startsWith("HTTP/1.1 401"),"revoke prevents media update");
+        check(invoke(server,"POST","/api/media/delete",base+origin+auth,deleteMedia).startsWith("HTTP/1.1 401"),"revoke prevents media delete");
         System.out.println("PASS: "+count+" actual editor-handler assertions (in-memory transport; no device/network claim)");
     }
 }

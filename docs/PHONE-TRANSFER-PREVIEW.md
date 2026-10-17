@@ -6,11 +6,11 @@ Current 0.4 implementation guide, preserved after the TV feedback. PR #5 is merg
 
 ## Send from iPhone
 
-1. On TV open From iPhone > Pair a browser. Keep Nook in the foreground.
-2. Open the displayed HTTP address in Safari on the same home network. Enter the code and approve the browser request on TV. No iOS app is required.
-3. In Send a video, choose an MP4 or MOV from Photos or Files, then Send to TV. Confirm that a copy will be kept on this TV.
-4. Keep Safari and Nook open until **Saved on TV** appears. 100% sent is not a save acknowledgement: the TV still checks/finalizes the file.
-5. On TV open Shared & Recent or the Saved on this TV row. Select the video to play/resume. Your phone can disconnect once saving is confirmed.
+1. On TV open From iPhone > Pair a browser (or scan QR code). Keep Nook in the foreground.
+2. Scan the displayed QR code with your iPhone camera to open Safari directly to the TV LAN URL (no credentials embedded in QR), or type the displayed HTTP address. Enter the 6-digit code and approve the browser request on TV.
+3. In Send a video, choose an MP4 or MOV from Photos or Files, then Send to TV. Confirm that a copy will be kept on this TV. The companion checks TV storage before initiating upload.
+4. Keep Safari and Nook open until **Saved on TV** appears. 100% sent is not a save acknowledgement: the TV still checks/finalizes the file and generates a rotation-aware thumbnail.
+5. On TV Home or in Shared & Recent, select the video from the Personal video shelf to play/resume. Videos can be pinned to the front, categorized by collection, hidden from Home, or deleted via remote options or the paired browser. Your phone can disconnect once saving is confirmed.
 
 The same companion works from a PC browser. This is binary file transfer over local HTTP, not AirPlay, Cast, screen mirroring, an iOS Share Sheet extension or an always-on receiver. Safari/Photos/Files selection and actual iPhone codecs still require device testing. Do not treat Android emulator evidence as a tested iPhone route.
 
@@ -47,7 +47,11 @@ The current companion is HTTP, so pairing does not encrypt traffic. Use the inte
 | Operation | Contract |
 |---|---|
 | GET /api/media | Authenticated metadata/availability, usage, limits, damage/busy state; no video bytes |
+| GET /api/media/thumbnail?id=<id> | Authenticated binary image/jpeg thumbnail (320x180 downscaled, rotation-aware) |
 | POST /api/media/upload | Same-origin authenticated application/octet-stream, explicit Content-Length, X-Nook-Filename (percent-encoded UTF-8), X-Nook-Upload-Id (32 lowercase hex) |
+| POST /api/media/update | Authenticated JSON mutation: `id`, `label` (1–120 chars), `pinned` (boolean), `collection` (0–80 chars), `hidden` (boolean) |
+| POST /api/media/reset | Authenticated JSON action: `id` — resets playback progress to zero |
+| POST /api/media/delete | Authenticated JSON action: `id` — deletes retained video file, thumbnail, and metadata entry |
 | Response | 200 with item only after file validation/finalization/index commit, or after matching an existing retained receipt |
 | Errors | 400 invalid identity/name, 401 expired/revoked permission, 409 busy/reused identity, 413 limits, 415 unsupported container/track, 507 storage, 503 unavailable/corrupt index |
 

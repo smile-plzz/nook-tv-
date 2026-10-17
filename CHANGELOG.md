@@ -12,6 +12,16 @@ All notable changes to Nook TV are documented in this file.
 - **Micro-interactions & Focus**: Smooth 1.04x scale animation (140ms DecelerateInterpolator) with high-contrast 3dp white focus border and elevated depth, respecting reduced-motion preferences.
 - **Dedicated Vector Glyphs**: Handcrafted vector canvas glyphs for YouTube channels/videos and RSS feeds in `LauncherTile`.
 - **Proportional Media Layouts**: Normalized video and shelf media cards to 16:9 widescreen ratio (`224dp x 140dp`) with crisp typography.
+- **F3 Companion & Dynamic Content**: Guided configuration of YouTube channels/playlists and public RSS/Atom feeds in paired companion editor with live feed verification on TV.
+- **Dynamic Content Shelves**: Responsive TV media shelves beneath apps displaying latest videos and article updates with custom vector glyphs and stable remote focus (no focus jumps on refresh).
+- **Exact Video Launch & Plain-text Detail**: One-click direct launch to exact YouTube video with zero fabricated playback progress; concise plain-text dialog with "Open article" action for RSS.
+- **Feed Hardening & SSRF/XXE Protection**: Enforced public HTTPS targets, rejected loopback/LAN/private network hosts, disabled XML DOCTYPE and external entity resolution, and bounded feed body size to 2 MiB.
+- **Lifecycle & Cache Management**: Atomic persistence in `SourceStore`, 30-minute throttled background refresh with 2-worker bounded pool, and clear stale/offline status labeling when disconnected.
+- **F4 Personal Video Shelf & QR Setup**: Retained iPhone video transfers rendered on TV Home screen with pin priority, measured resume indicators, and collection tags.
+- **Pure Java QR Generator**: Self-contained, zero-dependency QR code generator (`QrCode.java`, Versions 1–4, Byte mode, ECC L) rendering pairing URLs on TV for instant iPhone camera scanning into Safari (no tokens embedded in QR).
+- **Off-Main-Thread Video Thumbnails**: Rotation-aware video thumbnail generation (`MediaMetadataRetriever` + `Matrix.postRotate` downsampled to 320x180 JPEG) with LRU caching and vector fallback.
+- **Companion Media Controls**: Authenticated endpoints (`/api/media/thumbnail`, `/api/media/update`, `/api/media/reset`, `/api/media/delete`) and rich cards with pre-upload storage checks in `media.js`.
+- **TV Remote Organization Dialog**: Remote context menu for saved videos offering Play / Resume, Start over, Pin / Unpin, Rename, Set collection, Hide / Show on Home, and Delete copy.
 
 ## [0.4.0-phone-preview] - 2026-10-17
 ### Added

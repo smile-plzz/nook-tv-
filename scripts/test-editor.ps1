@@ -19,9 +19,11 @@ Get-ChildItem -LiteralPath $jsonSources -Filter *.java | ForEach-Object {
 }
 $core = Join-Path $repo 'android\app\src\main\java\com\ismail\nooktv'
 $sources = @(Get-ChildItem -LiteralPath $jsonOut -Filter *.java | ForEach-Object { $_.FullName })
-& javac --release 8 -encoding UTF-8 -d $out @sources "$core\Pairing.java" "$core\Targets.java" "$core\EditorServer.java" "$core\DashboardDocument.java" "$core\ViewingLedger.java" "$repo\tests\EditorBoundaryTests.java" "$repo\tests\DocumentTests.java"
+& javac --release 8 -encoding UTF-8 -d $out @sources "$core\Pairing.java" "$core\Targets.java" "$core\EditorServer.java" "$core\DashboardDocument.java" "$core\ViewingLedger.java" "$core\SourceDocument.java" "$core\FeedParser.java" "$repo\tests\EditorBoundaryTests.java" "$repo\tests\DocumentTests.java" "$repo\tests\SourceTests.java"
 if ($LASTEXITCODE -ne 0) { throw 'Editor handler tests failed to compile' }
 & java -cp $out com.ismail.nooktv.EditorBoundaryTests
 if ($LASTEXITCODE -ne 0) { throw 'Editor handler tests failed' }
 & java -cp $out com.ismail.nooktv.DocumentTests
 if ($LASTEXITCODE -ne 0) { throw 'Document and viewing tests failed' }
+& java -cp $out com.ismail.nooktv.SourceTests
+if ($LASTEXITCODE -ne 0) { throw 'Source tests failed' }

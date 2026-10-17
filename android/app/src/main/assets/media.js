@@ -1,18 +1,82 @@
 'use strict';
 // Binary file upload is separate from dashboard drafts and never stored in localStorage.
 (() => {
-  let transfer=null, selected=null, transferId=null, preparing=false;
+  let transfer=null, selected=null, transferId=null, preparing=false, lastData=null;
   const say=text=>{$('media-status').textContent=text;}, bytes=n=>`${(n/1048576).toFixed(1)} MiB`;
   async function refresh(){
     if(!session)return;
-    try{const data=(await request('/api/media')).data;$('media-limits').textContent=`${bytes(data.usedBytes)} used of ${bytes(data.quotaBytes)} · up to 50 videos · ${bytes(data.maxFileBytes)} per video. Keep Nook open on TV.`;
-      const list=$('media-list');list.replaceChildren();for(const item of data.items)list.append(element('p',`${item.label} · ${bytes(item.size)} · ${item.available?'Saved on TV':'Unavailable'}`));
+    try{
+      const data=(await request('/api/media')).data;
+      lastData=data;
+      $('media-limits').textContent=`${bytes(data.usedBytes)} used of ${bytes(data.quotaBytes)} · up to 50 videos · ${bytes(data.maxFileBytes)} per video. Keep Nook open on TV.`;
+      const list=$('media-list');list.replaceChildren();
+      for(const item of data.items){
+        const card=element('div');card.className='link media-card';
+        const fields=element('div');fields.className='fields';
+        let subText=`${bytes(item.size)}${item.duration>0?(' · '+Math.round(item.duration/1000)+'s'):''} · ${item.available?'Saved on TV':'Unavailable'}`;
+        if(item.pinned) subText='📌 Pinned · '+subText;
+        if(item.collection) subText='📁 '+item.collection+' · '+subText;
+        if(item.hidden) subText='👁️ Hidden from Home · '+subText;
+        const titleEl=element('strong',item.label);
+        const subEl=element('div',subText);
+        subEl.className='hint';
+        fields.append(titleEl,subEl);
+        const actions=element('div');actions.className='toolbar actions';
+        actions.append(
+          button('Rename',async()=>{
+            const name=prompt('Rename video (1-120 chars):',item.label);
+            if(name&&name.trim()&&name.trim()!==item.label){
+              try{await request('/api/media/update','POST',{id:item.id,label:name.trim()});say('Video renamed.');refresh();}catch(e){say(e.message);}
+            }
+          }),
+          button(item.pinned?'Unpin':'Pin to Home',async()=>{
+            const willPin=!item.pinned;
+            try{await request('/api/media/update','POST',{id:item.id,pinned:willPin});say(willPin?'Pinned to Home.':'Unpinned from Home.');refresh();}catch(e){say(e.message);}
+          }),
+          button('Collection',async()=>{
+            const col=prompt('Collection name (leave blank to clear):',item.collection||'');
+            if(col!==null){
+              try{await request('/api/media/update','POST',{id:item.id,collection:col.trim()});say('Collection updated.');refresh();}catch(e){say(e.message);}
+            }
+          }),
+          button(item.hidden?'Show on Home':'Hide',async()=>{
+            const willHide=!item.hidden;
+            try{await request('/api/media/update','POST',{id:item.id,hidden:willHide});say(willHide?'Hidden from TV Home.':'Visible on TV Home.');refresh();}catch(e){say(e.message);}
+          }),
+          button('Start over',async()=>{
+            try{await request('/api/media/reset','POST',{id:item.id});say('Progress reset to start.');}catch(e){say(e.message);}
+          }),
+          button('Delete copy',async()=>{
+            if(confirm(`Delete "${item.label}" from this TV? Original on your phone is not changed.`)){
+              try{await request('/api/media/delete','POST',{id:item.id});say('Saved copy removed from TV.');refresh();}catch(e){say(e.message);}
+            }
+          })
+        );
+        card.append(fields,actions);
+        list.append(card);
+      }
       if(data.damaged)say('The TV media index could not be read. New transfers are blocked; existing files were preserved.');
       return data;
     }catch(error){say(error.status===401?'Pair this browser again to send a video.':'Cannot reach TV storage. Reopen Nook and refresh.');}
   }
   function idle(){transfer=null;$('send-video').disabled=false;$('video-file').disabled=false;$('cancel-video').disabled=true;}
-  $('video-file').onchange=()=>{selected=$('video-file').files[0]||null;transferId=selected?id():null;$('video-progress').value=0;say(selected?`${selected.name} · ${bytes(selected.size)}. Send keeps a copy on your TV.`:'Choose an MP4 or MOV video.');};
+  $('video-file').onchange=()=>{
+    selected=$('video-file').files[0]||null;transferId=selected?id():null;$('video-progress').value=0;
+    if(!selected){say('Choose an MP4 or MOV video.');return;}
+    if(selected.size<12||selected.size>512*1048576){
+      say(`Choose an MP4 or MOV video up to 512 MiB (${bytes(selected.size)} selected).`);
+      $('send-video').disabled=true;return;
+    }
+    if(lastData){
+      const remaining=Math.min(lastData.quotaBytes-lastData.usedBytes,lastData.freeBytes);
+      if(selected.size>remaining||lastData.items.length>=50){
+        say(`Not enough TV storage for ${selected.name} (${bytes(selected.size)}). Delete saved copies or choose a smaller video.`);
+        $('send-video').disabled=true;return;
+      }
+    }
+    $('send-video').disabled=false;
+    say(`${selected.name} · ${bytes(selected.size)}. Send keeps a copy on your TV.`);
+  };
   $('send-video').onclick=async()=>{
     if(transfer||preparing)return;preparing=true;try{if(!session){say('Pair this browser on TV first.');return;}if(!selected){say('Choose an MP4 or MOV video first.');return;}
     const credentials=session,file=selected;
