@@ -6,9 +6,9 @@ Baseline 2.0 | 17 October 2026
 
 Build an Apple TV-style default TV home screen for Ismail. Main activities are YouTube, iPhone-shared video and getting back to that media. Spotify is tentative, browser rare, Google Drive requested if feasible. Keep PC customization/personal collections. NowShowing remains the selected streaming reference, but not the main product or next priority.
 
-0.2 booted in a brief BlueStacks trial; owner says structure exists but experience misses the goal. Do not report that as launcher acceptance or thorough testing. Main includes merged PR #2 and the existing infrastructure. Read [build status](BUILD-STATUS.md) before claiming capabilities.
+0.2 booted in a brief BlueStacks trial; owner says structure exists but experience misses the goal. Do not report that as launcher acceptance or thorough testing. Main includes the merged launcher PR #4; this change adds the next phone-transfer slice. Read [build status](BUILD-STATUS.md) before claiming capabilities.
 
-0.3 implements the first visual/interaction prototype and opt-in Home setup; see [prototype guide](LAUNCHER-PREVIEW.md). Owner visual review and actual-TV default Home remain pending. Phone receiving/file upload and Drive access are not implemented. Follow the new sequence.
+0.3 implements the first visual/interaction prototype and opt-in Home setup; see [prototype guide](LAUNCHER-PREVIEW.md). Owner visual review and actual-TV default Home remain pending. 0.4 adds the paired-browser retained-file path, local playback/resume and storage controls; see [transfer guide](PHONE-TRANSFER-PREVIEW.md). Real iPhone/TV, AirPlay and Drive remain pending. Follow the new sequence.
 
 ## Read order
 
@@ -38,7 +38,7 @@ Existing 74 contract assertions, editor tests and 15 Android smoke assertions co
 
 HOME support uses system-supported setup; retain original launcher and recovery. Never silently disable stock packages. A blocked default-Home gate is not solved by relabeling Nook an entertainment app.
 
-A launcher does not automatically receive AirPlay/Cast. Select/test a real route; distinguish live session, stable link and retained file. New upload requires streaming disk storage/limits/cleanup; existing editor accepts configuration, not videos. Google device flow is not whole-Drive authorization; prove selected-file grants and keep tokens outside HTTP companion.
+A launcher does not automatically receive AirPlay/Cast. Select/test a real route; distinguish live session, stable link and retained file. 0.4 implements a separate binary-upload endpoint with disk streaming, limits, validation and cleanup; do not feed videos through dashboard JSON. Google device flow is not whole-Drive authorization; prove selected-file grants and keep tokens outside HTTP companion.
 
 ## Evidence and completion
 

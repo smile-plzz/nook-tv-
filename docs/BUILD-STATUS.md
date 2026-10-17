@@ -1,8 +1,8 @@
-# Build status | 0.3 launcher prototype
+# Build status | 0.4 phone transfer preview
 
 Updated 17 October 2026. The owner briefly installed/explored 0.2 in BlueStacks: it boots, but the experience does not match the desired launcher. He confirmed default Home, Apple TV-style aesthetics, YouTube, iPhone video sharing and easier return to shared media; Spotify is tentative, browser rare and Google Drive conditional.
 
-[PRD baseline 2.0](PRD.md) supersedes the dashboard-first roadmap. 0.3 now implements L0's visual launcher prototype and initial L1 Home plumbing. It does not complete device acceptance or phone/Drive integrations. See [prototype guide](LAUNCHER-PREVIEW.md).
+[PRD baseline 2.0](PRD.md) supersedes the dashboard-first roadmap. 0.3 implements the launcher prototype/Home plumbing. 0.4 adds the first retained-file transfer/playback path in L2. Actual iPhone/TV acceptance and AirPlay/Drive remain pending. See [phone transfer guide](PHONE-TRANSFER-PREVIEW.md). See [prototype guide](LAUNCHER-PREVIEW.md).
 
 ## Pivot coverage
 
@@ -10,15 +10,31 @@ Updated 17 October 2026. The owner briefly installed/explored 0.2 in BlueStacks:
 |---|---|
 | Artwork app grid / direct app launch | Implemented; visual acceptance pending |
 | Default Home setup, task behavior and recovery | Disabled-by-default HOME alias, explicit setup, task reuse/root Back and removal guard implemented; actual-TV default/wake/reboot/rollback unverified |
-| From iPhone receiver / retained file transfer | Not implemented; route assessment required |
-| Shared & Recent | New destination for existing links/observed history; retained phone source/transfer unimplemented |
+| From iPhone / retained file transfer | Paired-browser MP4/MOV file upload, app-private retained copies, progress/cancel/retry and storage controls implemented; AirPlay/Cast/mirroring absent; real Safari/TV unverified |
+| Shared & Recent | Retained-copy row and measured local playback/resume added; live phone sessions still not imported |
 | Google Drive authorization/media | Not implemented; selected-file/scopes feasibility gate |
 | Spotify | Ordinary installed-app discovery may expose it; dedicated integration not implemented |
 | PC customization, collections, Media3 | Existing foundation retained, not proof of new UX acceptance |
 
 No physical-TV, real iPhone sharing or default-Home result is claimed. Historical M1 evidence remains in [M1 status](M1-STATUS.md).
 
-## 0.3 verification
+## 0.4 verification and bounds
+
+- Local: 22 core + 25 HTTP-handler + 35 model/source/viewing assertions pass (82 total), plus editor state and new binary-transfer browser-state checks.
+- ReceivedMediaStore compiles against the local Android SDK.
+- [Hosted app/test APK build](https://github.com/smile-plzz/nook-tv-/actions/runs/39037726748) passed for app code `9340bbfd98026e7d1ed8c017a6136a58b6fa6584`.
+- [Android API-35 runtime](https://github.com/smile-plzz/nook-tv-/actions/runs/39037726747) passed all 43 assertions: existing checks plus retained storage/recreation/receipts, invalid/interrupted/revoked transfers, deletion/corruption preservation, real loopback HTTP upload without autoplay, and production local-player/seek persistence.
+- Integration testing exposed a close-after-seek persistence failure. The player now preserves its ready timeline during buffering, saves explicit seeks and guards release callbacks from overwriting final progress. The same seek/return assertion passed after the fix.
+- A subsequent test-only change waits for the writer before reopening AtomicFile state; runtime app source is unchanged. Its [app/test build](https://github.com/smile-plzz/nook-tv-/actions/runs/39037939006) and [43-assertion Android rerun](https://github.com/smile-plzz/nook-tv-/actions/runs/39037939021) also passed at `b37dd34e576d62411eeedff1c1820535b73146df`.
+- Delivered owner APK has verified v2/v3 signatures, alignment and package/version, using the same preview certificate as M1/0.2/0.3. SHA-256: `b90ff039dbdfd812a7cd4c6f8fd767474c09d91b1e5c80905b98307ea58a3107`.
+- Limits: 512 MiB/file, 1 GiB retained quota, 50 listed files, 128 MiB free-space reserve; one media operation, 64 KiB streaming buffer. Quota does not auto-evict user files.
+- Authentication before upload ingestion; permission checked while receiving and before finalization. Original HTTP origin/host/CSRF boundary retained.
+- File finalization/index commit precede acknowledgement; incomplete files are not listed. Media index corruption blocks writes and preserves data.
+- Local playback uses stable IDs/private files, never an arbitrary external path. History and file deletion are separate.
+- Dashboard backups exclude retained file bytes/index, viewing history and credentials. Uninstall/clear storage deletes retained copies; same-key upgrade retains them.
+- Actual iPhone/Safari, real Wi-Fi, HEVC/HDR/rotation, large transfers and target-TV performance remain untested.
+
+## Historical 0.3 verification
 
 - 74 core/model/source/viewing/HTTP-handler assertions passed locally; editor state/syntax checks passed.
 - New tile/discovery classes compile against the local Android SDK.

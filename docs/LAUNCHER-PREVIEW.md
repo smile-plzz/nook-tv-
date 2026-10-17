@@ -8,6 +8,8 @@
 
 API-35 tablet emulator, captured from the running app. Installed apps and display proportions differ from the target TV. This is not a design mockup or physical-TV result.
 
+This guide describes the historical 0.3 prototype. The [0.4 phone transfer guide](PHONE-TRANSFER-PREVIEW.md) supersedes its file-upload limitations; AirPlay and Drive remain unimplemented.
+
 ## What to review
 
 This is the first working interface after the default-Home / Apple TV-style pivot. It uses a spacious native grid, installed-app icons/banners, quiet clock/header, rounded cards and a visible focus border. Favorites launch with one OK press. Hold OK for options, or use All Apps > Edit favorites to pin/unpin and move earlier/later.

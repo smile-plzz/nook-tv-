@@ -6,7 +6,7 @@ Baseline 2.0 | 17 October 2026 | Supersedes old M1-M6 delivery order
 
 M1 compatibility and 0.2 dashboard/editor/player/catalog infrastructure exist. The owner briefly used 0.2 in BlueStacks, confirmed boot but rejected the overall experience as the intended launcher. Do not restart storage/pairing work or extend catalogs before correcting the home experience.
 
-0.3 implements the initial L0 prototype and L1 Home setup plumbing; visual review and device gates remain. Build work follows these stages; no deadline is assumed. Physical TV tests remain pending, but design and independent checks can proceed.
+0.3 implements L0/L1 prototype plumbing; 0.4 adds the first L2 retained-file upload/playback path. Visual review and real-device gates remain. Build work follows these stages; no deadline is assumed. Physical TV tests remain pending, but design and independent checks can proceed.
 
 ## L0 - Reviewable launcher prototype
 
@@ -21,6 +21,8 @@ Implement system-supported HOME entry/setup/recovery, one-OK app launch, favorit
 Gate: Home from another app opens Nook; reboot/wake/task reuse behave predictably; original default restored successfully on target TV. BlueStacks validates visuals/navigation only. Firmware blockage is recorded as blocked core functionality, not a completed launcher.
 
 ## L2 - iPhone workflow and Shared & Recent
+
+Implementation slice: [0.4 retained-file preview](PHONE-TRANSFER-PREVIEW.md). The paired browser can send videos and the TV can retain/play/resume them. This does not pass the real iPhone/TV gate or implement AirPlay.
 
 Assess actual TV AirPlay/Cast/receiver support and owner sending gesture. Prototype a paired Safari retained-file path and stable-link submission without claiming AirPlay. Add a truthful From iPhone route selector, transfer progress/cancel/storage errors and replayability-aware media records.
 

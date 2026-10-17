@@ -4,7 +4,7 @@ Baseline 2.0 | 17 October 2026 | Current foundation plus proposed launcher desig
 
 ## Current implementation versus target
 
-Delivered 0.2 uses one Java/native-Views Android app, Media3 1.11.1, AtomicFile JSON dashboard/viewing stores, native OMDb client, and a foreground paired HTTP editor. It has no default-Home flow, iPhone receiver/file transfer or Drive integration. That describes 0.2. The 0.3 [prototype](LAUNCHER-PREVIEW.md) adds LauncherTile/LauncherApps, native grid/direct launching and an opt-in HOME alias. The remaining integration boundaries below are design targets.
+Delivered 0.2 uses one Java/native-Views Android app, Media3 1.11.1, AtomicFile JSON dashboard/viewing stores, native OMDb client, and a foreground paired HTTP editor. It has no default-Home flow, iPhone receiver/file transfer or Drive integration. That describes 0.2. The 0.3 [prototype](LAUNCHER-PREVIEW.md) adds LauncherTile/LauncherApps, native grid/direct launching and an opt-in HOME alias. 0.4 adds ReceivedMediaStore, authenticated binary upload and stable local playback; see [transfer guide](PHONE-TRANSFER-PREVIEW.md). Remaining receiver/Drive boundaries below are design targets.
 
 Keep working persistence, migrations, validation, pairing and playback. Do not rewrite in Kotlin/Compose or migrate to Room solely for appearance. The earlier Room/Compose proposal is superseded by retaining the current stack unless evidence justifies a separate change. Refactor MainActivity into clear responsibilities as needed for the launcher; module proliferation is not a goal.
 
@@ -58,7 +58,7 @@ Retained media is durable data, not an LRU cache. Separate history removal, coll
 
 See [feasibility](PHONE-AND-DRIVE.md) for protocol distinctions. Prefer a first self-contained retained-file prototype while assessing actual AirPlay/Cast/receiver options; this engineering proposal must not silently redefine system AirPlay.
 
-Current editor has no file-transfer endpoint. New transfers must use authenticated, bounded streaming to app-private temporary files, atomic finalization, free-space checks, content validation, cancellation and cleanup. Keep requests separate from 1 MiB config JSON. Never ingest full videos into RAM, accept arbitrary paths or auto-play on an unauthenticated request.
+0.4 adds GET /api/media and POST /api/media/upload: authenticated bounded streaming to app-private temporary files, atomic finalization, free-space checks, content validation, cancellation and cleanup. Keep requests separate from 1 MiB config JSON. Never ingest full videos into RAM or accept arbitrary paths. Received videos never auto-play.
 
 Receive UI is foreground by default; if transfer must survive an external receiver/app handoff, design a compliant service/notification and security lifecycle explicitly. Default Home does not mean permanently foreground. Mirroring does not persist a recording. External receivers expose progress only through verified documented contracts.
 

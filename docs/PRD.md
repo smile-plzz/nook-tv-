@@ -1,6 +1,6 @@
 # Nook TV product requirements
 
-Baseline 2.0 | 17 October 2026 | Owner: Ismail Hossain | Launcher pivot confirmed; 0.3 prototype implemented, acceptance pending
+Baseline 2.0 | 17 October 2026 | Owner: Ismail Hossain | Launcher pivot confirmed; 0.4 launcher/file-transfer preview implemented, acceptance pending
 
 ## Product and authority
 
@@ -105,5 +105,5 @@ No mandatory account for core Home. Drive/Spotify/YouTube may require their own 
 
 First usable launcher requires all P0 scenarios on the target TV and a real iPhone. If firmware or receiver constraints block a core outcome, report it and seek an explicit product decision rather than relabel the standalone APK complete. Later requested integrations retain their gates; full scope requires delivery or owner acceptance of specific limitations.
 
-PRD owns scope; [UX](UX-SPEC.md) owns interactions, [architecture](ARCHITECTURE.md) the design, [plan](DEVELOPMENT-PLAN.md) sequencing, [acceptance](ACCEPTANCE.md) evidence. The 0.3 [launcher prototype](LAUNCHER-PREVIEW.md) implements the grid/direct-app and initial Home setup slice. It does not complete P0 acceptance or add receiving/Drive capabilities.
+PRD owns scope; [UX](UX-SPEC.md) owns interactions, [architecture](ARCHITECTURE.md) the design, [plan](DEVELOPMENT-PLAN.md) sequencing, [acceptance](ACCEPTANCE.md) evidence. The 0.3 [launcher prototype](LAUNCHER-PREVIEW.md) implements the grid/direct-app and initial Home setup slice. 0.4 adds the [retained-file workflow](PHONE-TRANSFER-PREVIEW.md), not AirPlay/Drive or full P0 acceptance.
 
