@@ -13,6 +13,8 @@ public final class EditorServer {
         byte[] asset(String name) throws IOException;
         JSONObject config() throws Exception;
         JSONObject save(JSONObject input, long revision, String mutation) throws Exception;
+        default JSONObject restore(JSONObject input,long revision,String mutation) throws Exception { throw new IllegalArgumentException("Import unavailable"); }
+        default JSONObject inventory() throws Exception { return new JSONObject().put("apps",new JSONArray()); }
         void approve(String name);
     }
     private final Pairing pairing;
@@ -57,7 +59,7 @@ public final class EditorServer {
             }
             if(!api) { reply(client,404,"text/plain",bytes("Not found")); return; }
             int length=Integer.parseInt(h.getOrDefault("content-length","0"));
-            if(length<0||length>24000) { reply(client,413,"text/plain",bytes("Body too large")); return; }
+            if(length<0||length>1000000) { reply(client,413,"text/plain",bytes("Body too large")); return; }
             if(method.equals("POST")&&!"application/json".equals(h.get("content-type"))) { reply(client,415,"text/plain",bytes("JSON required")); return; }
             byte[] body=new byte[length]; for(int pos=0;pos<length;) { int n=in.read(body,pos,length-pos); if(n<0) throw new IOException(); pos+=n; }
             JSONObject data=length==0?new JSONObject():new JSONObject(new String(body,StandardCharsets.UTF_8));
@@ -75,7 +77,9 @@ public final class EditorServer {
                 String auth=h.getOrDefault("authorization",""); String token=auth.startsWith("Bearer ")?auth.substring(7):"";
                 if(!pairing.authorized(token,h.get("x-nook-csrf"))) { reply(client,401,"application/json",bytes("{\"error\":\"Pair this browser again on the TV.\"}")); return; }
                 if(path.equals("/api/config")&&method.equals("GET")) result=host.config();
+                else if(path.equals("/api/inventory")&&method.equals("GET")) result=host.inventory();
                 else if(path.equals("/api/config")&&method.equals("POST")) result=host.save(data.getJSONObject("config"),data.getLong("expectedRevision"),data.getString("mutationId"));
+                else if(path.equals("/api/import")&&method.equals("POST")) result=host.restore(data.getJSONObject("config"),data.getLong("expectedRevision"),data.getString("mutationId"));
                 else { status=404; result.put("error","Not found"); }
             }
             reply(client,status,"application/json",bytes(result.toString()));

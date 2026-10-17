@@ -22,18 +22,21 @@ jobs:
           packages: platform-tools
       - name: Install pinned SDK packages
         shell: pwsh
-        run: sdkmanager 'platforms;android-35' 'build-tools;35.0.1' 'sources;android-35'
+        run: sdkmanager 'platforms;android-36' 'sources;android-35'
       - name: Core checks
         shell: pwsh
         run: ./scripts/test-core.ps1
-      - name: Build compatibility APK
+      - name: Build Media3 preview APK
         shell: pwsh
-        run: ./scripts/build-offline.ps1
+        working-directory: android
+        run: ./gradlew.bat --no-daemon assembleDebug assembleAndroidTest
       - name: Editor boundary tests
         shell: pwsh
         run: ./scripts/test-editor.ps1
       - uses: actions/upload-artifact@v4
         with:
-          name: nook-tv-0.1.0-m1
-          path: android/app/build/offline/nook-tv-0.1.0-m1.apk
+          name: nook-tv-0.2.0-preview
+          path: |
+            android/app/build/outputs/apk/debug/*.apk
+            android/app/build/outputs/apk/androidTest/debug/*.apk
           retention-days: 30
