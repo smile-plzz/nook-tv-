@@ -1,6 +1,6 @@
 # Dynamic Home specification
 
-Baseline 2.1 | Proposed, not implemented in 0.4 | DYN-01, DYN-02, VIS-01, NAV-02
+Baseline 2.2 | Proposed, not implemented in 0.4 | DYN-01, DYN-02, VIS-01, NAV-02
 
 ## Composition
 

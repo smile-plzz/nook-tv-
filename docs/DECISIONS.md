@@ -1,8 +1,8 @@
 # Decisions and scope record
 
-Baseline 2.1 | 17 October 2026 | Supersedes dashboard-first baseline
+Baseline 2.2 | 17 October 2026 | Supersedes dashboard-first baseline
 
-Owner instructions govern; [PRD](PRD.md) is current scope. A design proposal is not an implemented capability. Baseline 2.1 was documentation-only. Subsequent owner authorization produced the 0.3 [launcher prototype](LAUNCHER-PREVIEW.md); it is not full device acceptance.
+Owner instructions govern; [PRD](PRD.md) is current scope. A design proposal is not an implemented capability. Baseline 2.2 was documentation-only. Subsequent owner authorization produced the 0.3 [launcher prototype](LAUNCHER-PREVIEW.md); it is not full device acceptance.
 
 ## Confirmed direction
 
@@ -10,7 +10,6 @@ Owner instructions govern; [PRD](PRD.md) is current scope. A design proposal is 
 |---|---|---|
 | D01 | Personal default TV home with media convenience | Updated by owner after BlueStacks use; launcher is core, not a late add-on |
 | D02 | Default screen when pressing Home | Explicit answer; LAUNCH-01 becomes P0; keep normal app entry for recovery |
-| D03 | NowShowing-Stream remains selected upstream | Original owner correction retained; catalog is secondary to launcher/phone workflows |
 | D04 | PC browser customization | Existing requirement retained; phone-responsive companion proposed for sharing |
 | D05 | YouTube and phone-shared video are principal activities | Explicit answer; prioritize direct app access and Shared & Recent |
 | D06 | Brave/filtering remains requested later scope | Rare browser use reduces priority; no implied cancellation or universal ad-block promise |
@@ -26,7 +25,7 @@ Owner instructions govern; [PRD](PRD.md) is current scope. A design proposal is 
 | ID | Decision / proposal | Status |
 |---|---|---|
 | E01 | Retain Java/native Views, Media3 and versioned AtomicFile stores | Existing implementation; replaces earlier default Compose/Room proposal |
-| E02 | Redesign Home before more catalog expansion | New sequencing proposal reflecting confirmed priorities |
+| E02 | Refine Home before extending integration scope | New sequencing proposal reflecting confirmed priorities |
 | E03 | One-OK app launch, hold OK/context alternative for management | Implemented for launcher apps; owner partially confirms navigation; added shortcuts remain planned |
 | E04 | Local-first core; same-LAN companion, no always-on PC/account | Retained design; Drive/services optional |
 | E05 | Retained Safari file-transfer prototype plus receiver capability assessment | Implemented in 0.4, awaiting owner transfer test; external AirPlay integration now optional under D18 |
@@ -35,14 +34,12 @@ Owner instructions govern; [PRD](PRD.md) is current scope. A design proposal is 
 | E08 | Drive selected-file access first; scope/picker proof before folders | Conditional design; tokens never through editor HTTP |
 | E09 | Native progress vs external opens vs live phone sessions | Required truthfulness; no universal cross-app history |
 | E10 | No private context/account/Photos import by default | Privacy boundary retained |
-| E11 | No upstream code/assets copied without reuse rights | Existing unresolved NowShowing license |
 | E12 | Full-product closure requires actual core outcomes | Build/emulator pass or standalone fallback is insufficient |
 
 ## Superseded wording
 
 - Standalone dashboard first, optional launcher later: replaced by default-home-first product.
 - Personal dashboard as a counterpart to an app launcher: replaced by an app launcher with personal media convenience.
-- NowShowing completion before Home quality: replaced by launcher, phone sharing and return-to-media sequence.
 - Text-button operational dashboard as usable release: rejected by owner feedback.
 - Room/Kotlin/Compose as assumed next implementation: no longer a commitment.
 - Spotify/Drive as fixed mandatory services: never confirmed; remain optional/conditional.
@@ -55,7 +52,7 @@ Earlier owner messages authorized implementation and continuing without immediat
 
 Exact iPhone source/gesture (AirPlay, Photos, Files, app cast or URL), actual receiver/TV support, selected Drive authorization UX, transfer storage/transport limits and exact launcher layout metrics need validation. They do not block documenting or prototyping the confirmed default-home and Apple TV direction. Any narrower substitute for a core outcome must be explicit and owner-accepted.
 
-## Baseline 2.1 decisions after physical-TV feedback
+## Baseline 2.2 decisions after physical-TV feedback
 
 | ID | Decision | Status / consequence |
 |---|---|---|
@@ -71,3 +68,9 @@ Exact iPhone source/gesture (AirPlay, Photos, Files, app cast or URL), actual re
 | E16 | Schema v3 for source/module settings with migration | Proposed only; 0.4 remains v2, media/cache/secrets separate |
 
 This request authorizes analysis and repository documentation updates. The resulting documentation PR does not implement the planned features or claim a new build. All earlier engineering proposals must be read with current implementation evidence in [build status](BUILD-STATUS.md), and the [feedback record](TV-FEEDBACK.md) supersedes earlier claims that no TV observations exist.
+
+## Baseline 2.2: separate installed apps
+
+The owner explicitly removes embedded movie/series discovery, movie-database API integration and provider templates from Nook. Such experiences belong in independently developed TV APKs; Nook only discovers/pins/launches them like any app. This supersedes earlier catalog plans entirely. Their old requirement IDs and source-audit document are removed, not deferred.
+
+The same PR now includes implementation removal and compatibility checks. Legacy saved links remain ordinary browser bookmarks after migration. Remove obsolete credentials/preferences/cache without deleting dashboard, collections, history or personal video copies. The current source differs from the last delivered 0.4 APK; a new build is needed to install the cleanup. Historical Git commits remain unchanged.

@@ -22,15 +22,14 @@ This build adds a visual/interaction prototype and an opt-in Home candidate. Pai
 
 Nook remains an Android app with its own branding, not tvOS. AirPlay, Cast, live mirroring and saved-file transfer are different capabilities. See [phone and Drive feasibility](docs/PHONE-AND-DRIVE.md) before making support claims.
 
-## Foundation retained from 0.2
+## Foundation retained
 
 - Installed-app discovery, pinning and launch; text-button dashboard with saved links/collections/background customization.
 - Paired local browser editor, revision conflicts, persistent mutation receipts and dashboard import/recovery.
 - Media3 direct-stream player and independent native progress/history.
-- Initial OMDb metadata search, series selection and owner-configured web templates.
 - YouTube external-app/browser handoff.
 
-0.3's passing checks are preserved. The 0.4 local suite passes 82 core/model/HTTP assertions plus editor/transfer browser-state checks; hosted app/test packaging and 43 Android runtime assertions also passed. Those checks do not prove real iPhone/Safari or target-TV behavior. [Build status](docs/BUILD-STATUS.md) preserves exact evidence.
+The delivered 0.4 preview passed 82 local assertions plus browser-state checks and 43 Android assertions. Current source removes obsolete contracts and adds upgrade/cleanup checks; see build status for this revision's validation. Those checks do not prove real iPhone/Safari or target-TV behavior. [Build status](docs/BUILD-STATUS.md) preserves exact evidence.
 
 ## Next delivery order
 
@@ -41,11 +40,11 @@ Nook remains an Android app with its own branding, not tvOS. AirPlay, Cast, live
 5. Measure daily-use performance, upgrades and recovery.
 6. Evaluate optional AirPlay replay, conditional Drive and remaining integrations.
 
-See [F1-F6 development plan](docs/DEVELOPMENT-PLAN.md). This documentation revision changes scope and sequencing, not app behavior; no new APK is produced.
+See [F1-F6 development plan](docs/DEVELOPMENT-PLAN.md). This revision also removes embedded movie discovery and its service configuration. The last delivered APK remains 0.4; these source changes need a new build before they appear on TV.
 
 The owner's TV is reported as Sony Plus Android 14 / 2 GB; actual API/firmware/receiver services remain unverified. Ordinary app entry stays for recovery. A standalone fallback is not a completed default-home outcome.
 
-[NowShowing-Stream](https://github.com/smile-plzz/NowShowing-Stream) remains the sole selected streaming baseline, as a secondary destination. Existing Brave/filtering and richer YouTube requests remain tracked. Selected YouTube/RSS cards are now near-term launcher scope; catalog expansion, weather and arbitrary widgets remain later work. No provider is enabled or verified by default.
+Nook focuses on Home, installed apps, configurable YouTube/RSS cards and personal phone videos. Movie discovery and streaming-platform logic belong in independent installed apps. Existing browser/filtering and richer YouTube requests remain tracked; weather and arbitrary widgets remain later work.
 
 ## Documentation
 
@@ -67,7 +66,6 @@ The owner's TV is reported as Sony Plus Android 14 / 2 GB; actual API/firmware/r
 | [Build status](docs/BUILD-STATUS.md) | Delivered code versus future design and executed evidence |
 | [Build/install](docs/BUILD-AND-INSTALL.md) | Existing APK, toolchain, upgrade and recovery instructions |
 | [Device checklist](docs/DEVICE-TEST.md) | Actual TV/iPhone observations |
-| [NowShowing audit](docs/NOWSHOWING-AUDIT.md) | Historical upstream findings, not current launcher scope |
 | [M1 archive](docs/M1-STATUS.md) | Preserved historical compatibility evidence |
 | [Third-party notices](THIRD-PARTY-NOTICES.md) | Actual dependencies and reuse boundaries |
 

@@ -1,6 +1,6 @@
 # Companion and personal media design
 
-Baseline 2.1 | Planned improvements to the existing paired browser | PC-03, PHONE-03
+Baseline 2.2 | Planned improvements to the existing paired browser | PC-03, PHONE-03
 
 ## A comfortable place to customize Home
 

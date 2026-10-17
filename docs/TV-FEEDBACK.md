@@ -1,6 +1,6 @@
 # TV feedback and product response
 
-Baseline 2.1 | 17 October 2026 | Owner feedback from a few minutes on a physical TV
+Baseline 2.2 | 17 October 2026 | Owner feedback from a few minutes on a physical TV
 
 ## Evidence, without overstating the test
 

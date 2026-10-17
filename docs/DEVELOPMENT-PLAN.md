@@ -1,12 +1,12 @@
 # Development plan after TV feedback
 
-Baseline 2.1 | 17 October 2026 | Replaces L0-L5 execution order; historical labels remain in preview guides
+Baseline 2.2 | 17 October 2026 | Replaces L0-L5 execution order; historical labels remain in preview guides
 
 ## Starting point
 
 PR #5 is merged at 247671613c9552fa9f67eda179a67528a680ddcf. Main contains 0.4 retained transfer plus the 0.3 launcher foundation. The owner's brief TV trial partially confirms smoothness, app launching and remote use; visual quality needs refinement and default Home fails in the observed use. File transfer/resume were not tested. Exact tested APK/firmware remain to be recorded. See [feedback](TV-FEEDBACK.md).
 
-This is a documentation/planning revision, not a new APK or implementation claim. Deliver small reviewable changes with updated docs/evidence. Do not expand catalog work or rewrite the UI stack before resolving daily-use gaps.
+The revision includes removal of embedded movie discovery and compatibility cleanup, but does not implement the planned Home/design/content features or deliver a new APK. Deliver small reviewable changes with updated docs/evidence. Keep movie-discovery/account/provider logic in independent installed apps; do not rewrite the UI stack before resolving daily-use gaps.
 
 | Stage | Deliverable | Exit evidence |
 |---|---|---|
@@ -15,7 +15,7 @@ This is a documentation/planning revision, not a new APK or implementation claim
 | F3 Companion and first live sources | Responsive guided editor, shared preview vocabulary, source validation and visibility/order; YouTube selected-source and RSS adapters | A12/A13 including exact-video launch, stale/offline, invalid feed, safe credentials, conflict/draft and migration tests |
 | F4 Personal video shelf | First verify 0.4 real transfer; then QR/help, thumbnails, titles, organization and storage refinement | Real Safari upload, saved receipt, phone disconnect, replay/resume, interruption/codec/storage checks; A14 |
 | F5 Daily-use hardening | Shortcut discoverability, populated-Home profiling, two-hour stability, upgrades and recovery | All P0 gates on target TV/iPhone; explicit owner visual approval |
-| F6 Conditional integrations | Optional external receiver metadata/replay, Drive selected-file proof, optional Spotify; retained NowShowing/YouTube player/Brave scope | Each integration has its own capability evidence and owner-accepted limits |
+| F6 Conditional integrations | Optional external receiver metadata/replay, Drive selected-file proof, optional Spotify; retained YouTube player/browser/filtering scope | Each integration has its own capability evidence and owner-accepted limits |
 
 F1 and F2 can progress independently. Run the existing phone transfer test as soon as the owner is available, without waiting for F3; use the result to shape F4. F3 provider credentials/quotas are an early spike, not a late surprise. Ship the companion/source slice only when it produces useful real content; fixtures alone do not satisfy DYN-01/02. F1 failure must not be hidden by a prettier Home. AirPlay is optional and does not block F5.
 
@@ -31,6 +31,6 @@ Read [dynamic Home](DYNAMIC-HOME.md) and [companion](COMPANION-SPEC.md). Propose
 
 ## Validation and release
 
-Preserve the existing 82 local assertions, editor/transfer state checks and 43 Android assertions; counts describe prior evidence, not this docs-only change. Add behavior tests for role outcome states, parser/URL bounds, source refresh, stable focus, migrations and new mutations when implemented. Use real TV/iPhone evidence for Home, handlers, codec, UX and performance. Check documentation links and requirement coverage on every scope change. Record source commit/APK/device/steps/results; no new deadline or version is promised until a slice is built.
+Preserve relevant regression coverage, editor/transfer state checks and Android runtime scenarios. Remove retired provider tests and add migration/cleanup checks; the historical 82-local/43-Android counts describe the delivered preview, not the revised suite. Add behavior tests for role outcome states, parser/URL bounds, source refresh, stable focus, migrations and new mutations when implemented. Use real TV/iPhone evidence for Home, handlers, codec, UX and performance. Check documentation links and requirement coverage on every scope change. Record source commit/APK/device/steps/results; no new deadline or version is promised until a slice is built.
 
 Default Home, the refined visual design, configurable selected YouTube/RSS content, companion usability and one proven retained-file path are first-usable-launcher requirements. Full broader product scope still includes requested conditional integrations; see [PRD](PRD.md) and [acceptance](ACCEPTANCE.md).

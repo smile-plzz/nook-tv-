@@ -1,6 +1,6 @@
 # Launcher acceptance and verification
 
-Baseline 2.1 | 17 October 2026 | Brief target-TV observations recorded; comprehensive acceptance and iPhone transfer pending
+Baseline 2.2 | 17 October 2026 | Brief target-TV observations recorded; comprehensive acceptance and iPhone transfer pending
 
 The 0.2 build has existing contract/emulator evidence, and the owner reports brief BlueStacks boot/exploration. Neither proves the new launcher experience. This document defines future acceptance against [PRD](PRD.md).
 
@@ -17,7 +17,7 @@ The 0.2 build has existing contract/emulator evidence, and the owner reports bri
 | A07 Companion/backup/privacy | PC-01, PC-02, SEND-01, DATA-01, PRIV-01 | P0 |
 | A08 Performance | PERF-01 | P0 |
 | A09 Drive/Spotify | DRIVE-01, DRIVE-02, SPOT-01 | Conditional P1 |
-| A10 Retained broader scope | NS-01, NS-02, NS-03, WEB-01, YT-02, YT-03, BLOCK-01, BLOCK-02 | P1 |
+| A10 Retained broader scope | WEB-01, YT-02, YT-03, BLOCK-01, BLOCK-02 | P1 |
 | A11 Optional future | DISC-01, WIDGET-01, LANMEDIA-01, PROFILES-01, CLOUD-01 | P2, separate delivery |
 | A12 Dynamic Home | DYN-01, DYN-02, VIS-01, PERF-01 | P0 |
 | A13 Companion refinement | PC-03, PC-02, DATA-01 | P0 |
@@ -55,7 +55,7 @@ For AirPlay/Cast/external receiver: record actual receiver/device/protocol and s
 
 ## A06 - Return and native playback
 
-Retained video plays after phone disconnect and TV process restart, resumes within 5 seconds of last committed measured position, and survives same-key upgrade. Multiple files/episodes have separate identities; replacing content does not inherit an incompatible timestamp.
+Retained video plays after phone disconnect and TV process restart, resumes within 5 seconds of last committed measured position, and survives same-key upgrade. Multiple media items have separate identities; replacing content does not inherit an incompatible timestamp.
 
 Live phone session without retained source says Reconnect phone/Start sharing again. A stale URL is not presented as guaranteed replay. External apps say Open in app; details alone do not create progress.
 
@@ -92,9 +92,9 @@ Spotify shortcut opens intended installed app and returns correctly; absence doe
 
 ## A10 - Broader entertainment scope retained
 
-YouTube saved links use intended handler; no account-wide history claim. Optional API/embed follows official requirements. NowShowing search/details/series choice and each source's identifier/movie/episode/remote behavior tested separately. Iframe load remains unknown without evidence; invalid event origins ignored; source switch/retry retains episode.
+YouTube saved links use the intended handler; no account-wide history claim. Optional API/embed follows official requirements. Generic web routes preserve a remote-accessible escape; iframe load is not proof of playback and invalid event origins are ignored. Independent installed apps are tested through generic pin/launch/return behavior, with no embedded catalog or account setup.
 
-Browser/Brave route needs actual handler/remote/Back tests. Filter engine has separate ruleset/version/off-on/site-exception results; disabling filtering preserves data. No universal blocking claim or preenabled unverified providers.
+Browser/Brave route needs actual handler/remote/Back tests. Filter engine has separate ruleset/version/off-on/site-exception results; disabling filtering preserves data. No universal blocking claim .
 
 ## Evidence and release
 
@@ -104,7 +104,7 @@ First usable launcher requires all P0 outcomes and explicit owner experience rev
 
 Documentation links/coverage were validated. The 0.3 prototype passed 24 Android emulator storage/player/UI assertions; see [build status](BUILD-STATUS.md) for exact coverage. 0.4 adds retained-file/HTTP/production-player tests; current results are recorded in [build status](BUILD-STATUS.md). Brief physical-TV observations are recorded in [feedback](TV-FEEDBACK.md): partial visual/app/remote confirmation, observed default-Home failure. Real iPhone file transfer and comprehensive scenario acceptance remain unrun.
 
-## Baseline 2.1 scenario extensions
+## Baseline 2.2 scenario extensions
 
 ### A04 extension: system selection, not just eligibility
 
@@ -131,3 +131,7 @@ Identify the reported YouTube-sharing receiver/protocol. Only a documented durab
 ### A16 - Shortcuts
 
 Every shortcut has a visible action; test hold-OK and its alternative on the owner's remote. Quick actions are reachable by D-pad, optional Menu key behaves consistently, Back restores focus, and system Home/volume behavior is not intercepted. Gesture-only or rapid-double-press actions cannot be essential.
+
+## Upgrade after scope removal
+
+Load/import legacy v1/v2 saved entries and collection references. Confirm preserved URLs/IDs/revision, browser routing, idempotent normalization, no input mutation, unsafe-URL rejection and rejection of retired routes on new writes. Recovery snapshots remain importable. Cleanup removes only retired settings/credentials/generated cache, preserving unrelated preferences/dashboard/files. Settings has no movie search, service-key, provider-template or movie-cache controls. Core app discovery, pairing, transfer and retained playback regressions still pass.

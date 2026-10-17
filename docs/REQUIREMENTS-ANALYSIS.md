@@ -2,7 +2,7 @@
 
 The second feedback round is now physical-TV evidence: a usable but incomplete visual foundation, working tried remote/app paths, failed observed Home/reboot outcome and demand for useful dynamic cards plus a richer companion. Upload/resume were not tested. See [feedback analysis](TV-FEEDBACK.md) for exact interpretation and questions.
 
-Baseline 2.1 | 17 October 2026 | Reconciles original intent, 0.2 implementation and BlueStacks feedback
+Baseline 2.2 | 17 October 2026 | Reconciles original intent, 0.2 implementation and BlueStacks feedback
 
 ## What changed
 
@@ -23,14 +23,13 @@ The implementation optimized infrastructure and editable dashboard breadth befor
 | Browser | Rare use | Secondary access; avoid browser-first Home |
 | Google Drive | Requested if possible | Feasibility gate and scoped authorized media integration |
 | PC editing/collections | Existing requirement retained | Companion management supports launcher |
-| NowShowing-Stream | Existing selected reference retained | Optional discovery destination, later priority |
 | Exact iPhone sending gesture/apps | Unknown | Verify AirPlay vs Photos/file transfer vs links; do not block design |
 | Actual TV Home/Cast/AirPlay support | Unknown | Real-device checks; BlueStacks cannot establish these |
 | Existing Java/Views/AtomicFile | Delivered engineering choice | Keep unless measured needs justify replacement |
 
 ## Priority reconciliation
 
-The earlier standalone-first baseline made launcher support P1 and placed discovery before everyday navigation. That ordering is superseded. Launcher, recognizable app grid and phone-media return are P0. NowShowing/provider work, richer YouTube browsing/embedded-player evaluation and Brave/filtering remain requested P1 work; selected-source YouTube cards are separately promoted to P0. Selected YouTube/RSS modules are now P0 (DYN-01/02); mood/weather and arbitrary widget hosting remain P2. Spotify/Drive do not become mandatory accounts for Home.
+The earlier standalone-first baseline made launcher support P1 and placed discovery before everyday navigation. That ordering is superseded. Launcher, recognizable app grid and phone-media return are P0. Richer YouTube browsing/embedded-player evaluation and browser/filtering remain requested P1 work; selected-source YouTube cards are separately promoted to P0. Selected YouTube/RSS modules are now P0 (DYN-01/02); mood/weather and arbitrary widget hosting remain P2. Spotify/Drive do not become mandatory accounts for Home.
 
 The pivot baseline was documentation-only, then the owner merged it and requested the next steps. The 0.3 [prototype](LAUNCHER-PREVIEW.md) now implements grid/direct-app and initial Home setup. 0.4 now adds the [retained-file workflow](PHONE-TRANSFER-PREVIEW.md); real iPhone/Safari acceptance, AirPlay and Drive remain future work. Follow the new sequence.
 
@@ -41,10 +40,6 @@ AirPlay, Google Cast, mirroring and local transfer solve different tasks. Apple 
 Google Drive supports authorized binary media download and byte-range requests. This makes a media source plausible, not already integrated. Google's limited-input device flow currently permits drive.file and drive.appdata; it does not automatically authorize browsing an entire existing Drive. File selection/scopes/authentication need a verified design before promising folders. See [phone and Drive assessment](PHONE-AND-DRIVE.md) for sources and implementation gates.
 
 The full launcher can be feasible while system Home behavior is firmware-dependent. A blocked Home selection is a core product issue requiring a decision; do not silently declare the standalone fallback accepted.
-
-## Existing source findings retained
-
-The targeted NowShowing-Stream audit found that recent-title entries are added on detail open without timestamp progress; season/episode and confirmed-working source semantics are incomplete. Its iframe sources are not native media URLs. Keep independent identity/episode/progress records, no iframe-load success claims and no fake timestamps. No upstream copying until reuse rights are established. See [source audit](NOWSHOWING-AUDIT.md).
 
 ## Research references and lessons
 
@@ -77,3 +72,7 @@ Address reliability and desirability together: fix the supported default-Home se
 Source inspection found an actionable Home gap: MainActivity currently enables the alias and opens ACTION_HOME_SETTINGS but does not request ROLE_HOME. This is a missing path, not a proven sole cause of the owner's result. Android documents role availability checks and a user-consent request; actual TV support must be tested. See [RoleManager](https://developer.android.com/reference/android/app/role/RoleManager) and [Home settings](https://developer.android.com/reference/android/provider/Settings#ACTION_HOME_SETTINGS).
 
 Official [YouTube playlist retrieval](https://developers.google.com/youtube/v3/docs/playlistItems/list) supports chosen playlists but explicitly excludes Watch Later/watch history. Therefore selected channels/playlists with precise video actions are the practical first scope. No personal-recommendation scraping or opaque progress import is assumed. The detailed proposal and primary references are in [dynamic Home](DYNAMIC-HOME.md).
+
+## Scope narrowed to launcher and media convenience
+
+The owner will develop movie streaming/discovery as a separate native TV app. Nook should make independent apps easy to find and open rather than duplicate their catalogs, credentials or playback-provider configuration. This reduces configuration and keeps Home and the companion focused. Generic installed-app support requires no knowledge of another app's internals or release schedule. Saved URLs are preserved as browser bookmarks during upgrade; the retired service/client/UI and future catalog requirements are removed.
