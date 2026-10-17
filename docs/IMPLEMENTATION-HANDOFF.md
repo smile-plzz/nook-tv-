@@ -8,7 +8,7 @@ Baseline 1.0 — 2026-10-17.
 
 The instruction authorizes application source, build tooling, CI and APK work. Do not replace the stock TV launcher automatically. See [build status](BUILD-STATUS.md) for what has actually been implemented and verified.
 
-A locally compiled and debug-signed M1 APK now exists. Device validation is pending. Planning documents continue to describe future behavior beyond this preview.
+A locally compiled M1 APK and hosted 0.2 Media3 preview builds exist. The owner explicitly asked to proceed with later phases while unable to test on TV. Continue independent development and hosted Android checks; physical-device acceptance stays pending. Planning documents include future behavior beyond this preview.
 
 ## Read order
 
@@ -35,7 +35,7 @@ A locally compiled and debug-signed M1 APK now exists. Device validation is pend
 ## Execution sequence after the build instruction
 
 1. Read current repo/AGENTS instructions and recheck changes since this baseline.
-2. Local Java 21 and SDK API 35/build-tools 35.0.1 are verified. Shell network downloads and local ADB startup failed. Use the checked-in offline build script; run device tests when possible.
+2. Local Java 21 / SDK 35 are available, but shell downloads and local ADB failed. Current Media3 sources require the pinned Gradle build with SDK 36; use hosted CI when local dependencies cannot be obtained. The M1 SDK-only script no longer builds current sources.
 3. Pin the selected upstream revision and inspect licensing before copying source/assets.
 4. Select current compatible Android toolchain and dependencies using official docs; record choices and license inventory.
 5. Implement the M1 compatibility APK only as the first milestone; continue independent work when device feedback is pending, without claiming unrun tests passed.

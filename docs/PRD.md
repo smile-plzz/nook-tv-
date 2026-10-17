@@ -1,6 +1,6 @@
 # Nook TV — Product Requirements Document
 
-Version 1.0 scope | 2026-10-17 | Owner: Ismail Hossain | Status: implementation authorized; M1 compatibility preview built
+Version 1.0 scope | 2026-10-17 | Owner: Ismail Hossain | Status: 0.2 dashboard/playback/catalog implementation; target-TV acceptance pending
 
 This is the planning baseline, not evidence that all features are implemented or device-verified. The owner has now instructed implementation. [Build status](BUILD-STATUS.md) records actual coverage; [decision record](DECISIONS.md) distinguishes requirements from implementation choices.
 

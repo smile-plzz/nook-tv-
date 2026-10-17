@@ -201,7 +201,7 @@ public final class MainActivity extends Activity implements EditorServer.Host {
         returnFocus=focusKey; page("player",label,"Native Media3 playback | Back returns to your dashboard.");
         playingUrl=url; playingLabel=label; playingId=id; prepared=false;
         try { viewing.ledger.opened(id,label,url,"native"); persistViewing(); } catch(Exception ignored) {}
-        player=new ExoPlayer.Builder(this).build();
+        player=new ExoPlayer.Builder(this).setLoadControl(new androidx.media3.exoplayer.DefaultLoadControl.Builder().setBufferDurationsMs(5000,20000,1000,2000).setTargetBufferBytes(24*1024*1024).build()).setAudioAttributes(androidx.media3.common.AudioAttributes.DEFAULT,true).setHandleAudioBecomingNoisy(true).build();
         playerView=new PlayerView(this); playerView.setPlayer(player); playerView.setUseController(true); playerView.setControllerAutoShow(true); playerView.setShowSubtitleButton(true);
         content.addView(playerView,new LinearLayout.LayoutParams(-1,dp(270))); playerStatus=text("Loading...",14,muted); content.addView(playerStatus); LinearLayout controls=row();
         controls.addView(action("Play / Pause","play-pause",()->{ if(player!=null) { if(player.isPlaying()) player.pause(); else player.play(); saveProgress(); } }));
@@ -277,6 +277,7 @@ public final class MainActivity extends Activity implements EditorServer.Host {
     private void settings() {
         page("settings","Settings","Compatibility preview. Your saved dashboard stays on this TV.");
         content.addView(action("Manage collections","settings-collections",this::manageCollections));
+        content.addView(action("Viewing history","settings-history",this::allHistory));
         content.addView(action("Metadata API key","settings-api",this::metadataKey));
         content.addView(action("Manage web sources","settings-source",this::manageSources));
         content.addView(action("Clear metadata cache","settings-cache",()->io.execute(()->{ catalog.clear(); handler.post(()->message("Metadata cache cleared. Your dashboard and viewing history stay.")); })));
@@ -299,6 +300,10 @@ public final class MainActivity extends Activity implements EditorServer.Host {
     }
     private void message(String text) { Toast.makeText(this,text,Toast.LENGTH_LONG).show(); }
     private void recordOpen(String url,String label,String route) { if(url.isEmpty()) return; try { viewing.ledger.opened(route+":"+url,label,url,route); persistViewing(); } catch(Exception ignored) {} }
+    private void allHistory() {
+        page("history","Viewing history","Measured playback and recently opened links are separate. Watched items stay here until you remove or clear them.");
+        try { JSONArray entries=viewing.ledger.snapshot().getJSONArray("entries"); if(entries.length()==0) content.addView(text("No viewing history yet.",18,muted)); for(int i=0;i<entries.length();i++) { JSONObject e=entries.getJSONObject(i); content.addView(action(e.optString("label")+" | "+e.optString("status"),"all-history-"+e.optString("id"),()->historyOptions(e))); } } catch(Exception e) { message("Could not read viewing history."); }
+    }
     private void createCollection() {
         EditText input=new EditText(this); input.setHint("Collection name");
         AlertDialog dialog=new AlertDialog.Builder(this).setTitle("Create a collection").setView(input).setPositiveButton("Create",null).setNegativeButton("Cancel",null).create();
