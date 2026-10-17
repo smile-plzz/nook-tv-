@@ -16,6 +16,13 @@ public final class SmokeInstrumentation extends Instrumentation {
     private void check(boolean condition,String description) { assertions++; if(!condition) throw new AssertionError(description); }
     private void onMain(Runnable run) { final Throwable[] failure={null}; runOnMainSync(()->{ try { run.run(); } catch(Throwable e) { failure[0]=e; } }); if(failure[0]!=null) throw new AssertionError("Main-thread test operation failed",failure[0]); }
     private View awaitTag(Activity activity,String tag) throws Exception { final View[] found={null};long deadline=System.currentTimeMillis()+10000;while(System.currentTimeMillis()<deadline){onMain(()->found[0]=activity.getWindow().getDecorView().findViewWithTag(tag));if(found[0]!=null)return found[0];Thread.sleep(80);}throw new AssertionError("Missing view: "+tag); }
+    private void loopbackTransfer(Activity activity,Context context,byte[] fixture)throws Exception{
+        java.lang.reflect.Field field=MainActivity.class.getDeclaredField("pairing");field.setAccessible(true);Pairing pairing=(Pairing)field.get(activity);String code=pairing.begin(),ticket=pairing.request(code,"Instrumentation");pairing.approve();String[] session=pairing.claim(ticket);String id="44444444444444444444444444444444";
+        String headers="POST /api/media/upload HTTP/1.1\r\nHost: 127.0.0.1:8765\r\nOrigin: http://127.0.0.1:8765\r\nX-Nook-Client: editor-v1\r\nAuthorization: Bearer "+session[0]+"\r\nX-Nook-CSRF: "+session[1]+"\r\nContent-Type: application/octet-stream\r\nX-Nook-Filename: Loopback%20video.mp4\r\nX-Nook-Upload-Id: "+id+"\r\nContent-Length: "+fixture.length+"\r\n\r\n";
+        String response;try(java.net.Socket socket=new java.net.Socket("127.0.0.1",8765);java.io.ByteArrayOutputStream reply=new java.io.ByteArrayOutputStream()){socket.setSoTimeout(20000);socket.getOutputStream().write(headers.getBytes("UTF-8"));socket.getOutputStream().write(fixture);socket.getOutputStream().flush();byte[] buffer=new byte[4096];int n;while((n=socket.getInputStream().read(buffer))!=-1)reply.write(buffer,0,n);response=reply.toString("UTF-8");}
+        check(response.startsWith("HTTP/1.1 200"),"real Android socket upload acknowledged after saving");check(new ReceivedMediaStore(context).playable(id).length()==fixture.length,"HTTP pipeline commits retained copy");
+        onMain(()->{try{java.lang.reflect.Field player=MainActivity.class.getDeclaredField("player");player.setAccessible(true);check(player.get(activity)==null,"receiving a file does not start playback");}catch(Exception e){throw new RuntimeException(e);}});pairing.revoke();
+    }
     @Override public void onCreate(Bundle arguments) { super.onCreate(arguments); start(); }
     @Override public void onStart() {
         Bundle result=new Bundle();
@@ -57,6 +64,7 @@ public final class SmokeInstrumentation extends Instrumentation {
             boolean eligible=false;for(android.content.pm.ResolveInfo r:context.getPackageManager().queryIntentActivities(new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME),0))if(r.activityInfo.packageName.equals(context.getPackageName()))eligible=true;check(eligible,"enabled alias advertises HOME");
             context.getPackageManager().setComponentEnabledSetting(alias,android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED,android.content.pm.PackageManager.DONT_KILL_APP);
             sendKeyDownUpSync(KeyEvent.KEYCODE_BACK);waitForIdleSync();
+            loopbackTransfer(activity,context,retainedFixture);waitForIdleSync();
             View savedVideo=awaitTag(activity,"received-"+ReceivedMediaChecks.ID);onMain(savedVideo::performClick);waitForIdleSync();
             final ExoPlayer[] retainedPlayer={null};CountDownLatch retainedReady=new CountDownLatch(1);
             onMain(()->{try{java.lang.reflect.Field field=MainActivity.class.getDeclaredField("player");field.setAccessible(true);retainedPlayer[0]=(ExoPlayer)field.get(activity);retainedPlayer[0].addListener(new Player.Listener(){@Override public void onPlaybackStateChanged(int state){if(state==Player.STATE_READY)retainedReady.countDown();}});if(retainedPlayer[0].getPlaybackState()==Player.STATE_READY)retainedReady.countDown();}catch(Exception e){throw new RuntimeException(e);}});
