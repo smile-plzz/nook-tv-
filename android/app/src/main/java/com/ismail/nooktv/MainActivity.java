@@ -56,7 +56,7 @@ public final class MainActivity extends Activity implements EditorServer.Host {
 
     @Override public void onCreate(Bundle b) {
         super.onCreate(b); getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-        store=new DashboardStore(this); history=getSharedPreferences("nook",MODE_PRIVATE); viewing=new ViewingStore(this); catalog=new CatalogClient(this); server=new EditorServer(pairing,this);
+        store=new DashboardStore(this); history=getSharedPreferences("nook",MODE_PRIVATE); focusKey=history.getString("lastFocus",""); homeScrollY=history.getInt("homeScroll",0); viewing=new ViewingStore(this); catalog=new CatalogClient(this); server=new EditorServer(pairing,this);
         home();
     }
     @Override public void onResume() {
@@ -66,14 +66,14 @@ public final class MainActivity extends Activity implements EditorServer.Host {
         if(pairInfo!=null&&screen.equals("pair")) pairInfo.setText(addressText());
     }
     @Override public void onPause() {
-        foreground=false; saveProgress(); if(player!=null) player.pause(); if(web!=null) web.onPause(); server.stop(); super.onPause();
+        foreground=false; history.edit().putString("lastFocus",returnFocus.isEmpty()?focusKey:returnFocus).putInt("homeScroll",screen.equals("home")&&homeScroll!=null?homeScroll.getScrollY():homeScrollY).apply(); saveProgress(); if(player!=null) player.pause(); if(web!=null) web.onPause(); server.stop(); super.onPause();
     }
     @Override public void onStop() {
         if(player!=null) { releasePlayback(); videoStopped=true; }
         if(web!=null) { releaseWeb(); screen="home"; home(); }
         super.onStop();
     }
-    @Override public void onDestroy() { handler.removeCallbacksAndMessages(null); releasePlayback(); server.stop(); io.shutdown(); super.onDestroy(); }
+    @Override public void onDestroy() { generation++; handler.removeCallbacksAndMessages(null); releasePlayback(); server.stop(); io.shutdown(); super.onDestroy(); }
 
     private int dp(int n) { return (int)(n*getResources().getDisplayMetrics().density+.5f); }
     private LinearLayout vertical() { LinearLayout l=new LinearLayout(this); l.setOrientation(LinearLayout.VERTICAL); return l; }
@@ -278,7 +278,7 @@ public final class MainActivity extends Activity implements EditorServer.Host {
         page("settings","Settings","Compatibility preview. Your saved dashboard stays on this TV.");
         content.addView(action("Manage collections","settings-collections",this::manageCollections));
         content.addView(action("Metadata API key","settings-api",this::metadataKey));
-        content.addView(action("Configure a web source","settings-source",this::configureSource));
+        content.addView(action("Manage web sources","settings-source",this::manageSources));
         content.addView(action("Clear metadata cache","settings-cache",()->io.execute(()->{ catalog.clear(); handler.post(()->message("Metadata cache cleared. Your dashboard and viewing history stay.")); })));
         if(store.canRecover()) content.addView(action("Undo last dashboard import","settings-undo",()->new AlertDialog.Builder(this).setTitle("Restore the pre-import dashboard?").setMessage("Current dashboard changes will be replaced. A recovery snapshot is kept.").setPositiveButton("Restore",(d,n)->io.execute(()->{ try { store.undoImport(); handler.post(this::home); } catch(Exception e) { handler.post(()->message("Could not restore snapshot.")); } })).setNegativeButton("Cancel",null).show()));
         content.addView(action("Add a saved link","settings-add",this::addLink));
@@ -332,6 +332,13 @@ public final class MainActivity extends Activity implements EditorServer.Host {
         LinearLayout fields=vertical(); EditText label=new EditText(this),movie=new EditText(this),series=new EditText(this); label.setHint("Source name"); movie.setHint("HTTPS movie URL with {imdb}"); series.setHint("HTTPS series URL with {imdb}, {season}, {episode}"); fields.addView(label); fields.addView(movie); fields.addView(series);
         AlertDialog dialog=new AlertDialog.Builder(this).setTitle("Add your permitted web source").setMessage("No source is preverified. Use the site's documented IMDb embed URL contract. Playback remains a web route without timestamp resume.").setView(fields).setPositiveButton("Save",null).setNegativeButton("Cancel",null).create();
         dialog.setOnShowListener(d->dialog.getButton(-1).setOnClickListener(v->{ try { String name=label.getText().toString().trim(),m=movie.getText().toString().trim(),t=series.getText().toString().trim(); if(name.isEmpty()||name.length()>60) throw new IllegalArgumentException(); SourceTemplate.build(m,"tt1234567",0,0); if(!t.isEmpty()) SourceTemplate.build(t,"tt1234567",1,1); JSONArray sources=new JSONArray(history.getString("sources","[]")); if(sources.length()>=10) throw new IllegalArgumentException(); sources.put(new JSONObject().put("id",UUID.randomUUID().toString()).put("label",name).put("movie",m).put("series",t)); history.edit().putString("sources",sources.toString()).apply(); dialog.dismiss(); message("Source saved as unverified."); } catch(Exception e) { movie.setError("Check the name, HTTPS URL placeholders, or 10-source limit."); } })); dialog.show();
+    }
+    private void manageSources() {
+        page("sources","Web sources","Owner-configured HTTPS sources. No provider has confirmed compatibility on your TV.");
+        try { JSONArray sources=new JSONArray(history.getString("sources","[]"));
+            for(int i=0;i<sources.length();i++) { JSONObject source=sources.getJSONObject(i); String id=source.getString("id"); content.addView(action(source.optString("label")+" | Unverified","source-"+id,()->new AlertDialog.Builder(this).setTitle(source.optString("label")).setMessage("Remove this source? Saved titles and viewing history remain.").setPositiveButton("Remove",(d,n)->{ try { JSONArray current=new JSONArray(history.getString("sources","[]")),next=new JSONArray(); for(int j=0;j<current.length();j++) if(!current.getJSONObject(j).getString("id").equals(id)) next.put(current.getJSONObject(j)); history.edit().putString("sources",next.toString()).apply(); manageSources(); } catch(Exception e) { message("Could not remove source."); } }).setNegativeButton("Cancel",null).show())); }
+        } catch(Exception e) { content.addView(text("Source configuration is unavailable.",16,muted)); }
+        content.addView(action("+ Add web source","source-add",this::configureSource));
     }
     private void watch() {
         page("watch","Watch something good","Native movie and series browsing. Metadata requires your optional OMDb key in TV Settings.");

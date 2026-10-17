@@ -1,47 +1,42 @@
-# Implementation status — 0.1.0-m1
+# Implementation status | 0.2.0-preview
 
-2026-10-17. The owner explicitly authorized implementation after documentation finalization. This is the compatibility milestone, not a P0 or full-product release.
+Updated 17 October 2026. Ismail asked to proceed with the next phases while TV testing is unavailable. Development continues independently; the target-TV compatibility and acceptance gates remain pending. Historical M1 evidence is in [M1 status](M1-STATUS.md).
 
-## Implemented
+## Implemented in this change
 
-| M1 area | Actual implementation | Remaining evidence/work |
+| Area | Implemented | Limits / remaining evidence |
 |---|---|---|
-| Installable app | Normal Android + Leanback entry; stable compatibility ID `com.ismail.nooktv.compat`; API 26 minimum/35 target; vector icon/banner | Installation on owner's TV |
-| Remote UI | Native Java Views with visible focus, Home/Apps/Settings, saved links and player return focus | Actual remote, overscan and low-memory behavior |
-| Apps | Discover launchable TV/mobile apps, pin/unpin, launch, missing-app label | Firmware package visibility/handlers |
-| Diagnostics | API/ABI, display, app memory class, WebView package, selected decoder types, YouTube/Brave installation, home handlers | Owner screenshot/transcription; no unique identifiers |
-| Native video | Platform VideoView MP4/HLS probes; visible play/pause/seek/exit and media keys; measured last-video resume | Actual codec/network/playback results; Media3, DASH, per-episode storage and tracks deferred |
-| Web | Controlled test page; one WebView; no bridge/file/content access, HTTPS-only navigation, popup/download rejection, cross-host link confirmation, visible exit | Real-TV remote escape/provider behavior; filtering not implemented |
-| YouTube | Try official TV/mobile handlers, then browser; no fabricated playback history | Installed handler and actual URL behavior; richer validation/discovery remains |
-| PC editor | Foreground-only port 8765; short-lived code plus TV approval; high-entropy bearer/CSRF credentials, Host/Origin checks, bounded threads/headers/body, revocation, revision conflict | Actual home-network connectivity; transport is HTTP, not encrypted |
-| Saved state | Atomic JSON dashboard, welcome line, up to 40 HTTPS links and 40 pinned app components; editor reorder/remove; dashboard-only export | Full layout/collections/backgrounds/import and Room migrations remain |
-| CI | Hosted Windows build, core/handler checks and APK artifact upload passed on commit `0b822b60c08812613b9916cf78eb7eb6a508b53a` | No device/runtime result is implied |
+| Dashboard | Schema-v2 migration from M1; ordered/visible Home rows; pinned apps; 200 saved items; 20 collections; references shared across collections | TV overscan, focus and performance pending |
+| Browser editing | Actual TV app inventory, app ordering/pinning, link ordering, collection membership/order, title/accent and resized photo backgrounds; approximate preview | Actual LAN testing pending |
+| Backup | Schema-v1/v2 import preview and explicit replacement; atomic pre-import recovery snapshot; Undo import on TV; dashboard-only export | Does not export secrets, viewing history, provider source templates or series selections |
+| Concurrency | Revision leases and last 128 mutation fingerprints persist with the config in one AtomicFile envelope | Replay returns current state after verifying the original mutation fingerprint; not an unlimited mutation journal |
+| Media3 | Pinned ExoPlayer 1.11.1, HLS/DASH modules, PlayerView, remote/media controls, audio/subtitle selection when tracks exist, retry and sample streams | Real content, codecs, seeking and two-hour tests pending |
+| Viewing state | Up to 100 independent entries; native measured progress; resume/start over/mark watched/remove; recently opened web/app routes; pause and separate clear | No account history, cross-origin progress scraping or external-app timestamps |
+| Metadata | Native OMDb search/pagination/details; saved movie/series entries; independent season/episode selection; 6-hour metadata cache bounded at 150 records / 8 MiB; quota/key/offline states | Owner supplies optional key on TV; OMDb metadata does not establish stream availability |
+| Web sources | Up to ten owner-configured HTTPS IMDb URL templates; movie/series placeholder validation; selection saved separately; opaque web playback never claims timestamps | No provider preenabled or verified; provider contracts and remote input require later tests |
+| Android verification | Added real Android AtomicFile/mutation/recovery/progress and native navigation instrumentation; hosted API-35 emulator workflow | Execution results recorded below when completed; emulator is not the owner's TV |
 
-## Executed locally
+## Verification
 
-- Java source compiled against Android API 35 and converted to DEX.
-- Resource/manifest packaging and zip alignment succeeded.
-- APK signature verification passed for v2 and v3 signing schemes.
-- APK manifest inspection confirms compatibility package ID, version, minimum/target API and normal/TV entry points.
-- 22 core assertions passed: code expiry, explicit approval, single-use claims, credentials, immediate revocation, lockout, URL schemes/credential/host rejection and exact editor hosts.
-- 17 actual editor-handler assertions passed using in-memory request/response streams and the SDK's AOSP JSON implementation: authenticated reads/writes, no credential before TV approval, origin/host checks, JSON/body limits, conflicts and revocation. These do not test a live LAN socket or Android lifecycle.
-- Browser editor JavaScript syntax checked with Node.
+- 22 core assertions passed locally.
+- 17 actual HTTP-handler assertions passed locally with in-memory transport.
+- 35 new schema/migration/collection/source/viewing assertions passed locally.
+- Editor JavaScript syntax passed.
+- Hosted Gradle build, APK packaging and Android instrumentation: verification in progress during this draft.
+- No owner-TV, physical remote, home LAN, provider, media playback, 2 GB memory or two-hour result is claimed.
 
-GitHub Actions independently repeated the SDK-only build, core checks and editor-handler tests and uploaded the APK in [run 39010354732](https://github.com/smile-plzz/nook-tv-/actions/runs/39010354732). The initial setup failed because the setup action requested a removed `tools` package; the workflow now explicitly requests `platform-tools` and the rerun passed the build/test/upload steps.
+The tests fixed a concrete M1 defect: link validation counted five fields even though saved links contain four. Schema-v2 tests now exercise valid saved links and reject malformed/dangling references.
 
-No app runtime, emulator, target-TV, media-source, LAN pairing, two-hour playback, provider, performance or accessibility result is claimed. ADB could not start its local service in this execution environment. Shell downloads failed DNS resolution; GitHub connector access worked.
+## Technical decisions
 
-## Explicit M1 limitations
+Java/native Views remain in use. Production playback now uses Media3 instead of the platform VideoView probe. Durable state currently uses versioned atomic JSON envelopes rather than Room; this is a recorded implementation deviation, not a claim that Room work was completed. The bounded state is covered by document and Android storage tests; SQLite/Room migration can follow measured requirements rather than running two authoritative stores concurrently.
 
-- Platform player is a compatibility probe. It does not implement Media3, DASH, track selection, live/DVR state or production per-episode history. Only the most recent native VOD is resumed; previously watched entries are not a complete library.
-- No NowShowing catalog/provider source is enabled or verified. Selected upstream commit: `5fc8b1870a028b2ee84bf324a11f6529e85f22a1`. No upstream source/assets copied because a root reuse license was not found during inspection.
-- No default launcher change, Brave-specific launch option, ad filtering, widgets, art cache, metadata credentials, backup import, arbitrary media proxy or cloud service.
-- YouTube handoff and generic HTTPS links are supported; comprehensive video/channel/playlist URL canonicalization is later work.
-- Config writes are atomic. Mutation receipts and browser credentials last only for the app process; reconnect/restart requires reading current revision. Lost-save retry is idempotent within that process (128 recent mutation IDs). Export covers dashboard configuration only.
-- Browser drafts stay in browser local storage. Session secrets stay in tab memory; they are never exported. HTTP cannot protect against someone intercepting home-network traffic. No provider credentials are accepted.
-- The editor server stops on Activity pause; it resumes when Nook is foregrounded. Browser drafts are retained without automatically replaying writes. Pairing accepts at most eight in-memory sessions before revocation is needed.
-- This is debug-signed. The local ignored key supports updates from this workspace; independently built CI APKs use a new debug key each run and may require uninstalling a previous preview. Production signing continuity is a later gate.
+Gradle 8.13, AGP 8.13.2 and compile SDK 36 are pinned for Media3 dependencies; minimum API remains 26 and target API remains 35. The previous SDK-only M1 build cannot compile these runtime dependencies and now directs contributors to Gradle.
 
-## Next execution
+Dashboard data and viewing state are separate atomic files. M1 config and last-native progress migrate on first use. A corrupt saved dashboard disables replacement rather than silently overwriting it; corrupt viewing data also remains untouched. Pairing sessions remain in memory and require pairing again after process death. Background images are JPEG-only, bounded in bytes/dimensions and decoded away from the UI thread.
 
-Run [device tests](DEVICE-TEST.md), record actual evidence, and address compatibility failures. Independent work can proceed on data models, Media3 dependency setup and catalog adapters without treating pending device tests as passes. Keep all P0/P1 requests in the PRD; this preview does not reduce them.
+The OMDb key is entered on TV and kept out of browser editing, backups and logs. OMDb requires the key in its HTTPS API query; the app sends it only to that endpoint and does not follow redirects. Source templates are owner-configured on TV and not included in dashboard backups.
+
+## Next work
+
+Continue resolving findings from hosted tests. When the TV is available, execute [device tests](DEVICE-TEST.md), then validate individual source contracts and network/remote behavior. Remaining full scope includes tested providers, richer metadata/artwork/episode browsing, fully polished native YouTube routes, Brave-specific routing/filtering, optional widgets, optional launcher and signed release continuity. Do not label P0 or the full product accepted merely because CI passes.

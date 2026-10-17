@@ -9,3 +9,5 @@ if ($LASTEXITCODE -ne 0) { throw 'Core test compilation failed' }
 if ($LASTEXITCODE -ne 0) { throw 'Core tests failed' }
 & node --check "$repo\android\app\src\main\assets\editor.js"
 if ($LASTEXITCODE -ne 0) { throw 'Editor JavaScript syntax check failed' }
+Push-Location $repo
+try { & node tests/editor-state.test.cjs; if ($LASTEXITCODE -ne 0) { throw 'Editor state tests failed' } } finally { Pop-Location }

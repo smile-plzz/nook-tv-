@@ -2,13 +2,13 @@
 
 ## Runtime
 
-The M1 app uses Android framework APIs supplied by the device. No third-party runtime library, tracker, analytics service or advertising SDK is bundled. No NowShowing source, images or provider-specific code has been copied.
+M1 used only Android framework APIs. Preview 0.2 adds AndroidX Media3 1.11.1 (ExoPlayer, HLS, DASH, UI and their transitive dependencies), under their applicable Apache 2.0 and transitive licenses. Gradle resolves these from Google Maven; no tracker/advertising SDK is intentionally added. Media3: https://github.com/androidx/media. No NowShowing source/assets/provider code has been copied. The added SourceTemplate implements a general owner-provided URL contract independently.
 
 ## Build tooling
 
 - Gradle wrapper JAR from the locally installed official Gradle 8.11.1 distribution: Apache License 2.0. License text is in `third-party/Gradle-LICENSE.txt`; Gradle notice is in `third-party/Gradle-NOTICE.txt`. Project: https://gradle.org/.
 - Android SDK/build-tools/API stubs are external build requirements under their applicable Android SDK terms; not redistributed here.
-- AGP 8.9.1 is referenced by the optional Gradle build, not bundled in the application.
+- Current build pins Gradle 8.13 and AGP 8.13.2. The bootstrap wrapper JAR remains the official Gradle 8.11.1 wrapper; it downloads the pinned 8.13 distribution. Build tooling is not bundled in the APK.
 - GitHub Actions reference checkout/setup-java/setup-node/setup-android/upload-artifact by version tags. They run in GitHub CI, not on the TV.
 
 ## Test media

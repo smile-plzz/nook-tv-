@@ -21,7 +21,8 @@ public final class EditorServer {
     private final Host host;
     private ServerSocket listener;
     private ExecutorService pool;
-    private final Set<String> hosts = new HashSet<>();
+    private final Set<String> hosts = ConcurrentHashMap.newKeySet();
+    private final Set<Socket> clients = ConcurrentHashMap.newKeySet();
     public EditorServer(Pairing pairing, Host host) { this.pairing=pairing; this.host=host; }
     public synchronized List<String> start() throws IOException {
         if(listener!=null) return addresses();
@@ -35,12 +36,13 @@ public final class EditorServer {
             while(!socket.isClosed()) try {
                 Socket client=socket.accept();
                 if(!client.getInetAddress().isSiteLocalAddress()&&!client.getInetAddress().isLoopbackAddress()) { client.close(); continue; }
-                try { pool.execute(()->serve(client)); } catch(RejectedExecutionException e) { client.close(); }
+                clients.add(client);
+                try { pool.execute(()->serve(client)); } catch(RejectedExecutionException e) { clients.remove(client); client.close(); }
             } catch(IOException e) { break; }
         },"nook-editor"); acceptor.setDaemon(true); acceptor.start(); return addresses();
     }
     private List<String> addresses() { List<String> result=new ArrayList<>(); for(String h:hosts) if(!h.startsWith("127.")) result.add("http://"+h); Collections.sort(result); return result; }
-    public synchronized void stop() { if(listener!=null) try { listener.close(); } catch(IOException ignored) {} listener=null; if(pool!=null) pool.shutdownNow(); pairing.cancel(); }
+    public synchronized void stop() { if(listener!=null) try { listener.close(); } catch(IOException ignored) {} listener=null; if(pool!=null) pool.shutdownNow(); for(Socket client:clients) try { client.close(); } catch(IOException ignored) {} clients.clear(); pairing.cancel(); }
     private void serve(Socket socket) {
         try(Socket client=socket) {
           try {
@@ -87,6 +89,7 @@ public final class EditorServer {
             catch(IllegalArgumentException|JSONException e) { reply(client,400,"application/json",bytes("{\"error\":\"Invalid configuration or request. Check names, URLs and limits.\"}")); }
             catch(Exception e) { reply(client,503,"application/json",bytes("{\"error\":\"TV unavailable or unable to save. Reopen Nook and reload.\"}")); }
         } catch(Exception ignored) { /* Client disconnect or timed-out connection. No request secrets logged. */ }
+        finally { clients.remove(socket); }
     }
     private static byte[] bytes(String value) { return value.getBytes(StandardCharsets.UTF_8); }
     private static void reply(Socket socket,int code,String type,byte[] body) throws IOException {

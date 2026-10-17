@@ -22,7 +22,7 @@ public final class CatalogClient {
             connection=(HttpURLConnection)new URL("https://www.omdbapi.com/?apikey="+encode(key)+"&r=json&"+query).openConnection(); connection.setConnectTimeout(8000); connection.setReadTimeout(10000); connection.setInstanceFollowRedirects(false);
             if(connection.getResponseCode()!=200) throw new IOException("Metadata service unavailable or quota reached.");
             ByteArrayOutputStream bytes=new ByteArrayOutputStream(); try(InputStream in=connection.getInputStream()) { byte[] buffer=new byte[4096]; int n; while((n=in.read(buffer))!=-1) { if(bytes.size()+n>512000) throw new IOException("Metadata response too large"); bytes.write(buffer,0,n); } }
-            JSONObject body=new JSONObject(new String(bytes.toByteArray(),StandardCharsets.UTF_8)); if(body.optString("Response").equals("False")) throw new IOException(body.optString("Error","No matching titles."));
+            JSONObject body=new JSONObject(new String(bytes.toByteArray(),StandardCharsets.UTF_8)); if(body.optString("Response").equals("False")) { String error=body.optString("Error","").toLowerCase(java.util.Locale.ROOT); throw new IllegalStateException(error.contains("not found")?"No matching titles. Try a different name.":error.contains("limit")?"Metadata quota reached. Try again later.":error.contains("key")?"OMDb key is invalid. Update it in TV Settings.":"Metadata is unavailable for this selection."); }
             java.nio.file.Files.write(entry.toPath(),new JSONObject().put("query",query).put("body",body).toString().getBytes(StandardCharsets.UTF_8)); trim(); return body;
         } catch(IOException e) {
             if(cached!=null&&cached.optString("query").equals(query)) return cached.getJSONObject("body").put("nookStale",true);

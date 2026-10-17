@@ -4,8 +4,8 @@ Your personal space on the big screen: apps, Continue Watching, YouTube, NowShow
 
 ## Status
 
-**Implementation authorized — 17 October 2026. Milestone 1 compatibility preview built locally.**
-The owner instructed “initiate the build accordingly.” The documentation hold is released. This branch introduces the first test APK; target-TV acceptance remains pending. It is not the first usable release or a claim of full product completion.
+**0.2.0 preview in development — 17 October 2026.**
+The owner asked to continue while TV testing is unavailable. This preview expands the dashboard/editor, adds Media3 playback and begins native movie/series browsing. Target-TV acceptance remains pending; this is not a completed P0 or full-product release.
 
 Start with [build and installation](docs/BUILD-AND-INSTALL.md), [current implementation status](docs/BUILD-STATUS.md), and the [TV test checklist](docs/DEVICE-TEST.md).
 
@@ -13,14 +13,16 @@ Start with [build and installation](docs/BUILD-AND-INSTALL.md), [current impleme
 
 - Remote-friendly native Home, Apps, Settings and diagnostics.
 - Discover, pin, launch and unpin installed apps.
-- Save/reorder HTTPS links from an authenticated PC browser editor with explicit TV pairing approval, revision conflicts and browser revocation.
-- Probe MP4/HLS using Android's platform player, with actual measured resume for the most recent finite native video.
+- Organize apps, saved links/titles and personal collections; reorder/hide Home rows and customize colors/photos from the paired browser editor.
+- Export/import versioned dashboards, with revision checks, persistent mutation receipts and a pre-import recovery snapshot.
+- Play native MP4/HLS/DASH using Media3, with multiple measured resume entries and supported audio/subtitle controls.
+- Search movie/series metadata natively using an optional owner-entered OMDb key; save titles, choose episodes, and use owner-configured web source contracts.
 - Hand off YouTube to its installed app or an external browser.
 - Open an isolated web screen with visible exit/browser controls and a controlled test page.
 
 ### What remains
 
-Media3/DASH, the native NowShowing catalog and source adapters, full collections/layout/background editing, Room-backed per-episode history, backup import, Brave-specific routing, filtering, widgets and launcher replacement remain future work. Native playback, PC connectivity and remote navigation need actual-TV testing. The full [PRD](docs/PRD.md) remains the delivery scope.
+Provider URL contracts/playback and actual TV operation remain unverified. No provider is enabled by default. Richer catalog artwork/episode browsing, native YouTube discovery, Brave-specific routing, filtering, widgets and launcher replacement remain future work. Durable bounded state currently uses atomic versioned JSON rather than Room; this deviation is recorded in build status. The full [PRD](docs/PRD.md) remains the delivery scope.
 
 Primary target: the owner's Sony Plus TV, reported **Android 14 / 2 GB RAM**. Actual API level, ABI, WebView, codecs and launcher behavior await device testing.
 
