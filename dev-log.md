@@ -91,4 +91,25 @@
   - `gradlew.bat assembleDebug`: SUCCESS (built `app-debug.apk`, copied to `outputs/nook-tv-0.4.3-f3-dynamic-sources.apk`).
   - `gradlew.bat compileDebugAndroidTestJavaWithJavac`: SUCCESS.
 
+## 2026-10-17 21:45 — F4 Personal video shelf, QR pairing, thumbnails and storage controls
+- Goal: Implement slice F4 of Nook TV roadmap: QR pairing setup, off-main-thread video thumbnails, personal video shelf on TV Home, and companion organization & storage controls.
+- Changes:
+  - Created `QrCode.java`: Pure Java, zero-dependency, self-contained QR code encoder (ISO/IEC 18004 Versions 1–4, Byte mode, Error Correction Level L) rendering local LAN URL for direct iPhone camera scanning into Safari (no tokens embedded).
+  - Created `tests/QrTests.java`: 485 unit test assertions covering QR matrix generation, quiet zones, finder patterns, alignment centers, timing patterns, masking, and error correction codewords.
+  - Updated `Targets.java`: Decoupled `validMediaId` regex check (`[a-f0-9]{32}`) for cross-module validation without circular store dependencies.
+  - Updated `ReceivedMediaStore.java`: Added rotation-aware thumbnail extraction (`MediaMetadataRetriever` + `Matrix.postRotate` downscaling to 320x180 JPEG), thumbnail file storage and lazy loading, atomic metadata mutations (`update` for label, pinned, collection, and hidden), and `.thumb` cleanup on deletion.
+  - Updated `EditorServer.java`: Added authenticated companion endpoints `GET /api/media/thumbnail?id=<id>`, `POST /api/media/update`, `POST /api/media/delete`, and `POST /api/media/reset`.
+  - Updated `media.js`: Pre-upload storage validation against TV remaining quota before upload; rendered rich media cards with duration, size, status, pin/collection/hidden badges; added actions for Rename, Pin to Home, Collection, Hide/Show on Home, Start over, and Delete copy.
+  - Updated `MainActivity.java`: Rendered personal video shelf on TV Home (`receivedRow()`) sorted with pinned items first, hidden items filtered, collection badges, and measured resume indicators; off-main-thread thumbnail loading via LRU cache; TV remote management dialog with full D-pad options; and high-contrast QR code display on pairing/phone screens (`pair-qr`, `phone-qr`).
+  - Updated `tests/EditorBoundaryTests.java`: Added tests for thumbnail, update, reset, and delete endpoints (38 assertions).
+  - Updated `tests/media-transfer.test.cjs`: Added pre-upload storage check tests and companion media management action tests.
+  - Updated `ReceivedMediaChecks.java`: Added Android instrumentation assertions for metadata mutation, persistence, and thumbnail extraction/cleanup.
+- Build & Verification:
+  - `scripts/test-core.ps1`: PASSED (22 Core + 485 QR + 23 HomeCoordinator + editor-state + media-transfer).
+  - `scripts/test-editor.ps1`: PASSED (38 EditorBoundary + 38 Document + 29 Source = 105 assertions).
+  - Total headless Java assertions passing: 635 assertions.
+  - `gradlew.bat assembleDebug`: SUCCESS (built `app-debug.apk`, copied to `outputs/nook-tv-0.4.4-f4-personal-shelf.apk`).
+  - `gradlew.bat compileDebugAndroidTestJavaWithJavac`: SUCCESS.
+
+
 

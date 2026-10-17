@@ -3,10 +3,12 @@ $repo = Split-Path $PSScriptRoot -Parent
 $out = Join-Path $repo 'test-output'
 New-Item -ItemType Directory -Force $out | Out-Null
 $core = Join-Path $repo 'android\app\src\main\java\com\ismail\nooktv'
-& javac --release 8 -encoding UTF-8 -d $out "$core\Pairing.java" "$core\Targets.java" "$repo\tests\CoreTests.java"
+& javac --release 8 -encoding UTF-8 -d $out "$core\Pairing.java" "$core\Targets.java" "$core\QrCode.java" "$repo\tests\CoreTests.java" "$repo\tests\QrTests.java"
 if ($LASTEXITCODE -ne 0) { throw 'Core test compilation failed' }
 & java -cp $out com.ismail.nooktv.CoreTests
 if ($LASTEXITCODE -ne 0) { throw 'Core tests failed' }
+& java -cp $out com.ismail.nooktv.QrTests
+if ($LASTEXITCODE -ne 0) { throw 'QR tests failed' }
 $sdk = $env:ANDROID_HOME
 if (-not $sdk) { $sdk = Join-Path $env:LOCALAPPDATA 'Android\Sdk' }
 $androidJar = Join-Path $sdk 'platforms\android-35\android.jar'
