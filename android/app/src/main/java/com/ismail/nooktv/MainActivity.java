@@ -64,10 +64,20 @@ public final class MainActivity extends Activity implements EditorServer.Host {
         if(getIntent().hasCategory(Intent.CATEGORY_HOME)) { focusKey=""; homeScrollY=0; } home();
     }
     @Override protected void onNewIntent(Intent intent) { super.onNewIntent(intent);setIntent(intent);if(intent.hasCategory(Intent.CATEGORY_HOME)){focusKey="";returnFocus="";homeScrollY=0;home();} }
+    @Override protected void onActivityResult(int requestCode,int resultCode,Intent data) {
+        super.onActivityResult(requestCode,resultCode,data);
+        if(requestCode==HomeCoordinator.REQUEST_CODE_ROLE_HOME) {
+            HomeCoordinator.State s=HomeCoordinator.inspect(this);
+            if(resultCode==RESULT_OK||s.isDefault()) message("Nook TV is now your default Home screen.");
+            else message("Default Home selection was cancelled or not confirmed.");
+            if(screen.equals("home-setup")) homeSetup();
+        }
+    }
     @Override public void onResume() {
         super.onResume(); foreground=true;
         if(videoStopped) { videoStopped=false; home(); }
         if(screen.equals("home")) refreshHomeApps();
+        if(screen.equals("home-setup")) homeSetup();
         try { addresses=server.start(); serverError=""; } catch(IOException e) { addresses=new ArrayList<>(); serverError="Editor could not start. Port 8765 may be in use."; }
         if(pairInfo!=null&&screen.equals("pair")) pairInfo.setText(addressText());
     }
@@ -388,19 +398,47 @@ public final class MainActivity extends Activity implements EditorServer.Host {
         content.addView(action("Device diagnostics","settings-diagnostics",this::diagnostics));
         content.addView(text("Collections, layout, backgrounds and dashboard backup/restore are available in the PC editor. Target-TV acceptance is still incomplete.",16,muted));
     }
-    private ComponentName homeAlias(){return new ComponentName(this,"com.ismail.nooktv.HomeEntry");}
-    private boolean homeEnabled(){return getPackageManager().getComponentEnabledSetting(homeAlias())==PackageManager.COMPONENT_ENABLED_STATE_ENABLED;}
-    private boolean isDefaultHome(){ResolveInfo info=getPackageManager().resolveActivity(new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME),PackageManager.MATCH_DEFAULT_ONLY);return info!=null&&info.activityInfo!=null&&getPackageName().equals(info.activityInfo.packageName);}
+    private ComponentName homeAlias(){return HomeCoordinator.getHomeAlias(this);}
+    private boolean homeEnabled(){return HomeCoordinator.isAliasEnabled(this);}
+    private boolean isDefaultHome(){return HomeCoordinator.inspect(this).defaultResolved;}
     private void homeSetup(){
-        page("home-setup","Your TV home",isDefaultHome()?"Nook is the selected Home app.":homeEnabled()?"Nook is available for Home selection.":"Choose Nook in your TV's Home settings.");
-        content.addView(text("Your original launcher stays installed. You can restore it in system Home settings. Support depends on your TV firmware.",16,muted));
-        content.addView(action(homeEnabled()?"Open system Home settings":"Enable Nook Home & open settings","home-enable",()->{getPackageManager().setComponentEnabledSetting(homeAlias(),PackageManager.COMPONENT_ENABLED_STATE_ENABLED,PackageManager.DONT_KILL_APP);openHomeSettings();}));
+        HomeCoordinator.State state=HomeCoordinator.inspect(this);
+        page("home-setup","Your TV home",state.getStatusHeadline());
+        content.addView(text(state.getGuidanceMessage(),16,muted));
+        content.addView(text("Your original launcher stays installed. You can restore it in system Home settings. Support depends on your TV firmware.",15,muted));
+        if(!state.isDefault()){
+            content.addView(action(state.roleSupported?"Request default Home role":(state.aliasEnabled?"Open system Home settings":"Enable Nook Home & open settings"),"home-enable",()->{
+                if(!state.aliasEnabled) HomeCoordinator.setAliasEnabled(this,true);
+                boolean requested=HomeCoordinator.requestHomeRole(this,HomeCoordinator.REQUEST_CODE_ROLE_HOME);
+                if(!requested) openHomeSettings();
+            }));
+        } else {
+            content.addView(action("Open system Home settings (change launcher)","home-enable",this::openHomeSettings));
+        }
+        content.addView(action("Open system Home settings","home-settings-direct",this::openHomeSettings));
         content.addView(action("Open system settings","home-system",()->{try{startActivity(new Intent(android.provider.Settings.ACTION_SETTINGS));}catch(Exception e){message("Open your TV's system settings from its remote.");}}));
         content.addView(action("Refresh Home status","home-status",this::homeSetup));
-        if(homeEnabled())content.addView(action("Remove Nook from Home choices","home-disable",()->new AlertDialog.Builder(this).setTitle("Remove Nook Home option?").setMessage("Select your original launcher in system Home settings first. Nook remains available as an ordinary app.").setPositiveButton("Remove",(dialog,which)->{if(isDefaultHome()){message("Choose another default Home app first.");openHomeSettings();return;}getPackageManager().setComponentEnabledSetting(homeAlias(),PackageManager.COMPONENT_ENABLED_STATE_DISABLED,PackageManager.DONT_KILL_APP);homeSetup();}).setNegativeButton("Cancel",null).show()));
+        if(state.aliasEnabled)content.addView(action("Remove Nook from Home choices","home-disable",()->{
+            HomeCoordinator.State current=HomeCoordinator.inspect(this);
+            if(!current.canDisableAlias()){
+                new AlertDialog.Builder(this).setTitle("Default Home is active").setMessage("Nook TV is currently set as your default Home. Select your original launcher in system Home settings first before removing Nook from Home choices.").setPositiveButton("Open settings",(d,n)->openHomeSettings()).setNegativeButton("Cancel",null).show();
+                return;
+            }
+            new AlertDialog.Builder(this).setTitle("Remove Nook Home option?").setMessage("Nook will no longer appear as a candidate for the Home button. Nook remains available as an ordinary app in All Apps.").setPositiveButton("Remove",(dialog,which)->{HomeCoordinator.setAliasEnabled(this,false);homeSetup();}).setNegativeButton("Cancel",null).show();
+        }));
+        section("Home configuration diagnostics");
+        StringBuilder diag=new StringBuilder();
+        diag.append("Home alias: ").append(state.aliasEnabled?"Enabled":"Disabled").append("\n");
+        diag.append("RoleManager API: ").append(state.roleSupported?"Supported (API 29+)":"Unsupported / Not exposed").append("\n");
+        diag.append("Home role held: ").append(state.roleHeld?"Yes":"No").append("\n");
+        diag.append("Default handler: ").append(state.currentHandlerLabel).append(" (").append(state.currentHandlerPackage.isEmpty()?"None":state.currentHandlerPackage).append(")\n");
+        diag.append("Home candidates found: ").append(state.homeAppCount);
+        TextView diagView=text(diag.toString(),15,muted);
+        diagView.setTextIsSelectable(true);
+        content.addView(diagView);
         restore("home-enable");
     }
-    private void openHomeSettings(){try{startActivity(new Intent(android.provider.Settings.ACTION_HOME_SETTINGS));}catch(Exception e){message("This firmware does not expose Home settings here. Try system Settings > Apps > Default apps. Nook has not disabled your original launcher.");}}
+    private void openHomeSettings(){if(!HomeCoordinator.openHomeSettingsWithFallback(this))message("This firmware does not expose Home settings here. Try system Settings > Apps > Default apps. Nook has not disabled your original launcher.");}
     private void samples(){
         page("samples","Playback checks","Diagnostic samples; not part of your daily Home.");
         content.addView(action("MP4 sample","sample-mp4",()->play("https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4","Big Buck Bunny | MP4")));

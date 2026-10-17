@@ -75,10 +75,12 @@ public final class SmokeInstrumentation extends Instrumentation {
             onMain(()->activity.getWindow().getDecorView().findViewWithTag("nav-settings").performClick());waitForIdleSync();
             onMain(()->activity.getWindow().getDecorView().findViewWithTag("settings-home").performClick());waitForIdleSync();
             onMain(()->check(activity.getWindow().getDecorView().findViewWithTag("home-enable")!=null,"explicit Home setup and recovery reachable"));
-            ComponentName alias=new ComponentName(context,"com.ismail.nooktv.HomeEntry");check(context.getPackageManager().getComponentEnabledSetting(alias)!=android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED,"Home alias disabled by default");
-            context.getPackageManager().setComponentEnabledSetting(alias,android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_ENABLED,android.content.pm.PackageManager.DONT_KILL_APP);
+            ComponentName alias=HomeCoordinator.getHomeAlias(context);check(!HomeCoordinator.isAliasEnabled(context),"Home alias disabled by default");
+            HomeCoordinator.State inspectState=HomeCoordinator.inspect(context);check(inspectState.status==HomeCoordinator.Status.ALIAS_DISABLED&&inspectState.canDisableAlias(),"coordinator reflects disabled initial state");
+            HomeCoordinator.setAliasEnabled(context,true);
+            check(HomeCoordinator.isAliasEnabled(context),"enabled alias confirmed by coordinator");
             boolean eligible=false;for(android.content.pm.ResolveInfo r:context.getPackageManager().queryIntentActivities(new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME),0))if(r.activityInfo.packageName.equals(context.getPackageName()))eligible=true;check(eligible,"enabled alias advertises HOME");
-            context.getPackageManager().setComponentEnabledSetting(alias,android.content.pm.PackageManager.COMPONENT_ENABLED_STATE_DISABLED,android.content.pm.PackageManager.DONT_KILL_APP);
+            HomeCoordinator.setAliasEnabled(context,false);
             sendKeyDownUpSync(KeyEvent.KEYCODE_BACK);waitForIdleSync();
             loopbackTransfer(activity,context,retainedFixture);waitForIdleSync();
             View savedVideo=awaitTag(activity,"received-"+ReceivedMediaChecks.ID);onMain(savedVideo::performClick);waitForIdleSync();

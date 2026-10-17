@@ -21,7 +21,7 @@ F1 and F2 can progress independently. Run the existing phone transfer test as so
 
 ## F1 implementation detail
 
-Current MainActivity enables HomeEntry and opens ACTION_HOME_SETTINGS, with manual status refresh. It does not call RoleManager. Add a coordinator that enables the eligible alias on explicit setup, checks API 29+ and isRoleAvailable(ROLE_HOME), skips prompting if held, and calls createRequestRoleIntent when supported. Handle cancel/denial/unavailable activity without claiming success. On return/resume re-read role/default handler; where signals disagree show unresolved status. Older or unsupported systems use resolvable Home settings then general-settings guidance. An ACTION_CHOOSER dialog does not itself establish a persistent default.
+HomeCoordinator now encapsulates Home role management on API 29+ (`RoleManager.ROLE_HOME`), checks role availability, skips prompt if already held, and requests the role intent. It provides a multi-tier fallback to `ACTION_HOME_SETTINGS`, `Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS`, and `ACTION_SETTINGS`. Return/resume and `onActivityResult` re-inspect multi-signal state, disambiguating confirmed default, role-held-only, resolved-only, and chooser-pending states. Active default removal guard prevents alias disablement while default.
 
 Keep ordinary app entry and stock launcher, document recovery and retain the guard against removing Nook while default. Do not force Home by disabling packages, intercepting keys, a boot activity launch or accessibility workaround. Record exact firmware if normal selection is blocked; any alternative needs a separate product decision.
 
