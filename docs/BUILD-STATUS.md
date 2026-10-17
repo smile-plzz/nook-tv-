@@ -2,11 +2,11 @@
 
 ## Latest owner TV evidence and documentation revision
 
-PR #5 merged into main at `247671613c9552fa9f67eda179a67528a680ddcf`. Baseline 2.2 updates the plan only; latest delivered APK remains 0.4.0-phone-preview. The exact APK used during the brief TV trial was not confirmed.
+PR #5 merged into main at `247671613c9552fa9f67eda179a67528a680ddcf`. PR #6 merged the feedback plan at `5de2009e787417974a290bfd7a90d174ede9c4ee`. Baseline 2.2 removes embedded discovery from current source; latest delivered owner APK remains 0.4.0-phone-preview. The exact APK used during the brief TV trial was not confirmed.
 
 Owner reports Home is smooth and closer to the aesthetic, apps launch correctly, and tried remote navigation works. Visual acceptance is incomplete. Home from YouTube and TV restart return to the existing environment: **default-Home outcome failed in the reported test**, cause/setup path unconfirmed. File upload/retained replay were not tested. Reported external YouTube AirPlay use is not evidence of Nook integration. See [feedback](TV-FEEDBACK.md).
 
-Planned, not implemented: role request prompt, refined design system, YouTube/RSS modules, companion redesign, QR/thumbnails/library refinements. Follow [F1-F6](DEVELOPMENT-PLAN.md); historical build/CI evidence below is preserved.
+F1 implemented: supported RoleManager.ROLE_HOME request on API 29+, settings fallback coordinator, multi-signal verification and safe recovery guards. Planned for subsequent slices: refined design system (F2), YouTube/RSS modules (F3), companion redesign (F3), QR/thumbnails/library refinements (F4). Follow [F1-F6](DEVELOPMENT-PLAN.md); historical build/CI evidence below is preserved.
 
 Updated 17 October 2026. The owner briefly installed/explored 0.2 in BlueStacks: it boots, but the experience does not match the desired launcher. He confirmed default Home, Apple TV-style aesthetics, YouTube, iPhone video sharing and easier return to shared media; Spotify is tentative, browser rare and Google Drive conditional.
 
@@ -17,7 +17,7 @@ Updated 17 October 2026. The owner briefly installed/explored 0.2 in BlueStacks:
 | New outcome | Actual status |
 |---|---|
 | Artwork app grid / direct app launch | Implemented; brief TV app use confirmed by owner, visual refinement still required |
-| Default Home setup, task behavior and recovery | Disabled-by-default HOME alias, explicit setup, task reuse/root Back and removal guard implemented; owner reports Home/restart return elsewhere; setup cause, wake and rollback still unverified |
+| Default Home setup, task behavior and recovery | Implemented (F1): RoleManager.ROLE_HOME prompt on Android 10+ (API 29+), multi-tier settings fallback (ACTION_HOME_SETTINGS -> ACTION_MANAGE_DEFAULT_APPS_SETTINGS -> ACTION_SETTINGS), multi-signal status verification (role held vs resolved default), onResume status refresh, onActivityResult handling, and active default removal guard. |
 | From iPhone / retained file transfer | Paired-browser MP4/MOV file upload, app-private retained copies, progress/cancel/retry and storage controls implemented; AirPlay/Cast/mirroring absent; real Safari/TV unverified |
 | Shared & Recent | Retained-copy row and measured local playback/resume added; live phone sessions still not imported |
 | Google Drive authorization/media | Not implemented; selected-file/scopes feasibility gate |

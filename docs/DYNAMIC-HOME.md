@@ -39,7 +39,7 @@ Provisional budgets: 10-second request deadline, 2 MiB decompressed feed body, 3
 
 Fetch feeds on the TV so browser CORS is not a dependency. Accept public HTTPS RSS/Atom; reject credentials in URLs, unsupported schemes, loopback/private/link-local destinations and equivalent redirect/DNS resolutions. Fetch no arbitrary local admin endpoints. Bound bytes, item count, time, nesting and title length; disable XML DTDs/external entities. Treat descriptions as untrusted text, never executable HTML. Article/image URLs get their own validation; strip tracking where safe without breaking source identity. Private/authenticated/LAN feeds require a separate design, not implicit support.
 
-Store source configuration (stable ID, type, canonical reference, label, enabled/order and presentation) separately from fetched items/status and secrets. Export permitted public configuration, not cache, credentials or private media. Proposed dashboard schema v3 must migrate v1/v2 atomically, preserve existing favorites/collections and refuse unsupported newer schemas without data loss. Old apps cannot be assumed to read v3 exports; clearly label compatibility. No schema change is delivered by this documentation PR.
+Store source configuration (stable ID, type, canonical reference, label, enabled/order and presentation) separately from fetched items/status and secrets. Export permitted public configuration, not cache, credentials or private media. Proposed dashboard schema v3 must migrate v1/v2 atomically, preserve existing favorites/collections and refuse unsupported newer schemas without data loss. Old apps cannot be assumed to read v3 exports; clearly label compatibility. No schema-version change is delivered by this scope-cleanup PR.
 
 ## Verification and sources
 

@@ -2,7 +2,7 @@
 
 Baseline 2.2 | 17 October 2026 | Supersedes dashboard-first baseline
 
-Owner instructions govern; [PRD](PRD.md) is current scope. A design proposal is not an implemented capability. Baseline 2.2 was documentation-only. Subsequent owner authorization produced the 0.3 [launcher prototype](LAUNCHER-PREVIEW.md); it is not full device acceptance.
+Owner instructions govern; [PRD](PRD.md) is current scope. A design proposal is not an implemented capability. The original launcher pivot was documentation-only; baseline 2.2 also removes a retired implementation. Subsequent owner authorization produced the 0.3 [launcher prototype](LAUNCHER-PREVIEW.md); it is not full device acceptance.
 
 ## Confirmed direction
 
@@ -67,7 +67,7 @@ Exact iPhone source/gesture (AirPlay, Photos, Files, app cast or URL), actual re
 | E15 | Home role request plus capability fallback and verified status | Proposed fix path; current code only enables alias/opens settings |
 | E16 | Schema v3 for source/module settings with migration | Proposed only; 0.4 remains v2, media/cache/secrets separate |
 
-This request authorizes analysis and repository documentation updates. The resulting documentation PR does not implement the planned features or claim a new build. All earlier engineering proposals must be read with current implementation evidence in [build status](BUILD-STATUS.md), and the [feedback record](TV-FEEDBACK.md) supersedes earlier claims that no TV observations exist.
+The initial TV-feedback request produced a documentation PR. The following owner scope change authorizes removing the embedded discovery implementation; the new visual/content features remain planned and a replacement owner APK is not yet delivered. All earlier engineering proposals must be read with current implementation evidence in [build status](BUILD-STATUS.md), and the [feedback record](TV-FEEDBACK.md) supersedes earlier claims that no TV observations exist.
 
 ## Baseline 2.2: separate installed apps
 

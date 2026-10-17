@@ -4,7 +4,7 @@ Baseline 2.2 | 17 October 2026 | Replaces L0-L5 execution order; historical labe
 
 ## Starting point
 
-PR #5 is merged at 247671613c9552fa9f67eda179a67528a680ddcf. Main contains 0.4 retained transfer plus the 0.3 launcher foundation. The owner's brief TV trial partially confirms smoothness, app launching and remote use; visual quality needs refinement and default Home fails in the observed use. File transfer/resume were not tested. Exact tested APK/firmware remain to be recorded. See [feedback](TV-FEEDBACK.md).
+PR #5 is merged at 247671613c9552fa9f67eda179a67528a680ddcf; PR #6 feedback documentation is merged at 5de2009e787417974a290bfd7a90d174ede9c4ee. Main contains 0.4 retained transfer plus the 0.3 launcher foundation. The owner's brief TV trial partially confirms smoothness, app launching and remote use; visual quality needs refinement and default Home fails in the observed use. File transfer/resume were not tested. Exact tested APK/firmware remain to be recorded. See [feedback](TV-FEEDBACK.md).
 
 The revision includes removal of embedded movie discovery and compatibility cleanup, but does not implement the planned Home/design/content features or deliver a new APK. Deliver small reviewable changes with updated docs/evidence. Keep movie-discovery/account/provider logic in independent installed apps; do not rewrite the UI stack before resolving daily-use gaps.
 
@@ -21,7 +21,7 @@ F1 and F2 can progress independently. Run the existing phone transfer test as so
 
 ## F1 implementation detail
 
-Current MainActivity enables HomeEntry and opens ACTION_HOME_SETTINGS, with manual status refresh. It does not call RoleManager. Add a coordinator that enables the eligible alias on explicit setup, checks API 29+ and isRoleAvailable(ROLE_HOME), skips prompting if held, and calls createRequestRoleIntent when supported. Handle cancel/denial/unavailable activity without claiming success. On return/resume re-read role/default handler; where signals disagree show unresolved status. Older or unsupported systems use resolvable Home settings then general-settings guidance. An ACTION_CHOOSER dialog does not itself establish a persistent default.
+HomeCoordinator now encapsulates Home role management on API 29+ (`RoleManager.ROLE_HOME`), checks role availability, skips prompt if already held, and requests the role intent. It provides a multi-tier fallback to `ACTION_HOME_SETTINGS`, `Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS`, and `ACTION_SETTINGS`. Return/resume and `onActivityResult` re-inspect multi-signal state, disambiguating confirmed default, role-held-only, resolved-only, and chooser-pending states. Active default removal guard prevents alias disablement while default.
 
 Keep ordinary app entry and stock launcher, document recovery and retain the guard against removing Nook while default. Do not force Home by disabling packages, intercepting keys, a boot activity launch or accessibility workaround. Record exact firmware if normal selection is blocked; any alternative needs a separate product decision.
 
