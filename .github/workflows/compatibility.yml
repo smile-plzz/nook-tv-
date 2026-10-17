@@ -35,6 +35,6 @@ jobs:
         run: ./scripts/test-editor.ps1
       - uses: actions/upload-artifact@v4
         with:
-          name: nook-tv-0.2.0-preview
+          name: nook-tv-0.3.0-launcher-preview
           path: android/app/build/outputs/apk/debug/app-debug.apk
           retention-days: 30
