@@ -94,23 +94,23 @@ public final class MainActivity extends Activity implements EditorServer.Host {
     private int dp(int n) { return (int)(n*getResources().getDisplayMetrics().density+.5f); }
     private LinearLayout vertical() { LinearLayout l=new LinearLayout(this); l.setOrientation(LinearLayout.VERTICAL); return l; }
     private TextView text(String s,int size,int color) { TextView t=new TextView(this); t.setText(s); t.setTextSize(size); t.setTextColor(color); t.setPadding(0,dp(6),0,dp(6)); return t; }
-    private GradientDrawable surface(int color) { GradientDrawable g=new GradientDrawable(); g.setColor(color); g.setCornerRadius(dp(12)); return g; }
+    private GradientDrawable surface(int color) { GradientDrawable g=new GradientDrawable(); g.setColor(color); g.setCornerRadius(dp(16)); return g; }
     private Button action(String label,String key,Runnable run) {
-        Button b=new Button(this); b.setText(label); b.setAllCaps(false); b.setTextColor(Color.WHITE); b.setTextSize(16); b.setMinHeight(dp(52)); b.setPadding(dp(18),dp(8),dp(18),dp(8)); b.setBackground(surface(Color.rgb(32,44,48)));
-        b.setTag(key); b.setOnClickListener(v->run.run()); b.setOnFocusChangeListener((v,focused)->{ b.setBackground(surface(focused?mint:Color.rgb(32,44,48))); b.setTextColor(focused?ink:Color.WHITE); if(focused) focusKey=key; });
-        LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(-2,-2); p.setMargins(0,dp(5),dp(10),dp(5)); b.setLayoutParams(p); return b;
+        Button b=new Button(this); b.setText(label); b.setAllCaps(false); b.setTextColor(Color.WHITE); b.setTextSize(15); b.setTypeface(Typeface.create("sans-serif-medium",Typeface.NORMAL)); b.setMinHeight(dp(48)); b.setPadding(dp(20),dp(8),dp(20),dp(8)); b.setBackground(surface(Color.rgb(26,34,48)));
+        b.setTag(key); b.setOnClickListener(v->run.run()); b.setOnFocusChangeListener((v,focused)->{ b.setBackground(surface(focused?mint:Color.rgb(26,34,48))); b.setTextColor(focused?ink:Color.WHITE); b.setElevation(focused?dp(6):0); if(focused) focusKey=key; });
+        LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(-2,-2); p.setMargins(0,dp(4),dp(10),dp(4)); b.setLayoutParams(p); return b;
     }
     private void page(String name,String title,String subtitle) {
         if(screen.equals("home")&&homeScroll!=null) homeScrollY=homeScroll.getScrollY(); releasePlayback(); screen=name; pairInfo=null; generation++;
-        mint=Color.parseColor(current().optString("accent","#9ce5c5")); root=vertical(); root.setBackground(new GradientDrawable(GradientDrawable.Orientation.TL_BR,new int[]{0xff17233d,0xff10121f,0xff252039}));root.setClipChildren(false); applyBackground(generation); root.setPadding(dp(40),dp(24),dp(40),dp(24));
-        LinearLayout nav=new LinearLayout(this); nav.setGravity(Gravity.CENTER_VERTICAL);
-        TextView logo=text("nook",24,mint); logo.setTypeface(null,Typeface.BOLD); nav.addView(logo,new LinearLayout.LayoutParams(0,-2,1));
-        android.widget.TextClock clock=new android.widget.TextClock(this);clock.setFormat12Hour("h:mm a");clock.setFormat24Hour("HH:mm");clock.setTextColor(muted);clock.setTextSize(16);clock.setPadding(0,0,dp(24),0);nav.addView(clock);
+        mint=Color.parseColor(current().optString("accent","#9ce5c5")); root=vertical(); root.setBackground(new GradientDrawable(GradientDrawable.Orientation.TL_BR,new int[]{0xff0d1320,0xff090c14,0xff141724}));root.setClipChildren(false); applyBackground(generation); root.setPadding(dp(48),dp(28),dp(48),dp(28));
+        LinearLayout nav=new LinearLayout(this); nav.setGravity(Gravity.CENTER_VERTICAL); nav.setPadding(0,0,0,dp(14));
+        TextView logo=text("nook",24,mint); logo.setTypeface(Typeface.create("sans-serif-medium",Typeface.BOLD)); nav.addView(logo,new LinearLayout.LayoutParams(0,-2,1));
+        android.widget.TextClock clock=new android.widget.TextClock(this);clock.setFormat12Hour("h:mm a");clock.setFormat24Hour("HH:mm");clock.setTextColor(muted);clock.setTextSize(15);clock.setPadding(0,0,dp(24),0);nav.addView(clock);
         nav.addView(action("Home","nav-home",()->{focusKey="";returnFocus="";homeScrollY=0;home();})); nav.addView(action("Apps","nav-apps",this::apps)); nav.addView(action("Shared","nav-shared",this::shared)); nav.addView(action("Settings","nav-settings",this::settings)); root.addView(nav);
         ScrollView scroll=new ScrollView(this); if(name.equals("home")) homeScroll=scroll; scroll.setFillViewport(true); content=vertical(); content.setPadding(0,dp(12),0,dp(20)); scroll.addView(content); root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));
         if(!title.isEmpty())content.addView(text(title,30,Color.WHITE)); if(!subtitle.isEmpty())content.addView(text(subtitle,15,muted)); setContentView(root);
     }
-    private void section(String title) { TextView t=text(title,20,Color.WHITE); t.setPadding(0,dp(20),0,dp(8)); content.addView(t); }
+    private void section(String title) { TextView t=text(title,20,0xfff8fafc); t.setTypeface(Typeface.create("sans-serif-medium",Typeface.NORMAL)); t.setPadding(0,dp(26),0,dp(10)); content.addView(t); }
     private LinearLayout row() { HorizontalScrollView s=new HorizontalScrollView(this); s.setHorizontalScrollBarEnabled(false); LinearLayout r=new LinearLayout(this); r.setPadding(0,dp(3),0,dp(6)); s.addView(r); content.addView(s); return r; }
     private void restore(String key) { root.post(()->{ View v=root.findViewWithTag(key); if(v!=null) v.requestFocus(); }); }
     private JSONObject current() { try { return store.read(); } catch(JSONException e) { throw new IllegalStateException(e); } }
@@ -120,7 +120,7 @@ public final class MainActivity extends Activity implements EditorServer.Host {
     private void home() {
         String oldFocus=returnFocus.isEmpty()?focusKey:returnFocus;returnFocus=""; JSONObject config=current();
         page("home","",""); homeConfig=config;homeRestore=oldFocus;firstHomeTag="";
-        TextView heading=text(config.optString("title","Home"),30,Color.WHITE);heading.setTypeface(null,Typeface.BOLD);content.addView(heading);
+        TextView heading=text(config.optString("title","Home"),32,Color.WHITE);heading.setTypeface(Typeface.create("sans-serif-medium",Typeface.BOLD));heading.setPadding(0,dp(8),0,dp(14));content.addView(heading);
         if(store.damaged())content.addView(text("Saved data has been preserved. Editing is unavailable until it can be recovered.",15,muted));
         homeAppsHost=vertical();homeAppsHost.setTag("favorite-grid");content.addView(homeAppsHost);
         renderHomeApps(installedApps);
@@ -135,17 +135,17 @@ public final class MainActivity extends Activity implements EditorServer.Host {
         root.post(()->{View found=root.findViewWithTag(oldFocus);if(found!=null)found.requestFocus();else focusFirstHome();homeScroll.scrollTo(0,homeScrollY);});
         refreshHomeApps();
     }
-    private int gridColumns(){int width=(int)(getResources().getDisplayMetrics().widthPixels/getResources().getDisplayMetrics().density)-80;return Math.max(2,Math.min(6,width/140));}
-    private int tileWidth(){int width=getResources().getDisplayMetrics().widthPixels-dp(80);return (width-dp(16)*gridColumns())/gridColumns();}
+    private int gridColumns(){int width=(int)(getResources().getDisplayMetrics().widthPixels/getResources().getDisplayMetrics().density)-96;return Math.max(2,Math.min(6,width/144));}
+    private int tileWidth(){int width=getResources().getDisplayMetrics().widthPixels-dp(96);return (width-dp(16)*gridColumns())/gridColumns();}
     private void addGridTile(LinearLayout host,LauncherTile tile,int index){
         int cols=gridColumns();LinearLayout r;if(index%cols==0){r=new LinearLayout(this);r.setClipChildren(false);r.setPadding(0,dp(8),0,dp(10));host.addView(r);}else r=(LinearLayout)host.getChildAt(host.getChildCount()-1);
-        LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(tileWidth(),dp(136));p.setMargins(dp(4),0,dp(12),0);r.addView(tile,p);
+        LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(tileWidth(),dp(140));p.setMargins(dp(6),0,dp(14),0);r.addView(tile,p);
     }
     private void trackTile(LauncherTile tile,String tag){tile.setTag(tag);View.OnFocusChangeListener visual=tile.getOnFocusChangeListener();tile.setOnFocusChangeListener((v,f)->{if(visual!=null)visual.onFocusChange(v,f);if(f)focusKey=tag;});}
     private LauncherTile makeTile(String label,String detail,String symbol,String tag,int color,Runnable open,Runnable more){
         LauncherTile tile=new LauncherTile(this,label,detail,symbol,color,tileWidth(),!history.getBoolean("reducedMotion",false),open,more);trackTile(tile,tag);return tile;
     }
-    private View mediaTile(String label,String detail,String tag,Runnable open,Runnable more){LauncherTile tile=makeTile(label,detail,"play",tag,0xff34384b,open,more);LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(dp(214),dp(136));p.setMargins(dp(4),dp(6),dp(16),dp(8));tile.setLayoutParams(p);return tile;}
+    private View mediaTile(String label,String detail,String tag,Runnable open,Runnable more){LauncherTile tile=makeTile(label,detail,"play",tag,0xff283145,open,more);LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(dp(224),dp(140));p.setMargins(dp(4),dp(6),dp(16),dp(8));tile.setLayoutParams(p);return tile;}
     private void focusFirstHome(){View first=root.findViewWithTag(firstHomeTag);if(first!=null)first.requestFocus();}
     private void renderHomeApps(List<LauncherApps.Entry> available){
         if(homeAppsHost==null||!screen.equals("home"))return;String desired=homeRestore;View focused=root.findFocus();if(!firstHomeTag.isEmpty()&&focused!=null&&focused.getTag() instanceof String)desired=(String)focused.getTag();homeAppsHost.removeAllViews();firstHomeTag="";int index=0;JSONArray pinned=homeConfig.optJSONArray("apps");List<String> favorites=new ArrayList<>();
