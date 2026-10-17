@@ -71,7 +71,9 @@ public final class SmokeInstrumentation extends Instrumentation {
             check(retainedReady.await(20,TimeUnit.SECONDS),"production player prepares retained phone video without sender");
             onMain(()->{check(retainedPlayer[0].getCurrentMediaItem().localConfiguration.uri.getScheme().equals("file"),"retained playback resolves private local file");retainedPlayer[0].seekTo(1200);retainedPlayer[0].pause();});Thread.sleep(250);
             onMain(()->activity.getWindow().getDecorView().findViewWithTag("player-close").performClick());waitForIdleSync();
-            long savedUntil=System.currentTimeMillis()+10000;boolean positionSaved=false;JSONObject lastSaved=null;while(System.currentTimeMillis()<savedUntil){JSONObject entry=new ViewingStore(context).ledger.find("local:"+ReceivedMediaChecks.ID);lastSaved=entry;if(entry!=null&&entry.optLong("position")>=1100){positionSaved=true;break;}Thread.sleep(100);}check(positionSaved,"retained-video progress persists after leaving production player: "+lastSaved);
+            // AtomicFile instances do not coordinate writers/readers. Drain the app's writer before reopening disk state.
+            java.lang.reflect.Field ioField=MainActivity.class.getDeclaredField("io");ioField.setAccessible(true);((java.util.concurrent.ExecutorService)ioField.get(activity)).submit(()->{}).get(10,TimeUnit.SECONDS);
+            JSONObject lastSaved=new ViewingStore(context).ledger.find("local:"+ReceivedMediaChecks.ID);check(lastSaved!=null&&lastSaved.optLong("position")>=1100,"retained-video progress persists after leaving production player: "+lastSaved);
             java.io.File fixture=new java.io.File(context.getCacheDir(),"fixture.mp4");
             try(java.io.InputStream in=getContext().getAssets().open("fixture.mp4"); java.io.OutputStream out=new java.io.FileOutputStream(fixture)) { byte[] bytes=new byte[4096]; int n; while((n=in.read(bytes))!=-1) out.write(bytes,0,n); }
             final ExoPlayer[] player={null}; final PlayerView[] view={null}; CountDownLatch ready=new CountDownLatch(1); final String[] failure={null};
