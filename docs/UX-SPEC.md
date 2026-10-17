@@ -1,6 +1,8 @@
 # Launcher and companion experience
 
-Baseline 2.0 | 17 October 2026 | Proposed implementation of the confirmed Apple TV-style default-home direction
+TV feedback partially validates the direction, not the finished design. Next: coherent premium/minimal styling and a small configurable content shelf; see [dynamic Home](DYNAMIC-HOME.md) for card states/tokens and [companion design](COMPANION-SPEC.md) for browser/mobile flows. All new behavior below is planned unless recorded in [build status](BUILD-STATUS.md).
+
+Baseline 2.1 | 17 October 2026 | Proposed implementation of the confirmed Apple TV-style default-home direction
 
 0.4 implements the paired-browser retained-file path and local playback/storage controls; see [current transfer guide](PHONE-TRANSFER-PREVIEW.md). AirPlay, QR setup and Drive account access are not delivered by this slice. The design below still includes planned behavior.
 
@@ -17,7 +19,7 @@ Borrow Apple TV's clarity and focus behavior; keep Nook's own branding, artwork 
 - From iPhone utility tile stays easy to find. Drive is optional and labeled with setup status; Spotify only if wanted/installed.
 - Continue Watching appears only for measured, resumable sessions.
 - Shared & Recent emphasizes phone media with source/availability labels.
-- Owner-selected collections below; optional NowShowing rows do not overtake the launcher.
+- Owner-selected YouTube/RSS content cards and collections below; optional NowShowing rows do not overtake the launcher. Hide empty modules and keep content refresh from stealing focus.
 
 No playback samples, diagnostics, API setup, pair codes, empty collections or routine management buttons on Home. Keep one unobtrusive Customize action. All Apps and Settings remain reachable regardless of hidden rows.
 
@@ -99,3 +101,10 @@ Useful messages include:
 
 Technical details, sample players and diagnostics belong in Settings > Help & diagnostics. [Acceptance](ACCEPTANCE.md) verifies these flows; current 0.2 text-button UI does not satisfy this design.
 
+## Refined setup, shortcuts and acceptance
+
+Offer Make Nook your Home during onboarding and from Settings; explain before opening the actual system role prompt where available. Show Selected, Not selected, Selection unavailable or Could not verify after rechecking. Enabling a candidate is never displayed as selecting the default. Cancel is safe; retry is reachable without repeated unsolicited prompts. Exact system wording is firmware-owned.
+
+Preserve working D-pad/OK/Back. Hold OK opens contextual actions with a visible More/Edit alternative. Add a compact Quick actions entry for Customize, Send video and source refresh. Menu-key support can mirror these actions where the remote provides it. Swipe/pointer controls may supplement mobile editing; gestures, double presses and remapping system Home/volume are not required. Validate any shortcut on the actual remote before assigning it.
+
+Home must feel complete with zero sources and restrained with populated sources. Review empty, 3-5 visible content cards, long titles, poor artwork, offline, stale content, personal-media hidden and reduced-motion states. Owner approval on the TV remains the visual gate; merely adding rounded cards or more animation is insufficient.

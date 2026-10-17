@@ -1,5 +1,9 @@
 # iPhone media and Google Drive feasibility
 
+## Refinement after TV feedback
+
+The owner has not tested Nook file transfer, but wants to explore it as a useful saved-video feature. Prioritize one real Safari transfer/replay test, then the personal shelf and companion improvements in [companion design](COMPANION-SPEC.md). Existing YouTube sharing described as AirPlay worked outside confirmed Nook involvement; identify the receiver before drawing conclusions. External replay/AirPlay integration is now explicitly optional (AIR-01). Drive remains requested conditional later scope. No new receiving/account capability is delivered by this docs revision.
+
 17 October 2026 | Feasibility assessment with first retained-file path implemented in 0.4
 
 The [0.4 transfer guide](PHONE-TRANSFER-PREVIEW.md) describes current binary upload, saved-copy playback and storage controls. Other protocol/account routes below remain proposals. No real iPhone/owner-TV acceptance is claimed.

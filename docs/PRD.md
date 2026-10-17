@@ -1,6 +1,8 @@
 # Nook TV product requirements
 
-Baseline 2.0 | 17 October 2026 | Owner: Ismail Hossain | Launcher pivot confirmed; 0.4 launcher/file-transfer preview implemented, acceptance pending
+Current owner feedback: brief TV use partially confirms app launching/remote navigation, requests a more refined and dynamic Home, and reports Home/restart returning to the existing environment. Retained-file upload/resume were not tested. [TV feedback](TV-FEEDBACK.md) records evidence and uncertainties. Baseline 2.1 promotes selected YouTube/RSS content and companion refinement into P0; it does not claim these are implemented.
+
+Baseline 2.1 | 17 October 2026 | Owner: Ismail Hossain | Launcher pivot confirmed; 0.4 launcher/file-transfer preview implemented, acceptance pending
 
 ## Product and authority
 
@@ -34,7 +36,7 @@ Default composition:
 2. Favorites: prominent grid of recognizable app banners/icons; YouTube first when installed.
 3. Continue Watching: shown only when genuine resumable entries exist.
 4. Shared & Recent: retained phone media, saved sources and truthful reopen actions.
-5. Owner-selected collections; additional catalog rows only when enabled.
+5. Owner-configured YouTube/RSS cards and collections; additional catalog rows only when enabled. Dynamic cards are hideable and do not displace the favorite-app anchor.
 
 Favorites are a configurable grid, not a dense settings menu or a mandatory Netflix-style feed. From iPhone is a first-class utility tile. Spotify, Browser and Drive appear when installed/configured or explicitly pinned. All Apps remains accessible; no fake installed apps or automatic sign-in. Final spacing/order is a proposed design to validate visually, not a pixel layout dictated by the owner.
 
@@ -74,7 +76,13 @@ P0 = first usable launcher. P1 = requested subsequent or conditional integration
 | WEB-01 | P1 | Rare browser use: launch configured browser or isolated web route; remote escape always available. |
 | NS-01 / NS-02 / NS-03 | P1 | NowShowing metadata/movie-series flows, stable source/episode choice and truthful source fallback; each enabled provider tested separately. No provider enabled by assumption. |
 | BLOCK-01 / BLOCK-02 | P1 | Requested Brave handoff and separate opt-in filtering remain tracked, subject to compatibility; no inherited Shields claim. |
-| DISC-01 / WIDGET-01 | P2 | Optional mood discovery/weather/ambient extras after core launcher quality. |
+| DYN-01 | P0 | Configurable YouTube selected-channel/playlist cards with current permitted metadata, exact-video action, freshness/error states and no fabricated personalized history. |
+| DYN-02 | P0 | Public RSS/Atom cards configurable from PC/mobile, source validation, safe plain-text display, refresh/cache/offline behavior and stable focus. |
+| PC-03 | P0 | Cohesive desktop/mobile companion with Home preview, guided sources, ordering/visibility, accessible inline help and explicit Save/conflict/draft states. |
+| PHONE-03 | P0 | Refined retained-video shelf: clear send/save guidance, bounded thumbnails, title/organization, replay/resume and separate storage/delete controls; real Safari evidence. |
+| NAV-02 | P0 | Discoverable contextual shortcuts with visible alternatives; no gesture-only essentials or interception of system Home/volume keys. |
+| AIR-01 | P1, optional | Assess existing receiver and documented replay/metadata contract; provide honest reconnect/open action when session is opaque. No required native AirPlay implementation. |
+| DISC-01 / WIDGET-01 | P2 | Mood discovery/weather/ambient extras and arbitrary widget hosting remain optional; selected YouTube/RSS modules are now DYN-01/02 P0. |
 | LANMEDIA-01 / PROFILES-01 / CLOUD-01 | P2 | Future PC media server, household profiles, remote sync; separate designs required. Drive is a requested media source, not generic cloud sync. |
 
 ## Success targets
@@ -107,3 +115,6 @@ First usable launcher requires all P0 scenarios on the target TV and a real iPho
 
 PRD owns scope; [UX](UX-SPEC.md) owns interactions, [architecture](ARCHITECTURE.md) the design, [plan](DEVELOPMENT-PLAN.md) sequencing, [acceptance](ACCEPTANCE.md) evidence. The 0.3 [launcher prototype](LAUNCHER-PREVIEW.md) implements the grid/direct-app and initial Home setup slice. 0.4 adds the [retained-file workflow](PHONE-TRANSFER-PREVIEW.md), not AirPlay/Drive or full P0 acceptance.
 
+## Baseline 2.1 delivery interpretation
+
+[Dynamic Home](DYNAMIC-HOME.md) specifies calm, owner-selected freshness; [companion design](COMPANION-SPEC.md) specifies configuration and the personal media shelf. Initial module density, refresh limits, styling values and schema v3 are proposals to validate, not owner-approved pixels or shipped behavior. Follow F1-F6 in [development plan](DEVELOPMENT-PLAN.md), which replaces the old L0-L5 order. Personalized YouTube Home/watch-history/Watch Later feeds are not promised. Existing external AirPlay use is not Nook acceptance; AIR-01 is optional and does not gate P0.

@@ -1,12 +1,14 @@
 # Build and install | 0.4.0-phone-preview
 
+Baseline 2.1 documentation does not produce a new APK. PR #5 is merged; latest preview remains 0.4.0-phone-preview. A brief owner TV trial found default Home did not take effect (Home/restart returned elsewhere); do not treat installation or enabling the alias as success. Record exact installed version and setup screen, then follow [device checklist](DEVICE-TEST.md). The role-prompt improvement is planned in F1, not present in this APK.
+
 ## Scope of this APK
 
 The 17 October launcher pivot is documented in [PRD](PRD.md). These commands build the 0.4 phone-file preview on the artwork-grid launcher with opt-in Home setup. See [prototype guide](LAUNCHER-PREVIEW.md). Paired-browser video upload and retained local playback are implemented; actual iPhone/Safari compatibility remains pending. AirPlay and Google Drive remain unimplemented.
 
 The owner reports brief successful boot/exploration in BlueStacks; use that for preliminary visual/function checks only. Target-TV Home/wake/remote/receiver behavior needs actual hardware and real iPhone tests.
 
-Compatibility app ID remains `com.ismail.nooktv.compat`, version code 4. It opens as an ordinary app until you explicitly enable Nook Home in Settings and select it through the system. Target-TV default-Home behavior remains unverified.
+Compatibility app ID remains `com.ismail.nooktv.compat`, version code 4. It opens as an ordinary app until you explicitly enable Nook Home in Settings and select it through the system. The owner reports default-Home failure in brief TV use; exact installed version/setup cause and recovery remain unverified.
 
 ## Build
 
@@ -31,7 +33,7 @@ The old SDK-only M1 pipeline cannot compile Media3. `scripts/build-offline.ps1` 
 ./scripts/test-editor.ps1 -AndroidSdk 'C:\path\to\Android\Sdk'
 ```
 
-These execute 74 core/document/source/viewing/HTTP-boundary assertions and browser syntax checks. Handler/document tests need `sources;android-35` for the SDK's AOSP JSON implementation. The helper strips annotations only in ignored test output; SDK sources are not redistributed in the APK.
+These execute 82 core/document/source/viewing/HTTP-boundary assertions plus editor/transfer browser-state and syntax checks. Handler/document tests need `sources;android-35` for the SDK's AOSP JSON implementation. The helper strips annotations only in ignored test output; SDK sources are not redistributed in the APK.
 
 The Compatibility APK workflow builds the app/test APKs and runs those checks. The Android runtime smoke workflow installs them in an API-35 emulator and runs a custom platform Instrumentation entrypoint:
 
@@ -78,7 +80,7 @@ For a site you can use, TV Settings accepts its documented HTTPS movie/series UR
 
 ## Rollback
 
-Leave/uninstall the preview and return to the unchanged original launcher. A lower-version-code APK may require uninstalling. Export your dashboard first if preserving it matters. Dashboard exports do not copy retained video bytes; uninstalling/clearing app storage deletes them, so preserve phone originals separately. Full target-TV acceptance remains pending; CI and emulator results are recorded separately from physical-device evidence.
+Select and verify the original launcher in system Home settings before removing Nook or uninstalling the preview; keep ordinary app access available for recovery. A lower-version-code APK may require uninstalling. Export your dashboard first if preserving it matters. Dashboard exports do not copy retained video bytes; uninstalling/clearing app storage deletes them, so preserve phone originals separately. Full target-TV acceptance remains pending; CI and emulator results are recorded separately from physical-device evidence.
 
 ## Launcher setup and recovery
 

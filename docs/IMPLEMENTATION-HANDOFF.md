@@ -1,48 +1,33 @@
-# Launcher pivot implementation handoff
+# Implementation handoff after TV feedback
 
-Baseline 2.0 | 17 October 2026
+Baseline 2.1 | 17 October 2026
 
-## Start here
+## Build the next useful experience
 
-Build an Apple TV-style default TV home screen for Ismail. Main activities are YouTube, iPhone-shared video and getting back to that media. Spotify is tentative, browser rare, Google Drive requested if feasible. Keep PC customization/personal collections. NowShowing remains the selected streaming reference, but not the main product or next priority.
+Nook is a default TV Home with Apple TV-inspired clarity, a stable favorite-app grid, a few configurable fresh-content cards, and convenient return to personal videos. The owner tested briefly on TV: apps and tried remote paths worked, appearance was only partially satisfactory, and Home/restart returned to the existing environment. File transfer/resume were not tested. Do not reset this evidence to "TV testing pending" or inflate it to acceptance.
 
-0.2 booted in a brief BlueStacks trial; owner says structure exists but experience misses the goal. Do not report that as launcher acceptance or thorough testing. Main includes the merged launcher PR #4; this change adds the next phone-transfer slice. Read [build status](BUILD-STATUS.md) before claiming capabilities.
-
-0.3 implements the first visual/interaction prototype and opt-in Home setup; see [prototype guide](LAUNCHER-PREVIEW.md). Owner visual review and actual-TV default Home remain pending. 0.4 adds the paired-browser retained-file path, local playback/resume and storage controls; see [transfer guide](PHONE-TRANSFER-PREVIEW.md). Real iPhone/TV, AirPlay and Drive remain pending. Follow the new sequence.
+Main includes merged PR #5 at 247671613c9552fa9f67eda179a67528a680ddcf. Latest delivered APK is 0.4.0-phone-preview. The current task updates documentation only; no role prompt, dynamic sources or new companion controls are delivered by it.
 
 ## Read order
 
-1. [README](../README.md) and [decisions](DECISIONS.md).
-2. [PRD](PRD.md) for requirement IDs and priority.
-3. [UX](UX-SPEC.md) for Home/grid/direct-launch/phone return interactions.
-4. [Phone and Drive feasibility](PHONE-AND-DRIVE.md).
-5. [Architecture](ARCHITECTURE.md), [plan](DEVELOPMENT-PLAN.md), [acceptance](ACCEPTANCE.md).
-6. [Requirements analysis](REQUIREMENTS-ANALYSIS.md) and historical [NowShowing audit](NOWSHOWING-AUDIT.md).
+1. [Feedback and questions](TV-FEEDBACK.md), [PRD](PRD.md), [decisions](DECISIONS.md).
+2. [UX](UX-SPEC.md), [dynamic Home](DYNAMIC-HOME.md), [companion/media design](COMPANION-SPEC.md).
+3. [Development sequence F1-F6](DEVELOPMENT-PLAN.md), [architecture](ARCHITECTURE.md).
+4. [Acceptance](ACCEPTANCE.md), [device checklist](DEVICE-TEST.md), [build status](BUILD-STATUS.md).
+5. [Current transfer contract](PHONE-TRANSFER-PREVIEW.md), [phone/Drive feasibility](PHONE-AND-DRIVE.md).
 
-## First implementation slice
+## Next implementation slices
 
-Create a reviewable launcher prototype before expanding integration scope:
-- Artwork-led app grid, quiet header, Settings, All Apps and From iPhone.
-- One OK launches an app; visible context alternative for editing.
-- Shared & Recent and Continue Watching with truthful empty/availability states.
-- Remove samples/diagnostics/pairing/configuration clutter from normal Home.
-- Include remote focus, long titles, missing artwork, offline and reduced-motion states.
+Start F1: capability-aware Home-role prompt, settings fallback, verified result/retry and recovery. Current MainActivity only enables the alias and opens Home settings. Test cancellation, missing role/activity, stale default status and process recreation; only the owner's hardware can close the Home/reboot gate. Collect exact model/firmware and setup screen behavior.
 
-Review the visual/task result against the owner's Apple TV reference before broad integration work. Then implement Home selection/recovery, phone workflow and durable return, and performance/migrations. Drive/authentication and remaining catalog/protection follow their documented gates.
+F2: reviewable coherent visual refinement with empty/populated/offline/focus states. Keep one-OK app launch. F3: pair the content-source model with a usable phone/desktop editor; start chosen YouTube channels/playlists and public RSS/Atom, not arbitrary widgets or scraped personal recommendations. Refresh must not change the focused target. Verify credential provisioning before claiming automatic YouTube updates.
 
-## Reuse and constraints
+Test the existing Safari video route early; F4 improves guidance, QR address, thumbnails, titles, organization and storage based on that result. Keep AirPlay integration optional and separate from retained copies. F5 completes actual-device quality gates; Drive and broader integrations follow F6.
 
-Keep Java/native Views, AtomicFile stores, revision/pairing contracts and Media3 unless a measured reason warrants change. Earlier Room/Compose preference is not a required rewrite. Keep com.ismail.nooktv.compat and preview signing continuity; do not commit keys. Current Gradle 8.13, AGP 8.13.2, compile SDK 36, target 35, min 26; use hosted CI if local dependencies cannot resolve.
+## Constraints and evidence
 
-Existing 74 contract assertions, editor tests and 15 Android smoke assertions cover foundation behavior, not the new launcher. Real TV, iPhone, receiver, network and Home-default tests remain necessary.
+Retain Java/native Views, AtomicFile, Media3 and pairing/revision contracts; refactor responsibilities instead of rewriting the stack. Keep com.ismail.nooktv.compat and owner signing continuity; never commit keys. Gradle 8.13 / AGP 8.13.2 / compile 36 / target 35 / min 26 remain. Current schema v2 stays unchanged until an implemented, tested migration. Hosted CI can resolve dependencies when local execution cannot.
 
-HOME support uses system-supported setup; retain original launcher and recovery. Never silently disable stock packages. A blocked default-Home gate is not solved by relabeling Nook an entertainment app.
+Preserve 82 local assertions and browser state checks, plus 43 Android smoke assertions. None proves the new design or target-TV default behavior. No system-package disabling, no automatic account/Photos import, no provider credentials through LAN HTTP, no fake external progress. Foreground-only editor/transfer lifecycle remains unless deliberately redesigned. Dashboard backup excludes retained files and history.
 
-A launcher does not automatically receive AirPlay/Cast. Select/test a real route; distinguish live session, stable link and retained file. 0.4 implements a separate binary-upload endpoint with disk streaming, limits, validation and cleanup; do not feed videos through dashboard JSON. Google device flow is not whole-Drive authorization; prove selected-file grants and keep tokens outside HTTP companion.
-
-## Evidence and completion
-
-Record actual TV API/ABI/memory/display/WebView, Home/wake/reboot/rollback, installed handlers and codecs. Record actual iPhone source/gesture/format/receiver and replay after disconnect. Redact identifiers and personal media.
-
-Use [device checklist](DEVICE-TEST.md); track results in build status. Full completion follows PRD outcomes and owner acceptance, never just CI or an installable preview. Do not silently drop NowShowing, Brave/filtering or richer YouTube, but do not let them displace the launcher and phone workflow.
-
+On each slice update capability status, tests, user guide and release evidence. A working APK or green CI does not close P0. Historical M1/0.3 and NowShowing audit evidence remain historical; their old task sequence does not govern this work.

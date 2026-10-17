@@ -1,22 +1,30 @@
 # Build status | 0.4 phone transfer preview
 
+## Latest owner TV evidence and documentation revision
+
+PR #5 merged into main at `247671613c9552fa9f67eda179a67528a680ddcf`. Baseline 2.1 updates the plan only; latest delivered APK remains 0.4.0-phone-preview. The exact APK used during the brief TV trial was not confirmed.
+
+Owner reports Home is smooth and closer to the aesthetic, apps launch correctly, and tried remote navigation works. Visual acceptance is incomplete. Home from YouTube and TV restart return to the existing environment: **default-Home outcome failed in the reported test**, cause/setup path unconfirmed. File upload/retained replay were not tested. Reported external YouTube AirPlay use is not evidence of Nook integration. See [feedback](TV-FEEDBACK.md).
+
+Planned, not implemented: role request prompt, refined design system, YouTube/RSS modules, companion redesign, QR/thumbnails/library refinements. Follow [F1-F6](DEVELOPMENT-PLAN.md); historical build/CI evidence below is preserved.
+
 Updated 17 October 2026. The owner briefly installed/explored 0.2 in BlueStacks: it boots, but the experience does not match the desired launcher. He confirmed default Home, Apple TV-style aesthetics, YouTube, iPhone video sharing and easier return to shared media; Spotify is tentative, browser rare and Google Drive conditional.
 
-[PRD baseline 2.0](PRD.md) supersedes the dashboard-first roadmap. 0.3 implements the launcher prototype/Home plumbing. 0.4 adds the first retained-file transfer/playback path in L2. Actual iPhone/TV acceptance and AirPlay/Drive remain pending. See [phone transfer guide](PHONE-TRANSFER-PREVIEW.md). See [prototype guide](LAUNCHER-PREVIEW.md).
+[PRD baseline 2.1](PRD.md) supersedes the dashboard-first roadmap. 0.3 implements the launcher prototype/Home plumbing. 0.4 adds the first retained-file transfer/playback path in L2. Actual iPhone/TV acceptance and AirPlay/Drive remain pending. See [phone transfer guide](PHONE-TRANSFER-PREVIEW.md). See [prototype guide](LAUNCHER-PREVIEW.md).
 
 ## Pivot coverage
 
 | New outcome | Actual status |
 |---|---|
-| Artwork app grid / direct app launch | Implemented; visual acceptance pending |
-| Default Home setup, task behavior and recovery | Disabled-by-default HOME alias, explicit setup, task reuse/root Back and removal guard implemented; actual-TV default/wake/reboot/rollback unverified |
+| Artwork app grid / direct app launch | Implemented; brief TV app use confirmed by owner, visual refinement still required |
+| Default Home setup, task behavior and recovery | Disabled-by-default HOME alias, explicit setup, task reuse/root Back and removal guard implemented; owner reports Home/restart return elsewhere; setup cause, wake and rollback still unverified |
 | From iPhone / retained file transfer | Paired-browser MP4/MOV file upload, app-private retained copies, progress/cancel/retry and storage controls implemented; AirPlay/Cast/mirroring absent; real Safari/TV unverified |
 | Shared & Recent | Retained-copy row and measured local playback/resume added; live phone sessions still not imported |
 | Google Drive authorization/media | Not implemented; selected-file/scopes feasibility gate |
 | Spotify | Ordinary installed-app discovery may expose it; dedicated integration not implemented |
 | PC customization, collections, Media3 | Existing foundation retained, not proof of new UX acceptance |
 
-No physical-TV, real iPhone sharing or default-Home result is claimed. Historical M1 evidence remains in [M1 status](M1-STATUS.md).
+Only the limited physical-TV observations above are claimed; no successful Nook default-Home or real iPhone retained-transfer result is claimed. Historical M1 evidence remains in [M1 status](M1-STATUS.md).
 
 ## 0.4 verification and bounds
 
@@ -92,4 +100,4 @@ The OMDb key is entered on TV and kept out of browser editing, backups and logs.
 
 ## Next work
 
-Follow the new [L0-L5 plan](DEVELOPMENT-PLAN.md): visual launcher prototype, default Home/direct apps, iPhone workflow and durable return, then polish/device acceptance. Drive and remaining catalog/YouTube/Brave/filtering follow their gates. Launcher support is now required P0; widgets remain optional. Production signing is still separate. Execute [device tests](DEVICE-TEST.md) when hardware is available; passing CI does not establish launcher acceptance.
+Follow the current [F1-F6 plan](DEVELOPMENT-PLAN.md): verified Home selection, cohesive visual refinement, selected YouTube/RSS modules and companion, personal video shelf, then device hardening. Drive, optional receiver integration and remaining catalog/player/Brave work follow their gates. Selected YouTube/RSS content is P0; weather/arbitrary widgets remain optional. Production signing is still separate. Use the owner feedback to focus the next [device tests](DEVICE-TEST.md); passing CI does not establish launcher acceptance.

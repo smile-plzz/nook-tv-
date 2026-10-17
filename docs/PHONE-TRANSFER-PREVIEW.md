@@ -1,5 +1,7 @@
 # Phone video transfer | 0.4.0-phone-preview
 
+Current 0.4 implementation guide, preserved after the TV feedback. PR #5 is merged. The owner has not yet tested upload or retained replay/resume; external YouTube sharing is not verification of this path. Proposed QR, thumbnails, titles/organization and richer browser controls are specified in [companion design](COMPANION-SPEC.md), and are not 0.4 capabilities. Start with the focused [device tests](DEVICE-TEST.md).
+
 17 October 2026 | First retained-file path in L2; actual iPhone/owner-TV acceptance pending
 
 ## Send from iPhone
