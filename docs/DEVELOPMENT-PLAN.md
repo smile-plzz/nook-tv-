@@ -4,7 +4,7 @@ Baseline 2.2 | 17 October 2026 | Replaces L0-L5 execution order; historical labe
 
 ## Starting point
 
-PR #5 is merged at 247671613c9552fa9f67eda179a67528a680ddcf. Main contains 0.4 retained transfer plus the 0.3 launcher foundation. The owner's brief TV trial partially confirms smoothness, app launching and remote use; visual quality needs refinement and default Home fails in the observed use. File transfer/resume were not tested. Exact tested APK/firmware remain to be recorded. See [feedback](TV-FEEDBACK.md).
+PR #5 is merged at 247671613c9552fa9f67eda179a67528a680ddcf; PR #6 feedback documentation is merged at 5de2009e787417974a290bfd7a90d174ede9c4ee. Main contains 0.4 retained transfer plus the 0.3 launcher foundation. The owner's brief TV trial partially confirms smoothness, app launching and remote use; visual quality needs refinement and default Home fails in the observed use. File transfer/resume were not tested. Exact tested APK/firmware remain to be recorded. See [feedback](TV-FEEDBACK.md).
 
 The revision includes removal of embedded movie discovery and compatibility cleanup, but does not implement the planned Home/design/content features or deliver a new APK. Deliver small reviewable changes with updated docs/evidence. Keep movie-discovery/account/provider logic in independent installed apps; do not rewrite the UI stack before resolving daily-use gaps.
 

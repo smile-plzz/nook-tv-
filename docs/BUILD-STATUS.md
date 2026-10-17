@@ -2,7 +2,7 @@
 
 ## Latest owner TV evidence and documentation revision
 
-PR #5 merged into main at `247671613c9552fa9f67eda179a67528a680ddcf`. Baseline 2.2 updates the plan only; latest delivered APK remains 0.4.0-phone-preview. The exact APK used during the brief TV trial was not confirmed.
+PR #5 merged into main at `247671613c9552fa9f67eda179a67528a680ddcf`. PR #6 merged the feedback plan at `5de2009e787417974a290bfd7a90d174ede9c4ee`. Baseline 2.2 removes embedded discovery from current source; latest delivered owner APK remains 0.4.0-phone-preview. The exact APK used during the brief TV trial was not confirmed.
 
 Owner reports Home is smooth and closer to the aesthetic, apps launch correctly, and tried remote navigation works. Visual acceptance is incomplete. Home from YouTube and TV restart return to the existing environment: **default-Home outcome failed in the reported test**, cause/setup path unconfirmed. File upload/retained replay were not tested. Reported external YouTube AirPlay use is not evidence of Nook integration. See [feedback](TV-FEEDBACK.md).
 
