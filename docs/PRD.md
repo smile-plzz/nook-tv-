@@ -1,6 +1,8 @@
 # Nook TV — Product Requirements Document
 
-Version 0.2 | 2026-10-17 | Owner: Ismail Hossain | Status: planning baseline
+Version 1.0 | 2026-10-17 | Owner: Ismail Hossain | Status: documentation finalized; implementation not authorized
+
+This is the planning baseline, not evidence of implemented or device-verified features. The owner will explicitly say when to start building. [Decision record](DECISIONS.md) distinguishes owner requirements from proposed implementation choices.
 
 ## 1. Problem statement
 
@@ -65,10 +67,11 @@ Sections can be hidden or reordered. Empty sections offer setup or remain hidden
 
 ## 6. Requirements and acceptance criteria
 
-P0 = first usable release; P1 = follow-up; P2 = future. Compatibility prototypes may test P1 capabilities without making them release promises.
+P0 = first usable release; P1 = subsequent planned scope; P2 = optional future scope. Completing P0 alone does not complete the requested product. Launcher support and web protection remain requested outcomes: each needs a tested implementation or a documented limitation accepted by the owner before full-scope closure. Compatibility prototypes may test P1 capabilities without making them release promises.
 
 | ID | Priority | Requirement | Acceptance criteria |
 |---|---|---|---|
+| PERS-01 | P0 | Personal interest collections | Create, rename, reorder and remove collections; pin supported links, titles, apps and playlists; user explicitly selects content; changes persist without PC |
 | DASH-01 | P0 | Personal dashboard | Reorder/hide rows and pin tiles from browser; saved layout survives process death and reboot |
 | NAV-01 | P0 | Complete remote operation | Every core control reachable; focus visible; Back returns predictably; returning from player restores prior item and scroll |
 | APP-01 | P0 | Installed app favorites | Discover launchable TV/mobile activities as permitted; launch or explain unavailable/uninstalled app |
@@ -76,13 +79,15 @@ P0 = first usable release; P1 = follow-up; P2 = future. Compatibility prototypes
 | CW-02 | P0 | Durable progress | Save every 5 seconds during native playback and on pause/seek/stop where lifecycle allows; restart restores last committed state |
 | CW-03 | P0 | Viewing-state controls | Resume/start over/remove/mark watched; proposed watched threshold 95% for finite VOD; live sources have no fabricated completion |
 | PLAY-01 | P0 | Native direct-stream playback | Test MP4/H.264/AAC plus representative HLS and DASH; seek, pause, error recovery, subtitle/audio selection when tracks exist |
-| NS-01 | P0 | NowShowing catalog | Search, movie/series detail, watchlist, season/episode selection and configured web-source playback route |
+| NS-01 | P0 | NowShowing catalog | Search, movie/series detail, watchlist, season/episode selection; at least one enabled source passes movie and series-episode playback tests on the TV, or owner explicitly accepts a documented narrower release |
 | NS-02 | P0 | Source selection | Remember selected source by stable ID; distinguish selected/loading/confirmed-playing/failed/unknown |
 | NS-03 | P0 | Honest source fallback | Show timeout as inconclusive; offer retry/source switch/browser; HTTP 200 or iframe load never means verified playback |
 | YT-01 | P0 | YouTube favorites and app handoff | Save video/channel/playlist URL from PC; validate link type; open supported installed handler or browser fallback |
 | WEB-01 | P0 | Online video sites | Per-site launch route: isolated web screen or external browser; unknown playback capability clearly shown |
 | PC-01 | P0 | Paired local browser editor | TV-displayed address/code; explicit TV approval; edit rows/tiles/links/background; validation and save acknowledgement |
+| SETUP-01 | P0 | Useful first run without PC | Open Apps, pin a favorite and return Home using the remote; pairing and richer customization may be completed later |
 | PC-02 | P0 | Revision-safe edits | Two editors cannot silently overwrite one another; stale save offers reload/reapply |
+| SEND-01 | P0 | Save from PC for TV | Add a supported URL to a collection or Play Later; validate scheme/target, allow label editing, confirm save without automatically interrupting TV playback |
 | DATA-01 | P0 | Local persistence and backup | Export/import versioned settings and lists; invalid import leaves existing data intact |
 | PERF-01 | P0 | 2 GB device suitability | Lazy images, bounded caches, one active player/WebView, no network or image decoding on main thread |
 | PRIV-01 | P0 | Personal controls | Pause history, clear history/cache separately, revoke paired devices; secrets excluded from exports/logs |
@@ -91,7 +96,7 @@ P0 = first usable release; P1 = follow-up; P2 = future. Compatibility prototypes
 | YT-03 | P1 | Embedded YouTube | Only after real-device remote/player test; official player behavior; own observed session progress kept distinct from account-wide history |
 | BLOCK-01 | P1 | Brave handoff | Detect eligible handler, test launch and Back; show honest installation/compatibility status |
 | BLOCK-02 | P1 | Embedded web filtering | Separate opt-in filter engine; global/per-site controls; popup/redirect controls; documented compatibility and rollback |
-| DISC-01 | P1 | Interests and mood discovery | User-selected interests, NowShowing-derived mood matching and editable collections; recommendation reasons visible |
+| DISC-01 | P1 | Mood discovery and suggestions | Build on PERS-01 collections with NowShowing-derived mood matching; show recommendation reasons; user can hide suggestions; no assumed account-wide viewing history |
 | WIDGET-01 | P1 | Weather and ambient photos | Optional location; bounded refresh/cache; cached/stale/offline state; background image resizing |
 | LANMEDIA-01 | P2 | LocalFlix / PC media | Separate authenticated media-serving integration, only when an actual server/API exists |
 | PROFILES-01 | P2 | Household profiles | Separate lists/history/settings; no speculative multi-user backend in v1 |
@@ -139,6 +144,26 @@ Provide actionable states for: first launch, no saved content, no paired browser
 
 No deadline was supplied. Delivery is gated by working milestones, not guessed calendar dates.
 
-## 11. Release definition
+## 11. First-release and full-scope definitions
+
+The first usable release satisfies all P0 requirements and the relevant [acceptance scenarios](ACCEPTANCE.md). It is a staged delivery, not completion of all requested integrations. Full requested scope additionally resolves LAUNCH-01, BLOCK-01/BLOCK-02 and the native YouTube experience: implement and validate the chosen route or record the owner's acceptance of a specific limitation. Optional widgets, richer discovery and P2 ideas do not silently become release blockers.
+
+Native YouTube browsing with official-app playback is the proposed initial interpretation, not a claim that the owner requested an external handoff. Embedded playback remains a separately evaluated route. Neither route promises account-wide history import.
+
+## 12. Release definition
 
 Signed, versioned APK; installation/update/rollback instructions; actual-TV acceptance record; documented source capabilities; export/import verified; known limitations; reproducible build instructions and dependency/license inventory. Passing emulator tests alone is insufficient.
+
+## 13. Operational product rules
+
+- Core personalization uses explicit choices; it must not import private personal context, account data or inferred interests automatically.
+- A PC is required only while editing. Online media still requires internet; cached layout working offline does not imply offline streaming.
+- The initial editor is available only while Nook is foregrounded, including its own player screens. Launching YouTube/Brave may disconnect the editor; returning restores access. No silent queued edits are applied later.
+- Opening details does not create a playback-progress record. A recent-open record begins on explicit playback/handoff request; failed attempts remain labeled as such.
+- Keep selected episode per series independently from verified watched status. Closing/reopening an unobservable player can restore the selection without claiming timestamp resume.
+- Personalization should feel immediately useful: first run exposes installed apps and lets the owner pin a favorite without metadata keys or browser pairing.
+- No runtime cloud AI or paid AI service is required for interests or mood suggestions.
+
+## 14. Document ownership
+
+PRD owns scope and requirement IDs; [UX](UX-SPEC.md) owns interaction detail; [architecture](ARCHITECTURE.md) owns technical proposals; [acceptance](ACCEPTANCE.md) owns verification scenarios; [handoff](IMPLEMENTATION-HANDOFF.md) owns execution readiness and the implementation hold. If they conflict, follow explicit owner instructions, then PRD, and resolve the other documents before implementation.
