@@ -1,107 +1,98 @@
-# TV and browser experience specification
+# Launcher and companion experience
 
-Baseline 1.0 — full-product design intent. Preview 0.2 implements native dashboard, collections, editor layout/backgrounds/import, Media3 controls and initial native catalog flows; broader integrations and device validation remain pending. See [build status](BUILD-STATUS.md).
+Baseline 2.0 | 17 October 2026 | Proposed implementation of the confirmed Apple TV-style default-home direction
 
-## Experience principles
+## Design intent
 
-Nook should be personal, calm and quick on the owner's 2 GB TV. Content comes before decorative widgets. Prefer readable type, restrained motion, clear focus and a small number of useful rows. Backgrounds may be personal, but text contrast must remain stable. No autoplay video or large animated background.
+A calm, recognizable home to use from the sofa. Use an app grid as the visual anchor, generous margins, rounded rectangular banners, legible type and a clear focused tile. Restrained enlargement/shadow and short transitions convey focus; reduced motion removes movement. Wallpaper supports the content rather than dominating it. Avoid dense toolbar buttons, glowing text-only tiles, autoplay heroes and continuous background effects on a 2 GB TV.
 
-English UI initially, while preserving Unicode titles, including Bangla, without broken rendering. Support long titles without letting them push controls off screen. Add a display-safe-margin control if device testing reveals overscan.
+Borrow Apple TV's clarity and focus behavior; keep Nook's own branding, artwork and Android conventions. Do not promise tvOS, Apple services or use copied Apple icons/fonts/assets. [PRD](PRD.md) defines required outcomes.
 
-## Screens and states
+## Home hierarchy
 
-| Screen | Main purpose | Required exit/return |
-|---|---|---|
-| Welcome | Explain standalone use; open Apps or pair PC | Skip pairing and enter useful dashboard |
-| Home | Personal rows and resume entries | Back to top, then explicit exit choice in standalone mode |
-| Watch | NowShowing search, curated picks, movie/series detail | Return to same row/card |
-| YouTube | Pinned videos, channels, playlists | Return from external handler without inventing progress |
-| Apps | Launchable apps and favorites | Preserve selected app |
-| Saved | Watchlist, Play Later, collections, Recently opened | Manage/remove with clear feedback |
-| Player | Native playback or source-specific web route | Back restores title selection and prior screen |
-| Settings | Appearance, data, pairing, sources and optional launcher | Return focus to opening control |
-| Browser editor | Customize, organize and save | Dirty-state warning and connection status |
+- Quiet header with clock and Settings access.
+- Favorite app grid above the fold. YouTube first when installed; selected apps launch immediately.
+- From iPhone utility tile stays easy to find. Drive is optional and labeled with setup status; Spotify only if wanted/installed.
+- Continue Watching appears only for measured, resumable sessions.
+- Shared & Recent emphasizes phone media with source/availability labels.
+- Owner-selected collections below; optional NowShowing rows do not overtake the launcher.
+
+No playback samples, diagnostics, API setup, pair codes, empty collections or routine management buttons on Home. Keep one unobtrusive Customize action. All Apps and Settings remain reachable regardless of hidden rows.
+
+Proposed layout: favorites use a six-column grid at 1080p with responsive safe margins; artwork can adapt to app banners or centered icons. This is a prototype starting point, not a frozen requirement. Verify actual display density/overscan before final dimensions.
+
+## Core remote rules
+
+| Input | Expected result |
+|---|---|
+| D-pad | Stable movement through grid, then content rows; no invisible focus or mouse dependency |
+| OK on app | Launch directly |
+| OK on media | Resume when valid, otherwise default action matches availability label |
+| Hold OK | Context menu: reorder, pin/unpin, rename, hide or media actions |
+| Visible More/Edit alternative | Same management actions for remotes without usable long press |
+| Back | Close innermost overlay, then return to originating screen/card |
+| Home in launcher mode | Return to Nook's documented starting focus; never exit to a blank screen |
+| Media keys | Control the active supported player without changing app-grid focus |
+
+Back on root Home in launcher mode stays on Home; it must not display a standalone-app exit dialog. Ordinary app entry remains available for recovery. Returning by Back from another app restores its originating tile; Home uses the predictable reset policy. Removed items select the nearest surviving tile.
 
 ## First run
 
-1. Nook opens as an ordinary app.
-2. Show two clear actions: Explore apps and Customize from PC.
-3. Apps can be browsed and pinned immediately; metadata credentials are optional at this stage.
-4. Home shows favorites and prompts to add a collection, with no fake viewing history.
-5. Pairing can be started later from Settings.
-6. Offer launcher setup only after standalone use has been validated; it is not part of mandatory onboarding.
+1. Show useful detected apps immediately; no account, key or PC prerequisite.
+2. Briefly explain Nook as a home screen; offer system default-home setup and a safe skip/retry.
+3. Let owner choose/reorder favorites using the remote.
+4. Offer From iPhone setup and optional PC customization.
+5. Show connected/available state instead of claiming unsupported receiving features.
+6. Missing YouTube/Spotify/browser gets an actionable explanation; never a fake app tile.
 
-## Remote navigation
+Setting Nook as default is the product goal. Skipping setup enables evaluation/recovery; it is not a substitute for the launcher release gate. Never disable the existing launcher automatically.
 
-- D-pad moves predictably between navigation, rows and cards.
-- OK activates the focused item; all important actions have visible controls.
-- Back dismisses the innermost dialog/player overlay before leaving a screen.
-- Do not intercept the remote's system Home behavior in standalone mode.
-- Long press may provide shortcuts but cannot be the only way to edit/remove.
-- Restore focus to the exact originating tile when it still exists; otherwise nearest surviving item.
-- Removing the final tile focuses the add action or section header.
-- An embedded player must not trap the owner without a remote-accessible way to return to Nook.
-- A source that requires a mouse is not listed as fully remote-supported.
-- Apply row changes during playback without interrupting video; on Home, preserve focused item where possible.
-- Use light motion and respect reduced-motion settings where available.
+## From iPhone
 
-## Continue Watching and Recently opened
+Open a focused receiving screen with only supported routes. Examples are Open configured AirPlay receiver, Send a link, or Send a video copy. Show what must be on the same network, what opens externally and whether the TV keeps a copy. Do not combine these into an ambiguous Cast button.
 
-A resume card displays title, episode if applicable, and genuine measured progress. OK offers Resume by default; secondary actions include Start over, Mark watched and Remove.
+For paired-browser transfer, proposed flow: scan QR/open address in Safari, pair with TV approval, select a video, show size and available TV storage, confirm transfer, display progress/cancel, then explicitly Play or Save. This does not implement iOS system Share Sheet integration. A share extension/Shortcut is a separate decision.
 
-A recent-open card shows title/episode and Open again. It never shows a made-up percentage. Explicit playback request may create a launch record; opening a detail page does not. Failed playback attempts are not marked watched.
+A new transfer never interrupts existing playback without confirmation. On disconnect, incomplete transfers stay out of replayable history. External receiver launch returns with an honest integration status; do not invent metadata from an unobservable session.
 
-If a source supports timestamp observation but not seeking, show recorded progress as informational and label the action Open again rather than Resume. If duration is unknown, omit the percentage. Ended or manually watched items leave Continue Watching but remain available in history if enabled.
+## Shared & Recent
 
-Example:
-- Native movie at 31:20: Resume 31:20.
-- Opaque web series, S2 E3 selected: Open S2 E3; progress unavailable.
-- YouTube handed off externally: Open in YouTube; no Nook progress bar.
+| Item state | Primary action |
+|---|---|
+| Retained local video and known progress | Resume |
+| Retained file with no progress | Play |
+| Authorized Drive reference | Resolve access, then Play/Resume when supported |
+| Saved external app/link | Open in app / Open again |
+| Phone-hosted session no longer reachable | Reconnect phone |
+| Screen mirroring only | Start sharing again; no fake replay card |
+| Deleted/revoked source | Unavailable with Remove/Relink |
 
-## NowShowing browsing
+Cards show useful title/thumbnail where safely available, source badge and genuine progress. No raw signed URLs or account identifiers. History is owner-controlled and hideable. Remove from history, remove from collection and delete retained copy are separate actions; file deletion requires explicit confirmation.
 
-Search and details remain native. Movie details show metadata and Play/Save actions. Series details preserve selected season and episode. Source selection has a visible status with a useful fallback.
+## YouTube, Spotify, browser and Drive
 
-Do not auto-cycle providers indefinitely. Offer user-controlled retry/switch, preserve episode selection, and avoid opening multiple players at once. Curated seed rows are labeled Picks, not live Trending. Metadata availability does not imply streaming availability.
+YouTube launches its installed app with one OK. Saved videos/channels/playlists route where supported. Nook does not pretend to mirror account history.
 
-## Personal collections
+Spotify is an optional app route, not a mandatory music service. Browser is a secondary app/shortcut; the original Brave request remains tracked in later integration work.
 
-The owner creates names and chooses items: movies, videos, playlists, sites and app shortcuts. Optional suggested labels such as Watch tonight, Music or Learn are examples, not preselected assumptions about the owner.
+Drive's proposed destination lists only authorized media and selected folders/files with clear sign-in/reconnect/permission states. No Google password entry in Nook WebView or the LAN editor. The chosen OAuth flow and actual available scopes must be established first. Open in browser is an explicit fallback, not completion of native Drive access.
 
-Collections can be reordered or hidden. Hiding a row retains its contents. Removing a collection requires clear confirmation about whether contained items are merely ungrouped; v1 removes membership, not independent watchlist/history entries. Removing an item from one collection does not remove it elsewhere.
+## PC and phone companion editor
 
-## Browser editor
+Keep existing pairing, revision checks, explicit Save, draft recovery and dashboard backup. Add grid/favorite preview and source/destination visibility controls to match launcher vocabulary. Phone layout must work in Safari without desktop-width forms. Preview remains approximate.
 
-Sections: Dashboard, Collections, Saved links, Appearance, Sources, Paired device information and Backup.
+Server disconnects when Nook leaves foreground under the current architecture; preserve drafts, explain reconnect and fetch latest revision. Default-home status does not imply an always-on server. Transfer/lifecycle needs a separate implementation decision.
 
-- Layout preview is approximate, labeled Preview; it is not a live screenshot.
-- Draft changes are distinct from saved TV state.
-- Save validates and returns confirmation with revision.
-- Failed saves preserve the draft and explain the retry.
-- A stale revision presents Reload latest and a way to reapply the draft; no silent overwrite.
-- Add link recognizes supported YouTube links and valid HTTPS websites/direct media targets; owner can edit label.
-- Saving a link never starts playback without a separate explicit future Play Now action.
-- Disable provider-password/API-key input in the initial HTTP editor; show TV settings guidance.
-- Configured app favorites use the TV's reported app inventory, not the PC browser's installed apps.
+## Appearance, accessibility and errors
 
-Connection states: Connected, Saving, Saved, Conflict, Disconnected, Pairing expired, Access revoked.
+Readable English UI with Unicode labels, long-title handling, safe margins and contrast over personal backgrounds. Use licensed app artwork with fallback initials, resized/lazy-loaded thumbnails and reduced motion. No perpetual shimmer when offline.
 
-When Nook leaves the foreground, show that the TV app needs to be reopened. Retain browser drafts, but re-read current TV revision before saving. An address change gets reconnect instructions, not an endless spinner.
+Useful messages include:
+- This TV has not selected Nook as its Home app yet.
+- Start sharing again from your iPhone; this session did not save a copy.
+- This video is saved on the TV and can play without your phone.
+- Drive access expired. Reconnect your account.
+- Your TV storage is full. Free space or choose another video.
+- Your layout changed elsewhere. Reload the latest version.
 
-## Data actions
-
-Separate buttons: Clear image cache, Clear viewing history, Remove paired browsers, Export backup, Import backup. Cache clearing must not imply a library reset. Imports show what will be replaced and require confirmation. Export includes optional history only when selected.
-
-History paused means no new playback/launch history is retained after the choice takes effect; already saved entries remain until cleared. Explicit watchlist and collection saves continue working.
-
-## Error copy examples
-
-- Can't reach the TV. Open Nook TV and check that both devices are on the same network.
-- This source has not confirmed playback. Retry, choose another source, or open it in a browser.
-- Progress is unavailable for this player. You can reopen the same episode.
-- This app is no longer installed. Choose another app or remove the shortcut.
-- Your dashboard changed elsewhere. Reload the latest version before saving.
-- Offline. Your saved layout is available; online videos need a connection.
-
-Technical diagnostics belong in Settings, not routine browsing.
-
+Technical details, sample players and diagnostics belong in Settings > Help & diagnostics. [Acceptance](ACCEPTANCE.md) verifies these flows; current 0.2 text-button UI does not satisfy this design.

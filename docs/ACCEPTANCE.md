@@ -1,83 +1,100 @@
-# Acceptance and verification specification
+# Launcher acceptance and verification
 
-Baseline 1.0. **Target-device execution results pending.** Local build and security checks are recorded in [build status](BUILD-STATUS.md). This document defines product acceptance; local checks do not substitute for actual-TV testing.
+Baseline 2.0 | 17 October 2026 | Target-TV/iPhone execution pending
 
-## Requirement coverage
+The 0.2 build has existing contract/emulator evidence, and the owner reports brief BlueStacks boot/exploration. Neither proves the new launcher experience. This document defines future acceptance against [PRD](PRD.md).
 
-| Scenario group | Requirement IDs | Observable result |
+## Coverage
+
+| Scenario | Requirement IDs | Gate |
 |---|---|---|
-| A01 First run / apps | SETUP-01, APP-01 | Useful remote-only setup, pin/launch/uninstall behavior |
-| A02 Personal home | DASH-01, PERS-01, NAV-01 | Persisted customization with stable D-pad focus |
-| A03 PC save | PC-01, PC-02, SEND-01 | Pair/save/acknowledge; conflicts and lost acknowledgements handled |
-| A04 Native viewing | PLAY-01, CW-01, CW-02, CW-03 | Genuine progress, resume, track controls and stable identities |
-| A05 NowShowing / websites | NS-01, NS-02, NS-03, WEB-01 | Search/episode/source flow, truthful status and fallback |
-| A06 YouTube | YT-01, YT-02, YT-03 | Version-appropriate route works; unimplemented optional routes not claimed |
-| A07 Backup/privacy | DATA-01, PRIV-01 | Recoverable import, independent clear operations, no credentials leaked |
-| A08 Device performance | PERF-01 | Measured startup, session stability and memory trend |
-| A09 Protection | BLOCK-01, BLOCK-02 | Measured Brave/filter support and per-site exception behavior |
-| A10 Launcher | LAUNCH-01 | Opt-in default selection and normal-app rollback |
-| A11 Discovery/widgets | DISC-01, WIDGET-01 | Editable suggestions, bounded refresh and honest stale/offline state |
-| A12 Future scope | LANMEDIA-01, PROFILES-01, CLOUD-01 | Not part of initial acceptance; require separate future criteria |
+| A01 Useful first run | SETUP-01, APP-01, YT-01 | P0 |
+| A02 Apple TV-style Home | VIS-01, DASH-01, PERS-01 | P0 |
+| A03 Remote actions | NAV-01, APP-01 | P0 |
+| A04 Default Home/recovery | LAUNCH-01 | P0 |
+| A05 From iPhone | PHONE-01, PHONE-02 | P0 |
+| A06 Return to media | RECENT-01, CW-01, CW-02, CW-03, PLAY-01 | P0 |
+| A07 Companion/backup/privacy | PC-01, PC-02, SEND-01, DATA-01, PRIV-01 | P0 |
+| A08 Performance | PERF-01 | P0 |
+| A09 Drive/Spotify | DRIVE-01, DRIVE-02, SPOT-01 | Conditional P1 |
+| A10 Retained broader scope | NS-01, NS-02, NS-03, WEB-01, YT-02, YT-03, BLOCK-01, BLOCK-02 | P1 |
+| A11 Optional future | DISC-01, WIDGET-01, LANMEDIA-01, PROFILES-01, CLOUD-01 | P2, separate delivery |
 
-## Detailed scenarios
+## A01 - Useful first run
 
-### A01 — Setup and apps
-Given a fresh installation with no key, pairing or history, when the owner opens Apps and pins one, Home shows it after restart. Back and D-pad work throughout. Uninstalling the target later leaves an editable unavailable shortcut; Nook does not crash.
+Fresh install with no cloud account/PC/key: launchable apps appear, owner pins/reorders YouTube where installed and opens it with one OK. Missing app has an actionable state; no fake installed tile. Spotify/Drive sign-in never blocks Home. Pairing and default-home setup can be revisited from Settings.
 
-### A02 — Personalization and navigation
-Given two named collections with mixed item types, when the owner reorders rows and hides one, changes survive process death/reboot. Removing an item from one collection leaves other memberships and watchlist intact. Changing the home layout while a player is active does not stop playback. Returning restores focus where possible.
+## A02 - Visual and layout acceptance
 
-### A03 — Pairing and edits
-Given no session, config/history requests and mutations are rejected. An expired/incorrect code cannot create a session; valid code still needs TV approval. Revoked sessions fail immediately.
+Review actual screenshots/prototype and remote use with owner: recognizable artwork/grid, comfortable spacing/type, stable contrast, obvious focus and restrained motion. Home has no test samples/diagnostics/API setup. Continue Watching hides when empty. Shared & Recent and From iPhone are easy to locate.
 
-Given two editors reading revision N, the first save creates N+1. The second stale save is rejected without data loss. Retrying the same acknowledged or uncertain mutation ID does not duplicate a tile. A lost response is resolved using current revision/status.
+Change order/background/collections, restart/force-stop/reboot and verify persistence. Unicode/long names/missing artwork do not clip controls. Collection removal preserves source items/files. Visual approval is explicit owner feedback, not a screenshot-exists test.
 
-Given Nook hands off to another app, the editor reports disconnection, preserves its draft and does not queue automatic mutations. On return, it checks the current address/session/revision. Save a link adds it without interrupting TV playback.
+## A03 - Navigation and direct actions
 
-### A04 — Native playback and history
-Use permitted known test media with stable duration and seek support. Watch, pause, seek, exit, reopen, force-stop and restart. Resume matches the last committed position within 5 seconds; document source seek accuracy separately. No progress is claimed after the last committed save.
+D-pad reaches every grid tile, row, Settings and context alternative. OK launches app; management requires a deliberate secondary action. Back closes overlay/player before leaving destination and restores exact item/scroll when possible. Removed item selects nearest surviving item. No pointer or long press is the sole path. Home resets to documented start focus; Back return from external app restores originating app tile.
 
-Different episodes maintain separate state. Source switching retains identity and episode but does not reuse a timestamp across incompatible cuts. A live/unknown-duration item has no invented percentage. Remove, mark watched and start over each behave distinctly. Pausing history prevents new history writes while explicit saves still work.
+## A04 - Default Home and recovery
 
-### A05 — NowShowing and web sources
-Search a movie and series; inspect metadata, change episode, choose source and retry. Opening details alone does not add progress. Unsupported ID formats fail with an actionable reason before constructing a bogus URL.
+On actual TV, record previous launcher and supported selection flow. Select Nook through system-supported UI. From YouTube/another app press Home, then test repeated Home, root Back, settings return, process recreation, wake and reboot. Nook returns without empty screen or navigation trap. Ordinary app entry remains.
 
-An iframe load without playback proof stays Unknown/Loading, not Playing. A documented message with incorrect origin/session/media ID is ignored. An opaque embed offers Open again with saved episode and no fake timestamp.
+Restore original Home successfully. No root, automated system-package disabling or hidden interception. Firmware prevention is Blocked/Fail against core launcher requirement; standalone fallback needs explicit owner acceptance before narrowing scope.
 
-Test no network, metadata quota, missing poster, provider timeout, invalid embed, media failure and external browser return. Outer controls and Back remain usable with the remote. Record each provider's observed capability.
+## A05 - iPhone-to-TV media
 
-### A06 — YouTube
-Save video/channel/playlist links including supported shortened forms; reject malformed targets. Installed YouTube receives the intended route where supported; missing handler offers browser. Returning does not invent watched state. Optional API search handles quota; optional embed respects official integration requirements. Public-account history import is not a test promise.
+Use real owner-selected iPhone source/file, note sender app/gesture and receiver route. TV offers accurate same-network/permission instructions. Complete one video sharing path and verify image/audio/orientation/remote controls.
 
-### A07 — Data and boundaries
-Export/import with Unicode labels, missing apps and a background. Exports omit secrets and optional history unless chosen. Invalid/newer schema, oversized JSON/image and corrupt asset leave original state unchanged. Replace import has a recovery snapshot.
+For retained-file transfer: pair with approval, select file in Safari, show progress/cancel, verify free-space/size limits and finalize only complete files. Cancel/network loss must clean partials. Receiving must not auto-interrupt current playback. Test representative iPhone formats, including HEVC where relevant; unsupported codec gives useful error rather than fake success.
 
-Cache clear preserves saved lists/progress. Per-site browser data clear preserves Room data. History clear does not delete watchlists. Test unauthorized origin/host, automatic external scheme, popup and untrusted page attempts to access editor privileges.
+For AirPlay/Cast/external receiver: record actual receiver/device/protocol and supported media. Do not substitute upload and call it AirPlay. Test phone lock/disconnect and return to Nook. An unobservable external session has no invented Nook position.
 
-### A08 — Performance protocol
-Device: actual owner's TV; record API/ABI/WebView, display, APK version and build type.
-Fixture: 8 rows, up to 20 tiles each, mixed local/remote artwork, 20 saved viewing entries, 10 installed-app favorites where available. Record any unavailable fixture element.
-Cold launch: app process stopped; existing data/cache retained; measure launch intent to usable focused Home over 20 runs. Target at least 18 runs under 3 seconds.
-Edit: five successful LAN saves, UI reflection within 2 seconds after acknowledgement.
-Playback: 2 hours native video plus repeated player open/close. Record network, codec, crashes, buffering and periodic PSS samples. After initial 15-minute warm-up, investigate sustained growth; provisional threshold: final steady-state PSS no more than 20% above first comparable steady-state window, without repeated low-memory kills. Compare equal playback/navigation states.
-An external provider's server delay is recorded separately from Nook startup/UI time; it is not erased from the owner-experience report.
+## A06 - Return and native playback
 
-### A09 — Web protection
-Record site/movie/episode, date, route, ruleset version and filtering off/on behavior. Verify per-site disable recovers a broken player without clearing saved data. Test blocked popup/redirect controls. Brave route passes only after installation, launch, remote input and return tests. Do not claim removal of every ad or full browser-extension coverage.
+Retained video plays after phone disconnect and TV process restart, resumes within 5 seconds of last committed measured position, and survives same-key upgrade. Multiple files/episodes have separate identities; replacing content does not inherit an incompatible timestamp.
 
-### A10 — Launcher
-Only after owner opts into testing: record existing default, enable Nook home option if supported, exercise Home and reboot, then restore original default. Ordinary app launching stays available. If firmware prevents selection, document standalone behavior and limitation; do not disable system components automatically.
+Live phone session without retained source says Reconnect phone/Start sharing again. A stale URL is not presented as guaranteed replay. External apps say Open in app; details alone do not create progress.
 
-### A11 — Discovery and widgets
-Owner-selected interests produce editable rows; suggestions explain genre/source basis. Curated seeds are not described as current trends. Weather handles permission/location choice, offline/stale state and bounded refresh. Disabling widgets releases their periodic work.
+Exercise MP4/HLS/DASH permitted test media, pause/seek/error/retry and supported tracks. Unknown/live duration has no percentage. Mark watched, Start over and Remove differ. History paused stops history writes; history clear preserves retained files and collections. Delete saved copy explicitly removes bytes and updates availability without crashing.
 
-## Release evidence
+## A07 - Companion, migration and boundaries
 
-Record requirement/scenario ID, commit/APK, device, fixture, steps, expected/actual result, pass/fail/blocked, evidence and issue reference. A blocked test is not a pass. Mark routes separately: native, web embed, YouTube external and Brave/browser.
+Pair code needs TV approval; invalid/expired/denied/revoked sessions cannot read/write private state. Host/Origin/CSRF/size checks remain. Two editors at revision N: first commits, second conflicts without draft loss. Lost-save retry is idempotent.
 
-First usable release requires all P0 scenarios passed on device. Full scope also records the outcomes and owner-accepted limitations described in [PRD](PRD.md). No unresolved crash, data loss, unauthorized editing or navigation trap is acceptable.
+Leaving foreground disconnects current companion; draft preserved, no silent queued mutation. Link Save does not start playback. Phone Safari companion layout fits usable controls.
 
-## Documentation verification
+Upgrade schema-v1/v2 data into new launcher mapping without losing favorites/background/collections/progress. Invalid/newer/corrupt import leaves original intact; pre-import recovery works. Dashboard export excludes credentials and media payloads, states missing references clearly. History, thumbnail cache, files and account/session clears remain separate.
 
-Check all relative links, requirement coverage, current source selection, authority/hold wording and consistency between release definitions. This is the only verification executed during the current documentation-only task.
+Reject traversal/invalid MIME/oversized/interrupted upload. No privileged bridge from external web pages or access to editor credentials. Google tokens never appear in backup/editor/QR/logs/foreign-origin requests. No silent Photos or connected-account import.
 
+## A08 - Device performance
+
+Use actual reported 2 GB TV; record API/ABI/WebView/display/version and fixture.
+- Fixture: 12 favorite apps where available, 20 shared/recent items, 4 optional collections and representative resized artwork; record differences from fixture.
+- 20 cold starts with cache/data retained: at least 18 usable focused Homes under 3 seconds.
+- Five LAN layout saves: reflect within 2 seconds after acknowledgement.
+- Two hours native playback plus repeated app/Home/receiver/player switching; record crashes, network/codec, buffering and comparable PSS samples.
+- After 15-minute warm-up investigate sustained memory growth; provisional final comparable steady-state PSS target within 20% of initial window, without repeated low-memory kills.
+- Transfer a supported large file while observing memory/disk bounds; do not require full-file buffering.
+- Offline Home/apps remain usable; missing sources do not freeze grid.
+
+Separate network/server delays from UI timing, but retain them in the owner-experience report.
+
+## A09 - Conditional Drive and optional Spotify
+
+Document actual OAuth client/scopes and how existing selected files are authorized. Prove one selected file's metadata/access, playback and range seek; test token expiry/refresh, revocation, deletion, changed version and network loss. Reopen by durable file ID, not expired bearer URL. Disconnect clears credentials and updates source availability. Whole-Drive browsing cannot be marked passed from drive.file device-code login alone.
+
+Spotify shortcut opens intended installed app and returns correctly; absence does not block Home. No Spotify Connect/account-wide media-session claims without separate tests.
+
+## A10 - Broader entertainment scope retained
+
+YouTube saved links use intended handler; no account-wide history claim. Optional API/embed follows official requirements. NowShowing search/details/series choice and each source's identifier/movie/episode/remote behavior tested separately. Iframe load remains unknown without evidence; invalid event origins ignored; source switch/retry retains episode.
+
+Browser/Brave route needs actual handler/remote/Back tests. Filter engine has separate ruleset/version/off-on/site-exception results; disabling filtering preserves data. No universal blocking claim or preenabled unverified providers.
+
+## Evidence and release
+
+For each scenario record commit/APK hash, actual device, sender/receiver/source, steps, expected/actual, Pass/Fail/Blocked, evidence and issue. Do not publish account IDs, LAN identifiers or personal media without consent.
+
+First usable launcher requires all P0 outcomes and explicit owner experience review on target TV/iPhone. Later conditional/requested scope needs delivered behavior or owner-accepted limitations. No unresolved data loss, unauthorized access, launcher lockout or remote navigation trap is acceptable.
+
+Docs-only validation here: links, requirement coverage, current priority/authority wording and preservation of historical evidence. New runtime scenarios remain unrun.

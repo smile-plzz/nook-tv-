@@ -1,60 +1,47 @@
-# Implementation handoff
+# Launcher pivot implementation handoff
 
-Baseline 1.0 — 2026-10-17.
+Baseline 2.0 | 17 October 2026
 
-## Current authorization and status
+## Start here
 
-**Implementation authorized on 2026-10-17:** Ismail instructed “initiate the build accordingly.” The documentation-only hold below is historical and has been released. Continue the planned milestones; no additional build permission is needed.
+Build an Apple TV-style default TV home screen for Ismail. Main activities are YouTube, iPhone-shared video and getting back to that media. Spotify is tentative, browser rare, Google Drive requested if feasible. Keep PC customization/personal collections. NowShowing remains the selected streaming reference, but not the main product or next priority.
 
-The instruction authorizes application source, build tooling, CI and APK work. Do not replace the stock TV launcher automatically. See [build status](BUILD-STATUS.md) for what has actually been implemented and verified.
+0.2 booted in a brief BlueStacks trial; owner says structure exists but experience misses the goal. Do not report that as launcher acceptance or thorough testing. Main includes merged PR #2 and the existing infrastructure. Read [build status](BUILD-STATUS.md) before claiming capabilities.
 
-A locally compiled M1 APK and hosted 0.2 Media3 preview builds exist. The owner explicitly asked to proceed with later phases while unable to test on TV. Continue independent development and hosted Android checks; physical-device acceptance stays pending. Planning documents include future behavior beyond this preview.
+This change is documentation only. Earlier build authorization remains part of history; next implementation follows the new plan. No new APK, Home default, receiver or Drive account access is created by a documentation merge.
 
 ## Read order
 
-1. [README](../README.md): product and current state.
-2. [Decisions](DECISIONS.md): owner decisions versus proposals.
-3. [PRD](PRD.md): requirements and release scope.
-4. [UX](UX-SPEC.md): TV/browser flows.
-5. [Requirements analysis](REQUIREMENTS-ANALYSIS.md) and [source audit](NOWSHOWING-AUDIT.md).
-6. [Architecture](ARCHITECTURE.md), [development plan](DEVELOPMENT-PLAN.md) and [acceptance](ACCEPTANCE.md).
+1. [README](../README.md) and [decisions](DECISIONS.md).
+2. [PRD](PRD.md) for requirement IDs and priority.
+3. [UX](UX-SPEC.md) for Home/grid/direct-launch/phone return interactions.
+4. [Phone and Drive feasibility](PHONE-AND-DRIVE.md).
+5. [Architecture](ARCHITECTURE.md), [plan](DEVELOPMENT-PLAN.md), [acceptance](ACCEPTANCE.md).
+6. [Requirements analysis](REQUIREMENTS-ANALYSIS.md) and historical [NowShowing audit](NOWSHOWING-AUDIT.md).
 
-## Non-negotiable context
+## First implementation slice
 
-- Personal TV dashboard, not a generic public streaming service.
-- Owner reports Android 14 and 2 GB RAM.
-- Standalone APK first, with launcher support still tracked.
-- PC browser customization; settings remain on TV.
-- Streaming reference is exactly https://github.com/smile-plzz/NowShowing-Stream.
-- Native browsing, real Continue Watching where supported, explicit limits for opaque embeds and external apps.
-- Brave handoff/filtering must be tested, not assumed.
-- Basic editable interest collections are P0, not deferred until a recommendation engine.
-- Do not import private user context or connected-account content without an explicit task.
-- Preserve the upstream repo; work here unless separately asked to modify upstream.
+Create a reviewable launcher prototype before expanding integration scope:
+- Artwork-led app grid, quiet header, Settings, All Apps and From iPhone.
+- One OK launches an app; visible context alternative for editing.
+- Shared & Recent and Continue Watching with truthful empty/availability states.
+- Remove samples/diagnostics/pairing/configuration clutter from normal Home.
+- Include remote focus, long titles, missing artwork, offline and reduced-motion states.
 
-## Execution sequence after the build instruction
+Review the visual/task result against the owner's Apple TV reference before broad integration work. Then implement Home selection/recovery, phone workflow and durable return, and performance/migrations. Drive/authentication and remaining catalog/protection follow their documented gates.
 
-1. Read current repo/AGENTS instructions and recheck changes since this baseline.
-2. Local Java 21 / SDK 35 are available, but shell downloads and local ADB failed. Current Media3 sources require the pinned Gradle build with SDK 36; use hosted CI when local dependencies cannot be obtained. The M1 SDK-only script no longer builds current sources.
-3. Pin the selected upstream revision and inspect licensing before copying source/assets.
-4. Select current compatible Android toolchain and dependencies using official docs; record choices and license inventory.
-5. Implement the M1 compatibility APK only as the first milestone; continue independent work when device feedback is pending, without claiming unrun tests passed.
-6. Deliver a reproducible installable test build with installation and diagnostic instructions.
-7. Use observed TV results to refine proposals, then execute the remaining plan.
+## Reuse and constraints
 
-## Device evidence to collect when testing is possible
+Keep Java/native Views, AtomicFile stores, revision/pairing contracts and Media3 unless a measured reason warrants change. Earlier Room/Compose preference is not a required rewrite. Keep com.ismail.nooktv.compat and preview signing continuity; do not commit keys. Current Gradle 8.13, AGP 8.13.2, compile SDK 36, target 35, min 26; use hosted CI if local dependencies cannot resolve.
 
-Actual OS API level, ABI, screen dimensions/density, memory class, WebView version, launchable app handlers, available decoders, native stream results, remote buttons/focus behavior, editor network/pairing results and home-default support. Do not publish unique device identifiers or LAN secrets in a public repo.
+Existing 74 contract assertions, editor tests and 15 Android smoke assertions cover foundation behavior, not the new launcher. Real TV, iPhone, receiver, network and Home-default tests remain necessary.
 
-## Product choices that are still proposals
+HOME support uses system-supported setup; retain original launcher and recovery. Never silently disable stock packages. A blocked default-Home gate is not solved by relabeling Nook an entertainment app.
 
-Kotlin/Compose candidate, exact module layout, same-LAN HTTP editor boundaries, foreground-only editing, default watched threshold, native YouTube browsing with app playback, filter engine and technical numeric limits. Resolve through the documented milestones; do not misrepresent them as instructions from the owner.
+A launcher does not automatically receive AirPlay/Cast. Select/test a real route; distinguish live session, stable link and retained file. New upload requires streaming disk storage/limits/cleanup; existing editor accepts configuration, not videos. Google device flow is not whole-Drive authorization; prove selected-file grants and keep tokens outside HTTP companion.
 
-## What completion must include
+## Evidence and completion
 
-Built/signed versioned APK, build instructions and dependency versions; install/update/rollback guidance; device-test evidence; source capability matrix; stable data migrations; scoped known limitations. Full-scope closure follows PRD, not merely a passing build or a first P0 release.
+Record actual TV API/ABI/memory/display/WebView, Home/wake/reboot/rollback, installed handlers and codecs. Record actual iPhone source/gesture/format/receiver and replay after disconnect. Redact identifiers and personal media.
 
-## Documentation review outcome
-
-The 1.0 refinement aligns every explicit request with requirements, adds P0 personalization and first-run behavior, separates measured progress from selected episodes/recent opens, defines edit/backup lifecycle, and makes outstanding device/provider checks visible. This completes documentation work only.
-
+Use [device checklist](DEVICE-TEST.md); track results in build status. Full completion follows PRD outcomes and owner acceptance, never just CI or an installable preview. Do not silently drop NowShowing, Brave/filtering or richer YouTube, but do not let them displace the launcher and phone workflow.

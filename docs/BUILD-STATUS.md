@@ -1,6 +1,26 @@
-# Implementation status | 0.2.0-preview
+# Build status | launcher pivot and 0.2 foundation
 
-Updated 17 October 2026. Ismail asked to proceed with the next phases while TV testing is unavailable. Development continues independently; the target-TV compatibility and acceptance gates remain pending. Historical M1 evidence is in [M1 status](M1-STATUS.md).
+Updated 17 October 2026. The owner briefly installed/explored 0.2 in BlueStacks: it boots, but the experience does not match the desired launcher. He confirmed default Home, Apple TV-style aesthetics, YouTube, iPhone video sharing and easier return to shared media; Spotify is tentative, browser rare and Google Drive conditional.
+
+[PRD baseline 2.0](PRD.md) supersedes the dashboard-first roadmap. This change updates documentation only. No new APK or runtime integration is included.
+
+## Pivot coverage
+
+| New outcome | Actual status |
+|---|---|
+| Apple TV-inspired artwork grid / one-OK app launch throughout | Design specified; existing UI still needs redesign |
+| Default Home setup, task behavior and recovery | Not implemented or TV-tested |
+| From iPhone receiver / retained file transfer | Not implemented; route assessment required |
+| Shared & Recent with durable phone-source identity | Existing generic viewing store is reusable, phone-specific behavior not implemented |
+| Google Drive authorization/media | Not implemented; selected-file/scopes feasibility gate |
+| Spotify | Ordinary installed-app discovery may expose it; dedicated integration not implemented |
+| PC customization, collections, Media3 | Existing foundation retained, not proof of new UX acceptance |
+
+No physical-TV, real iPhone sharing or default-Home result is claimed. Historical M1 evidence remains in [M1 status](M1-STATUS.md).
+
+## Existing 0.2 implementation and evidence
+
+The following describes the delivered pre-pivot APK. It must not be read as the new launcher design being complete.
 
 ## Implemented in this change
 
@@ -43,4 +63,4 @@ The OMDb key is entered on TV and kept out of browser editing, backups and logs.
 
 ## Next work
 
-When the TV is available, execute [device tests](DEVICE-TEST.md), then validate individual source contracts and network/remote behavior. Remaining full scope includes tested providers, richer metadata/artwork/episode browsing, fully polished native YouTube routes, Brave-specific routing/filtering, optional widgets, optional launcher and production release signing. Do not label P0 or the full product accepted merely because CI passes.
+Follow the new [L0-L5 plan](DEVELOPMENT-PLAN.md): visual launcher prototype, default Home/direct apps, iPhone workflow and durable return, then polish/device acceptance. Drive and remaining catalog/YouTube/Brave/filtering follow their gates. Launcher support is now required P0; widgets remain optional. Production signing is still separate. Execute [device tests](DEVICE-TEST.md) when hardware is available; passing CI does not establish launcher acceptance.
