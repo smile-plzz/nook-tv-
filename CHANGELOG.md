@@ -8,6 +8,10 @@ All notable changes to Nook TV are documented in this file.
 - **Graceful Settings Fallbacks**: Multi-level fallback routing from `RoleManager` to `Settings.ACTION_HOME_SETTINGS` to `Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS` and general `Settings.ACTION_SETTINGS`.
 - **Verified Status & Diagnostics**: Multi-signal verification checking both `RoleManager.isRoleHeld` and `PackageManager.resolveActivity` to detect confirmed default, role-only, resolved-only, or unresolved states.
 - **Home Recovery & Guards**: Safe alias management guarding against disabling Nook while currently active as the system default.
+- **F2 Visual Refinement**: Cohesive Apple TV-inspired aesthetic featuring a deep cinematic gradient (`#0d1320` -> `#090c14` -> `#141724`), 48dp TV safe margins, and 16dp rounded card geometry.
+- **Micro-interactions & Focus**: Smooth 1.04x scale animation (140ms DecelerateInterpolator) with high-contrast 3dp white focus border and elevated depth, respecting reduced-motion preferences.
+- **Dedicated Vector Glyphs**: Handcrafted vector canvas glyphs for YouTube channels/videos and RSS feeds in `LauncherTile`.
+- **Proportional Media Layouts**: Normalized video and shelf media cards to 16:9 widescreen ratio (`224dp x 140dp`) with crisp typography.
 
 ## [0.4.0-phone-preview] - 2026-10-17
 ### Added
