@@ -4,7 +4,7 @@
 
 ## Source reconciliation
 
-Main was verified at `273755cd6cc908c793c5f10abbf54604a6307db0` (F2). PR #10 targeted the F2 branch; PR #11 targeted the F3 branch and was merged at `1c65cf8b53ae1df8a4a448bcdacac203997b4615`. This candidate includes that F4 snapshot plus F5 repairs. Review/merge only the consolidation PR targeting main. Never merge without explicit owner instruction.
+The initial audit found main at `273755c` (F2). PR #10/#11 targeted feature branches. During this task the owner merged PRs #12/#13; main is now `1bae04d`, whose tree is identical to F4 merge `1c65cf8`. PR #14 (`fix/f5-launcher-hardening`) contains the F5 repairs and targets main. Never merge without explicit owner instruction.
 
 ## Current candidate
 

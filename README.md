@@ -6,7 +6,7 @@ A personal Android TV Home screen with direct app access, selected YouTube/RSS c
 
 The F5 hardening candidate is **0.4.5-f5-hardening**, version code **5**. It includes F1–F4 and the correctness fixes described in [F5 hardening](docs/F5-HARDENING.md). Dashboard schema v2, app ID `com.ismail.nooktv.compat`, native Java Views, Media3 and independent atomic stores are preserved.
 
-**Branch reconciliation:** main at `273755c` contains F1/F2. PR #10 was merged into the F2 feature branch, and PR #11 into the F3 feature branch. Their merged status did not put F3/F4 on main. This candidate starts from the F4 merge `1c65cf8` and must be reviewed in a PR **targeting main**. No PR is merged automatically.
+**Branch reconciliation:** the initial audit found main at F2 `273755c`. During this task, the owner merged PRs #12/#13; main is now `1bae04d`, with the same F4 source tree as merge `1c65cf8`. PR #14 targets main and contains the F5 repairs. No PR is merged automatically.
 
 Implemented source includes:
 

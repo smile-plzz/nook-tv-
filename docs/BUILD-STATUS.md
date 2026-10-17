@@ -2,7 +2,7 @@
 
 ## Current source: F1–F4 reconciliation and F5 fixes
 
-This candidate starts at F4 merge `1c65cf8`; main was verified at F2 `273755c`. PR #10 and #11 merged into feature branches. Consolidation is proposed through a PR targeting main, with no automatic merge.
+This candidate starts at F4 merge `1c65cf8`. Main was initially F2 `273755c`; during this task the owner merged PRs #12/#13, moving main to `1bae04d` with the identical F4 tree. PR #14 contains the F5 repairs and targets main. No PR is merged automatically.
 
 Version code is 5. Implemented candidate capabilities include Home-role setup, visual refinement, selected-source shelves/companion, QR and retained-video organization. [F5-HARDENING](F5-HARDENING.md) documents the save/refresh/focus/privacy/memory repairs and the unchanged data formats/quotas.
 

@@ -4,7 +4,7 @@
 
 ## Reconciled baseline
 
-This PR starts from F4 merge `1c65cf8` and targets main, which was still at F2 `273755c`. Earlier merged feature PRs were stacked onto feature branches. No automatic merge is authorized.
+This PR starts from F4 merge `1c65cf8`. The owner merged the stacked work through PRs #12/#13 while this task ran; main is now `1bae04d` with an identical F4 tree. PR #14 targets main with F5 repairs. No automatic merge is authorized.
 
 ## Correctness fixes
 

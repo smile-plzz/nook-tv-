@@ -30,6 +30,7 @@ public final class ContentSourceManager {
     private final SourceRefreshQueue fetchPool = new SourceRefreshQueue();
     private final Map<String, Long> attempts = new ConcurrentHashMap<>();
     private volatile boolean closed;
+    private boolean refreshRequested;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private final Map<String, CachedSource> cache = new ConcurrentHashMap<>();
     private Listener listener;
@@ -140,7 +141,7 @@ public final class ContentSourceManager {
         return fetchFeed(type, url);
     }
 
-    public void refresh(boolean force) {
+    public synchronized void refresh(boolean force) {
         if (closed) return;
         try {
             JSONArray sources = store.read().getJSONArray("sources");
@@ -177,8 +178,14 @@ public final class ContentSourceManager {
             }
             cache.keySet().retainAll(active);
             attempts.keySet().retainAll(attemptKeys);
-            fetchPool.start(tasks, () -> { if (!closed) { saveCache(); notifyListener(); } });
+            if(!tasks.isEmpty()&&!fetchPool.start(tasks,this::refreshFinished))refreshRequested=true;
         } catch (Exception ignored) {}
+    }
+
+    private synchronized void refreshFinished(){
+        if(closed)return;
+        saveCache();notifyListener();
+        if(refreshRequested){refreshRequested=false;refresh(true);}
     }
 
     private boolean configured(String id, String identity) {

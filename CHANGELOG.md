@@ -4,7 +4,7 @@ All notable changes to Nook TV are documented in this file.
 
 ## [Unreleased]
 ### Fixed — F5 hardening candidate (0.4.5, version code 5)
-- Reconcile F3/F4 feature-branch work in a PR targeting main; no automatic merge.
+- Verify F3/F4 consolidation (owner-merged PRs #12/#13); deliver F5 repairs in PR #14 targeting main without merging.
 - Save source config without cache metadata; acknowledge partial failures honestly, preserve both drafts and retry uncertain source writes idempotently.
 - Run six feed jobs on two workers without self-blocking waits; throttle failures, invalidate changed-source cache, and stop workers on destruction.
 - Preserve feed item identity and defer focused-shelf updates; filter hidden clips from all Home rows; persist history renames.

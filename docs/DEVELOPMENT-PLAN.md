@@ -11,7 +11,7 @@
 | F5 | Hardening candidate with focused regressions and upgrade fixture | Hosted evidence and target 2 GB performance gates |
 | F6 | Conditional investigation only | Receiver identification and Drive authorization feasibility |
 
-Main was at F2 `273755c`; this candidate includes F4 merge `1c65cf8` and must target main. Do not merge without explicit owner instruction. Keep schema-v2 dashboard and independent versioned sources/media/history stores.
+Main was initially F2 `273755c`; the owner merged PRs #12/#13 during this task, bringing main to F4 `1bae04d` (same tree as `1c65cf8`). PR #14 targets main with F5 repairs. Do not merge without explicit owner instruction. Keep schema-v2 dashboard and independent versioned sources/media/history stores.
 
 ## Original sequencing and acceptance reference
 
