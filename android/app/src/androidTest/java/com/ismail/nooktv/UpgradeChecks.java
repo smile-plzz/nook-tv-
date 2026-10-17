@@ -17,7 +17,7 @@ final class UpgradeChecks {
     private byte[] fixture()throws Exception{try(InputStream in=test.getContext().getAssets().open("fixture.mp4");ByteArrayOutputStream out=new ByteArrayOutputStream()){byte[] b=new byte[4096];int n;while((n=in.read(b))!=-1)out.write(b,0,n);return out.toByteArray();}}
     static int run(Instrumentation test,String mode)throws Exception{return new UpgradeChecks(test).execute(mode);}
     private int execute(String mode)throws Exception{
-        Context c=getTartest.getContext();byte[] video=fixture();
+        Context c=test.getTargetContext();byte[] video=fixture();
         DashboardStore dashboard=new DashboardStore(c);SourceStore sources=new SourceStore(c);ReceivedMediaStore media=new ReceivedMediaStore(c);ViewingStore viewing=new ViewingStore(c);
         if(mode.equals("seed")){
             JSONObject d=dashboard.read();d.put("title","Upgrade continuity").getJSONArray("apps").put("com.example.player/com.example.player.MainActivity");dashboard.save(d,d.getLong("revision"),"upgrade-dashboard-seed");
