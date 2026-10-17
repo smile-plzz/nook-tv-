@@ -2,7 +2,7 @@
 
 17 October 2026 | Launcher pivot | Record observed results only
 
-The owner reports 0.2 boots and allows light exploration in BlueStacks, but its experience misses the intended launcher. BlueStacks does not establish TV Home, remote, receiver, codecs, LAN or iPhone compatibility. Existing 0.2 has no new launcher/phone-transfer/Drive implementation. Mark unavailable future tests Blocked, not passed.
+The owner reports 0.2 boots and allows light exploration in BlueStacks, but its experience misses the intended launcher. BlueStacks does not establish TV Home, remote, receiver, codecs, LAN or iPhone compatibility. 0.3 now adds the grid, direct app access and opt-in Home setup; phone-transfer/Drive implementation remains absent. Mark unavailable future tests Blocked, not passed.
 
 ## Before testing
 

@@ -6,9 +6,9 @@ Your default TV home, inspired by Apple TV: favorite apps, YouTube and media sha
 
 **Launcher pivot confirmed, 17 October 2026.** Ismail wants Nook to open when he presses Home, with Apple TV-style aesthetics and navigation. Priorities are YouTube, iPhone video sharing and return to shared media. Spotify is optional, browser use is rare, and Google Drive access is requested if feasible.
 
-The delivered **0.2.0-preview is infrastructure**, with dashboard/editor/storage/player/catalog features. It is not the redesigned launcher. The owner installed it in BlueStacks and briefly explored it: boot worked, but the experience missed the intended product. No thorough BlueStacks or actual-TV acceptance is claimed.
+**0.3.0-launcher-preview implements the first working launcher prototype:** installed-app artwork grid, direct app launch, phone/recent destinations and explicit Home setup. See [prototype guide](docs/LAUNCHER-PREVIEW.md). The earlier 0.2 supplied infrastructure; the owner briefly tested it in BlueStacks and confirmed boot but rejected the experience. The redesigned prototype still needs owner visual review and actual-TV acceptance.
 
-This documentation update changes the product baseline and next delivery order. It does not add Home selection, an iPhone receiver, video upload, Drive authorization or a new APK.
+This build adds a visual/interaction prototype and an opt-in Home candidate. AirPlay, phone video upload and Drive authorization/playback remain unimplemented.
 
 ## Intended daily experience
 
@@ -22,7 +22,7 @@ This documentation update changes the product baseline and next delivery order. 
 
 Nook remains an Android app with its own branding, not tvOS. AirPlay, Cast, live mirroring and saved-file transfer are different capabilities. See [phone and Drive feasibility](docs/PHONE-AND-DRIVE.md) before making support claims.
 
-## What exists in 0.2
+## Foundation retained from 0.2
 
 - Installed-app discovery, pinning and launch; text-button dashboard with saved links/collections/background customization.
 - Paired local browser editor, revision conflicts, persistent mutation receipts and dashboard import/recovery.
@@ -30,12 +30,12 @@ Nook remains an Android app with its own branding, not tvOS. AirPlay, Cast, live
 - Initial OMDb metadata search, series selection and owner-configured web templates.
 - YouTube external-app/browser handoff.
 
-Hosted build, 74 contract assertions, editor checks and 15 Android emulator smoke assertions passed for the recorded code. Those tests do not prove the new launcher, iPhone integration or actual-TV behavior. [Build status](docs/BUILD-STATUS.md) preserves exact evidence.
+The 0.3 hosted build, 74 contract assertions, editor checks and 24 Android emulator smoke assertions passed for the recorded code. Those tests do not prove the new launcher, iPhone integration or actual-TV behavior. [Build status](docs/BUILD-STATUS.md) preserves exact evidence.
 
 ## Next delivery order
 
-1. Reviewable launcher visual/interaction prototype.
-2. Default Home and direct favorite-app access.
+1. Review the implemented launcher visual/interaction prototype.
+2. Validate initial Home setup and direct-app access on the target TV.
 3. Tested iPhone workflow plus durable, honest return to media.
 4. Companion alignment, migrations, remote polish and actual-device performance.
 5. Conditional Drive integration and optional service improvements.
@@ -66,3 +66,4 @@ The owner's TV is reported as Sony Plus Android 14 / 2 GB; actual API/firmware/r
 | [Third-party notices](THIRD-PARTY-NOTICES.md) | Actual dependencies and reuse boundaries |
 
 Core Home needs no mandatory cloud account or always-on PC. Optional services need their own access/network. Personal media, account credentials and private history are not silently imported or included in dashboard backups.
+

@@ -2,7 +2,7 @@
 
 Baseline 2.0 | 17 October 2026 | Supersedes dashboard-first baseline
 
-Owner instructions govern; [PRD](PRD.md) is current scope. A design proposal is not an implemented capability. This task updates documentation only.
+Owner instructions govern; [PRD](PRD.md) is current scope. A design proposal is not an implemented capability. Baseline 2.0 was documentation-only. Subsequent owner authorization produced the 0.3 [launcher prototype](LAUNCHER-PREVIEW.md); it is not full device acceptance.
 
 ## Confirmed direction
 
@@ -49,8 +49,9 @@ Owner instructions govern; [PRD](PRD.md) is current scope. A design proposal is 
 
 ## Authorization and next work
 
-Earlier owner messages authorized implementation and continuing without immediate TV testing. The current instruction explicitly requests documentation updates reflecting the pivot. This change produces no new APK or receiver/account connection. Next build work follows [development plan](DEVELOPMENT-PLAN.md), starting with a reviewable launcher visual/interaction prototype rather than repeating broad infrastructure work.
+Earlier owner messages authorized implementation and continuing without immediate TV testing. The pivot instruction requested documentation updates; after merging, the owner requested the next steps. The 0.3 prototype now delivers the reviewable launcher interface and initial Home setup. No receiver/account connection is implemented. Further work follows [development plan](DEVELOPMENT-PLAN.md).
 
 ## Open implementation decisions
 
 Exact iPhone source/gesture (AirPlay, Photos, Files, app cast or URL), actual receiver/TV support, selected Drive authorization UX, transfer storage/transport limits and exact launcher layout metrics need validation. They do not block documenting or prototyping the confirmed default-home and Apple TV direction. Any narrower substitute for a core outcome must be explicit and owner-accepted.
+

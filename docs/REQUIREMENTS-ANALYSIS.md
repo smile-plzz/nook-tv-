@@ -30,7 +30,7 @@ The implementation optimized infrastructure and editable dashboard breadth befor
 
 The earlier standalone-first baseline made launcher support P1 and placed discovery before everyday navigation. That ordering is superseded. Launcher, recognizable app grid and phone-media return are P0. NowShowing/provider work, richer YouTube and Brave/filtering remain requested P1 work. Mood/weather/widgets become optional P2. Spotify/Drive do not become mandatory accounts for Home.
 
-The user requested all documentation updates in this turn. No launcher code, new APK, receiver or Drive connection is being added in this documentation change. Earlier build authorization is historical context; future work must follow the new sequence.
+The pivot baseline was documentation-only, then the owner merged it and requested the next steps. The 0.3 [prototype](LAUNCHER-PREVIEW.md) now implements grid/direct-app and initial Home setup. Phone receiving/Drive remain future work. Follow the new sequence.
 
 ## Feasibility and evidence
 
@@ -67,3 +67,4 @@ Research supports the pivot; it does not authorize copying launcher code/assets 
 - Privacy: shared media can be personal; explicit display/storage/delete controls, no silent Photos/library import.
 
 Design decisions remain in [DECISIONS](DECISIONS.md), measurable outcomes in [PRD](PRD.md), and delivery order in [plan](DEVELOPMENT-PLAN.md).
+
