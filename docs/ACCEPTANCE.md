@@ -1,6 +1,6 @@
 # Acceptance and verification specification
 
-Baseline 1.0. **All execution results pending.** This document defines future tests; documentation review is not app testing.
+Baseline 1.0. **Target-device execution results pending.** Local build and security checks are recorded in [build status](BUILD-STATUS.md). This document defines product acceptance; local checks do not substitute for actual-TV testing.
 
 ## Requirement coverage
 
@@ -80,3 +80,4 @@ First usable release requires all P0 scenarios passed on device. Full scope also
 ## Documentation verification
 
 Check all relative links, requirement coverage, current source selection, authority/hold wording and consistency between release definitions. This is the only verification executed during the current documentation-only task.
+

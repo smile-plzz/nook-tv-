@@ -1,6 +1,6 @@
 # Proposed architecture
 
-2026-10-17 | Documentation baseline v1.0. Technical choices remain proposed until the compatibility milestone, which begins only after owner authorization.
+2026-10-17 | Documentation baseline v1.0. Implementation has been authorized. M1 currently uses Java/native Views, platform VideoView, AtomicFile configuration and a bounded Java HTTP server to build with available offline SDK tooling. Media3, Room and the full architecture below remain planned; no device measurements yet support a final toolkit choice. See [build status](BUILD-STATUS.md).
 
 ## Components
 
@@ -161,3 +161,4 @@ OMDb metadata is not a streaming availability API. Seeded rows must be labeled a
 Verify actual API/ABI, required features and package visibility during the authorized spike; do not equate Android version branding with certified Android TV capability. Keep normal app launch available when a HOME alias is enabled. Request only permissions justified by implemented features. Do not depend on boot autostart, unrestricted background execution, root, accessibility-service interception or device-owner privileges.
 
 Persist user state before handing off externally. Restore the dashboard position on return; do not overwrite progress with zero when the external app provides no result. Keep title/episode selection if a provider fails or an embedded page reloads.
+

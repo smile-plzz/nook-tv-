@@ -1,6 +1,6 @@
 # Development plan and verification gates
 
-2026-10-17 | Documentation baseline v1.0 finalized. **Implementation is on hold until the owner explicitly says to start building.**
+2026-10-17 | Documentation baseline v1.0 finalized. **The owner has authorized implementation. M1 preview is built; device gate is pending.** See [build status](BUILD-STATUS.md).
 
 ## Delivery policy
 
@@ -136,3 +136,4 @@ No third-party source is marked supported before successful actual-TV playback a
 ## Handoff and acceptance
 
 Read [implementation handoff](IMPLEMENTATION-HANDOFF.md) before execution. [Acceptance scenarios](ACCEPTANCE.md) map requirement IDs to observable checks. The docs-only review validates these documents; it does not execute any milestone above or populate device evidence.
+

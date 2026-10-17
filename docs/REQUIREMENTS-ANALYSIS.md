@@ -101,7 +101,7 @@ These references inform planning. Recheck current integration documentation when
 | Other sites and native online streaming | Native catalog/player where source supports it; isolated embed/browser route otherwise |
 | Brave ad blocker support | Brave handoff plus separately evaluated filtering; no Shields inheritance assumption |
 | Explicitly use NowShowing-Stream | Sole streaming baseline; no CineVault or V2 substitution |
-| Owner will say when to start building | Documentation-only hold, recorded in README and implementation handoff |
+| Owner will say when to start building | Hold released by explicit instruction on 2026-10-17; M1 implementation tracked in BUILD-STATUS.md |
 
 ## Review corrections in v1.0
 
@@ -115,3 +115,4 @@ These references inform planning. Recheck current integration documentation when
 - Added portable backup boundaries and TV-only API-key entry for the initial HTTP editor.
 
 Personal context informs the preference for a lightweight, polished and manageable product. It does not authorize importing private history, relationship details, health information or account content into a TV visible to others. Interest collections start with owner-selected content.
+

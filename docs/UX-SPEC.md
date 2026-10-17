@@ -1,6 +1,6 @@
 # TV and browser experience specification
 
-Baseline 1.0 — design intent, no UI implemented.
+Baseline 1.0 — full-product design intent. An initial native M1 interface and PC editor are implemented; broader flows below remain planned. See [build status](BUILD-STATUS.md).
 
 ## Experience principles
 
@@ -104,3 +104,4 @@ History paused means no new playback/launch history is retained after the choice
 - Offline. Your saved layout is available; online videos need a connection.
 
 Technical diagnostics belong in Settings, not routine browsing.
+

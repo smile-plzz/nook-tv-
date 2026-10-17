@@ -1,0 +1,37 @@
+name: Compatibility APK
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: android-actions/setup-android@v3
+      - name: Install pinned SDK packages
+        shell: pwsh
+        run: sdkmanager 'platforms;android-35' 'build-tools;35.0.1' 'sources;android-35'
+      - name: Core checks
+        shell: pwsh
+        run: ./scripts/test-core.ps1
+      - name: Build compatibility APK
+        shell: pwsh
+        run: ./scripts/build-offline.ps1
+      - name: Editor boundary tests
+        shell: pwsh
+        run: ./scripts/test-editor.ps1
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nook-tv-0.1.0-m1
+          path: android/app/build/offline/nook-tv-0.1.0-m1.apk
+          retention-days: 30
