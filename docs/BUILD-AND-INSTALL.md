@@ -1,12 +1,12 @@
-# Build and install | 0.2.0-preview
+# Build and install | 0.3.0-launcher-preview
 
 ## Scope of this APK
 
-The 17 October launcher pivot is documented in [PRD](PRD.md). These commands build the existing 0.2 foundation. It does not yet provide default-Home setup, the Apple TV-style launcher grid, iPhone receiving/file transfer or Google Drive. Do not look for a Home setup control or receiver in this APK. Documentation changes do not require reinstalling it.
+The 17 October launcher pivot is documented in [PRD](PRD.md). These commands build the 0.3 artwork-grid/direct-app launcher prototype with opt-in Home setup. See [prototype guide](LAUNCHER-PREVIEW.md). iPhone receiving/file upload and Google Drive remain unimplemented.
 
 The owner reports brief successful boot/exploration in BlueStacks; use that for preliminary visual/function checks only. Target-TV Home/wake/remote/receiver behavior needs actual hardware and real iPhone tests.
 
-Compatibility app ID remains `com.ismail.nooktv.compat`, version code 2. The current APK remains a standalone preview. The next product requires default-home behavior; that implementation is still pending.
+Compatibility app ID remains `com.ismail.nooktv.compat`, version code 3. It opens as an ordinary app until you explicitly enable Nook Home in Settings and select it through the system. Target-TV default-Home behavior remains unverified.
 
 ## Build
 
@@ -41,7 +41,11 @@ adb install -r android/app/build/outputs/apk/androidTest/debug/app-debug-android
 adb shell am instrument -w com.ismail.nooktv.compat.test/com.ismail.nooktv.SmokeInstrumentation
 ```
 
-Use a disposable test device/emulator for instrumentation: it changes dashboard/history fixtures. The owner installs only the app APK. Hosted artifacts are `nook-tv-0.2.0-preview` and `android-smoke-evidence`.
+Use a disposable test device/emulator for instrumentation: it changes dashboard/history fixtures. The owner installs only the app APK. Hosted artifacts are `nook-tv-0.3.0-launcher-preview` and `android-smoke-evidence`.
+
+## Owner preview artifact
+
+Delivered file: `nook-tv-0.3.0-launcher-preview.apk`, version code 3. It is the passing CI APK re-signed with the same development certificate as M1/0.2. v2/v3 signatures, alignment and package/version were verified. SHA-256: `19be610447536f328a9078cb6c1f6f038833d6b7395090a6e3d5389d8bc22353`. Raw CI artifacts may use another debug key.
 
 ## Install / update
 
@@ -52,7 +56,7 @@ adb install -r app-debug.apk
 adb shell am start -n com.ismail.nooktv.compat/com.ismail.nooktv.MainActivity
 ```
 
-The delivered `nook-tv-0.2.0-preview.apk` was re-signed from the passing CI build with the same private development key as the delivered M1 APK. Its certificate matches M1, and v2/v3 signatures and alignment were verified. It can update that M1 installation. SHA-256: `43680b094c3f07207f07de325dedb5defac05c1893f5fc8cbed608c75140360d`.
+Historical 0.2 artifact: `nook-tv-0.2.0-preview.apk` was re-signed from the passing CI build with the same private development key as the delivered M1 APK. Its certificate matches M1, and v2/v3 signatures and alignment were verified. It can update that M1 installation. SHA-256: `43680b094c3f07207f07de325dedb5defac05c1893f5fc8cbed608c75140360d`.
 
 Same-key upgrades preserve/migrate M1 dashboard and progress. Raw Gradle/CI debug artifacts may use different keys from the delivered owner APK. If Android reports a signature mismatch, export your dashboard before deciding to uninstall/reinstall. Schema-v1 and schema-v2 dashboard imports are supported in the browser editor; viewing history and secrets are not in these exports. Keep the same development keystore for repeated builds where update continuity is needed. Production signing is still a later release gate.
 
@@ -72,8 +76,8 @@ For a site you can use, TV Settings accepts its documented HTTPS movie/series UR
 
 Leave/uninstall the preview and return to the unchanged original launcher. A lower-version-code APK may require uninstalling. Export your dashboard first if preserving it matters. Full target-TV acceptance remains pending; CI and emulator results are recorded separately from physical-device evidence.
 
-## Planned launcher setup and recovery
+## Launcher setup and recovery
 
-Future builds must offer a system-supported Home/default choice, retain normal app entry and explain restoring the original default. Exact settings vary by TV; do not execute speculative package-disabling/ADB commands or assume BlueStacks settings match the TV. Record Home from other apps, wake/reboot and successful rollback before launcher acceptance.
+Settings > Default Home setup enables Nook's Home option and opens system Home settings. Select Nook there if supported. Installation alone does not change your default. To revert, select the original Home first, then Remove Nook from Home choices. Removal is blocked while Nook is detected as default. Ordinary app entry remains. Exact settings vary by TV; do not execute speculative package-disabling/ADB commands or assume BlueStacks settings match the TV. Record Home from other apps, wake/reboot and successful rollback before launcher acceptance.
 
 The future From iPhone flow must state whether it uses AirPlay/Cast, an external receiver, saved URL or retained-file transfer. Current pairing/link Save is not a video uploader or AirPlay receiver. Drive sign-in/media access is likewise not present. See [phone and Drive feasibility](PHONE-AND-DRIVE.md).

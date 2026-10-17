@@ -1,22 +1,35 @@
-# Build status | launcher pivot and 0.2 foundation
+# Build status | 0.3 launcher prototype
 
 Updated 17 October 2026. The owner briefly installed/explored 0.2 in BlueStacks: it boots, but the experience does not match the desired launcher. He confirmed default Home, Apple TV-style aesthetics, YouTube, iPhone video sharing and easier return to shared media; Spotify is tentative, browser rare and Google Drive conditional.
 
-[PRD baseline 2.0](PRD.md) supersedes the dashboard-first roadmap. This change updates documentation only. No new APK or runtime integration is included.
+[PRD baseline 2.0](PRD.md) supersedes the dashboard-first roadmap. 0.3 now implements L0's visual launcher prototype and initial L1 Home plumbing. It does not complete device acceptance or phone/Drive integrations. See [prototype guide](LAUNCHER-PREVIEW.md).
 
 ## Pivot coverage
 
 | New outcome | Actual status |
 |---|---|
-| Apple TV-inspired artwork grid / one-OK app launch throughout | Design specified; existing UI still needs redesign |
-| Default Home setup, task behavior and recovery | Not implemented or TV-tested |
+| Artwork app grid / direct app launch | Implemented; visual acceptance pending |
+| Default Home setup, task behavior and recovery | Disabled-by-default HOME alias, explicit setup, task reuse/root Back and removal guard implemented; actual-TV default/wake/reboot/rollback unverified |
 | From iPhone receiver / retained file transfer | Not implemented; route assessment required |
-| Shared & Recent with durable phone-source identity | Existing generic viewing store is reusable, phone-specific behavior not implemented |
+| Shared & Recent | New destination for existing links/observed history; retained phone source/transfer unimplemented |
 | Google Drive authorization/media | Not implemented; selected-file/scopes feasibility gate |
 | Spotify | Ordinary installed-app discovery may expose it; dedicated integration not implemented |
 | PC customization, collections, Media3 | Existing foundation retained, not proof of new UX acceptance |
 
 No physical-TV, real iPhone sharing or default-Home result is claimed. Historical M1 evidence remains in [M1 status](M1-STATUS.md).
+
+## 0.3 verification
+
+- 74 core/model/source/viewing/HTTP-handler assertions passed locally; editor state/syntax checks passed.
+- New tile/discovery classes compile against the local Android SDK.
+- [Hosted Gradle packaging](https://github.com/smile-plzz/nook-tv-/actions/runs/39034531772) passed at code commit `181c77855d7c0ad330b8f9814ed7c41bd2fab532`.
+- [Android API-35 tablet smoke](https://github.com/smile-plzz/nook-tv-/actions/runs/39034531785) passed 24 assertions: prior storage/player cases plus grid reachability, absence of Home test/pairing clutter, focusable cards, one-click intended app launch dispatch (intercepted monitor), phone/shared destinations, Home setup and enabled HOME alias eligibility. System default selection/wake/reboot are not covered by alias eligibility.
+- Emulator screenshot inspected and retained in [prototype guide](LAUNCHER-PREVIEW.md); app inventory differs from the owner's TV.
+- Owner APK signed with the same certificate as M1/0.2; v2/v3 signature, alignment and package/version verified. SHA-256: `19be610447536f328a9078cb6c1f6f038833d6b7395090a6e3d5389d8bc22353`.
+- Schema v2, app ID and existing user data retained; no new runtime dependency.
+- From iPhone currently offers paired-browser link guidance and All Apps access for an existing receiver; no built-in AirPlay/Cast/file upload.
+- Optional Drive preview tile is hidden by default and explicitly not connected.
+- Samples, diagnostics, catalog and pairing are in Settings.
 
 ## Existing 0.2 implementation and evidence
 

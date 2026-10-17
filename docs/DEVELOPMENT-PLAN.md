@@ -6,7 +6,7 @@ Baseline 2.0 | 17 October 2026 | Supersedes old M1-M6 delivery order
 
 M1 compatibility and 0.2 dashboard/editor/player/catalog infrastructure exist. The owner briefly used 0.2 in BlueStacks, confirmed boot but rejected the overall experience as the intended launcher. Do not restart storage/pairing work or extend catalogs before correcting the home experience.
 
-The current task is documentation only. Future build work follows these stages; no deadline is assumed. Physical TV tests remain pending, but design and independent checks can proceed.
+0.3 implements the initial L0 prototype and L1 Home setup plumbing; visual review and device gates remain. Build work follows these stages; no deadline is assumed. Physical TV tests remain pending, but design and independent checks can proceed.
 
 ## L0 - Reviewable launcher prototype
 
@@ -65,3 +65,4 @@ Preserve existing 74 contract assertions, editor state checks and 15 Android smo
 ## Dependencies and completion
 
 Read [handoff](IMPLEMENTATION-HANDOFF.md), [PRD](PRD.md), [UX](UX-SPEC.md), [architecture](ARCHITECTURE.md) and [phone/Drive feasibility](PHONE-AND-DRIVE.md). Track actual results in [build status](BUILD-STATUS.md), never infer milestone acceptance from green CI. Record version/commit/device/route/expected/actual/evidence for each gate.
+

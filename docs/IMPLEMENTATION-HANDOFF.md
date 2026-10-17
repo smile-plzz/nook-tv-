@@ -8,7 +8,7 @@ Build an Apple TV-style default TV home screen for Ismail. Main activities are Y
 
 0.2 booted in a brief BlueStacks trial; owner says structure exists but experience misses the goal. Do not report that as launcher acceptance or thorough testing. Main includes merged PR #2 and the existing infrastructure. Read [build status](BUILD-STATUS.md) before claiming capabilities.
 
-This change is documentation only. Earlier build authorization remains part of history; next implementation follows the new plan. No new APK, Home default, receiver or Drive account access is created by a documentation merge.
+0.3 implements the first visual/interaction prototype and opt-in Home setup; see [prototype guide](LAUNCHER-PREVIEW.md). Owner visual review and actual-TV default Home remain pending. Phone receiving/file upload and Drive access are not implemented. Follow the new sequence.
 
 ## Read order
 
@@ -45,3 +45,4 @@ A launcher does not automatically receive AirPlay/Cast. Select/test a real route
 Record actual TV API/ABI/memory/display/WebView, Home/wake/reboot/rollback, installed handlers and codecs. Record actual iPhone source/gesture/format/receiver and replay after disconnect. Redact identifiers and personal media.
 
 Use [device checklist](DEVICE-TEST.md); track results in build status. Full completion follows PRD outcomes and owner acceptance, never just CI or an installable preview. Do not silently drop NowShowing, Brave/filtering or richer YouTube, but do not let them displace the launcher and phone workflow.
+

@@ -41,6 +41,9 @@ public final class MainActivity extends Activity implements EditorServer.Host {
     private int generation;
     private ScrollView homeScroll;
     private int homeScrollY;
+    private final android.util.LruCache<String,Bitmap> appArtwork=new android.util.LruCache<String,Bitmap>(4*1024*1024){ @Override protected int sizeOf(String key,Bitmap value){return value.getByteCount();} };
+    private String firstHomeTag="";
+    private final List<LauncherApps.Entry> installedApps=new ArrayList<>();
     private Bitmap backgroundBitmap;
     private String backgroundIdentity="";
     private WebView web;
@@ -57,11 +60,13 @@ public final class MainActivity extends Activity implements EditorServer.Host {
     @Override public void onCreate(Bundle b) {
         super.onCreate(b); getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         store=new DashboardStore(this); history=getSharedPreferences("nook",MODE_PRIVATE); focusKey=history.getString("lastFocus",""); homeScrollY=history.getInt("homeScroll",0); viewing=new ViewingStore(this); catalog=new CatalogClient(this); server=new EditorServer(pairing,this);
-        home();
+        if(getIntent().hasCategory(Intent.CATEGORY_HOME)) { focusKey=""; homeScrollY=0; } home();
     }
+    @Override protected void onNewIntent(Intent intent) { super.onNewIntent(intent);setIntent(intent);if(intent.hasCategory(Intent.CATEGORY_HOME)){focusKey="";returnFocus="";homeScrollY=0;home();} }
     @Override public void onResume() {
         super.onResume(); foreground=true;
         if(videoStopped) { videoStopped=false; home(); }
+        if(screen.equals("home")) refreshHomeApps();
         try { addresses=server.start(); serverError=""; } catch(IOException e) { addresses=new ArrayList<>(); serverError="Editor could not start. Port 8765 may be in use."; }
         if(pairInfo!=null&&screen.equals("pair")) pairInfo.setText(addressText());
     }
@@ -86,55 +91,104 @@ public final class MainActivity extends Activity implements EditorServer.Host {
     }
     private void page(String name,String title,String subtitle) {
         if(screen.equals("home")&&homeScroll!=null) homeScrollY=homeScroll.getScrollY(); releasePlayback(); screen=name; pairInfo=null; generation++;
-        mint=Color.parseColor(current().optString("accent","#9ce5c5")); root=vertical(); root.setBackgroundColor(ink); applyBackground(generation); root.setPadding(dp(40),dp(24),dp(40),dp(24));
+        mint=Color.parseColor(current().optString("accent","#9ce5c5")); root=vertical(); root.setBackground(new GradientDrawable(GradientDrawable.Orientation.TL_BR,new int[]{0xff17233d,0xff10121f,0xff252039}));root.setClipChildren(false); applyBackground(generation); root.setPadding(dp(40),dp(24),dp(40),dp(24));
         LinearLayout nav=new LinearLayout(this); nav.setGravity(Gravity.CENTER_VERTICAL);
         TextView logo=text("nook",24,mint); logo.setTypeface(null,Typeface.BOLD); nav.addView(logo,new LinearLayout.LayoutParams(0,-2,1));
-        nav.addView(action("Home","nav-home",this::home)); nav.addView(action("Apps","nav-apps",this::apps)); nav.addView(action("Watch","nav-watch",this::watch)); nav.addView(action("Pair PC","nav-pair",this::pair)); nav.addView(action("Settings","nav-settings",this::settings)); root.addView(nav);
+        android.widget.TextClock clock=new android.widget.TextClock(this);clock.setFormat12Hour("h:mm a");clock.setFormat24Hour("HH:mm");clock.setTextColor(muted);clock.setTextSize(16);clock.setPadding(0,0,dp(24),0);nav.addView(clock);
+        nav.addView(action("Home","nav-home",()->{focusKey="";returnFocus="";homeScrollY=0;home();})); nav.addView(action("Apps","nav-apps",this::apps)); nav.addView(action("Shared","nav-shared",this::shared)); nav.addView(action("Settings","nav-settings",this::settings)); root.addView(nav);
         ScrollView scroll=new ScrollView(this); if(name.equals("home")) homeScroll=scroll; scroll.setFillViewport(true); content=vertical(); content.setPadding(0,dp(12),0,dp(20)); scroll.addView(content); root.addView(scroll,new LinearLayout.LayoutParams(-1,0,1));
-        content.addView(text(title,30,Color.WHITE)); content.addView(text(subtitle,15,muted)); setContentView(root);
+        if(!title.isEmpty())content.addView(text(title,30,Color.WHITE)); if(!subtitle.isEmpty())content.addView(text(subtitle,15,muted)); setContentView(root);
     }
     private void section(String title) { TextView t=text(title,20,Color.WHITE); t.setPadding(0,dp(20),0,dp(8)); content.addView(t); }
     private LinearLayout row() { HorizontalScrollView s=new HorizontalScrollView(this); s.setHorizontalScrollBarEnabled(false); LinearLayout r=new LinearLayout(this); r.setPadding(0,dp(3),0,dp(6)); s.addView(r); content.addView(s); return r; }
     private void restore(String key) { root.post(()->{ View v=root.findViewWithTag(key); if(v!=null) v.requestFocus(); }); }
     private JSONObject current() { try { return store.read(); } catch(JSONException e) { throw new IllegalStateException(e); } }
+    private LinearLayout homeAppsHost;
+    private JSONObject homeConfig;
+    private String homeRestore="";
     private void home() {
-        String oldFocus=returnFocus.isEmpty()?focusKey:returnFocus; returnFocus=""; JSONObject config=current();
-        page("home",config.optString("title"),"Your personal big screen | Preview 0.2");
-        if(store.damaged()) content.addView(text("Your saved dashboard could not be read. It has been preserved; editing is disabled.",16,muted));
-        JSONArray sections=config.optJSONArray("sections");
-        for(int n=0;n<sections.length();n++) {
-            JSONObject row=sections.optJSONObject(n); if(!row.optBoolean("visible")) continue;
-            String id=row.optString("id");
-            if(id.equals("resume")||id.equals("recent")) { historyRow(id.equals("resume")); continue; }
-            if(id.equals("apps")) { section("Favorite apps"); LinearLayout r=row(); JSONArray a=config.optJSONArray("apps"); if(a.length()==0) r.addView(action("+ Pin your first app","pin-first",this::apps)); for(int i=0;i<a.length();i++) { String c=a.optString(i); r.addView(action(appLabel(c),"app-"+c,()->appOptions(c))); } }
-            if(id.equals("saved")) { section("Saved for later"); LinearLayout r=row(); JSONArray a=config.optJSONArray("links"); if(a.length()==0) r.addView(action("+ Add a link","add-link",this::addLink)); for(int i=0;i<a.length();i++) { JSONObject l=a.optJSONObject(i); r.addView(action(l.optString("label"),"link-"+l.optString("id"),()->linkOptions(l))); } }
-            if(id.equals("collections")) {
-                JSONArray groups=config.optJSONArray("collections"); for(int i=0;i<groups.length();i++) {
-                    JSONObject group=groups.optJSONObject(i); section(group.optString("label")); LinearLayout r=row(); JSONArray members=group.optJSONArray("items");
-                    for(int j=0;j<members.length();j++) { String ref=members.optString(j); if(ref.startsWith("app:")) { String c=ref.substring(4); r.addView(action(appLabel(c),"group-"+group.optString("id")+"-"+j,()->appOptions(c))); }
-                        else { JSONArray links=config.optJSONArray("links"); for(int k=0;k<links.length();k++) { JSONObject l=links.optJSONObject(k); if(l.optString("id").equals(ref)) r.addView(action(l.optString("label"),"group-"+group.optString("id")+"-"+j,()->linkOptions(l))); } }
-                    } if(members.length()==0) r.addView(action("Add saved items","empty-"+group.optString("id"),()->collectionMembers(group.optString("id"))));
-                }
-                content.addView(action("+ Create a collection","collection-add",this::createCollection));
-            }
-            if(id.equals("samples")) { section("Playback and compatibility"); LinearLayout r=row();
-                r.addView(action("MP4 sample","sample-mp4",()->play("https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4","Big Buck Bunny | MP4")));
-                r.addView(action("HLS sample","sample-hls",()->play("https://devstreaming-cdn.apple.com/videos/streaming/examples/bipbop_4x3/bipbop_4x3_variant.m3u8","Apple BipBop | HLS")));
-                r.addView(action("DASH sample","sample-dash",()->play("https://storage.googleapis.com/wvmedia/clear/h264/tears/tears.mpd","Tears of Steel | DASH")));
-                r.addView(action("YouTube","youtube",()->external("https://www.youtube.com/","youtube")));
-                r.addView(action("Web test","sample-web",()->web("","Controlled web test"))); r.addView(action("Diagnostics","diagnostics",this::diagnostics));
-            }
+        String oldFocus=returnFocus.isEmpty()?focusKey:returnFocus;returnFocus=""; JSONObject config=current();
+        page("home","",""); homeConfig=config;homeRestore=oldFocus;firstHomeTag="";
+        TextView heading=text(config.optString("title","Home"),30,Color.WHITE);heading.setTypeface(null,Typeface.BOLD);content.addView(heading);
+        if(store.damaged())content.addView(text("Saved data has been preserved. Editing is unavailable until it can be recovered.",15,muted));
+        homeAppsHost=vertical();homeAppsHost.setTag("favorite-grid");content.addView(homeAppsHost);
+        renderHomeApps(installedApps);
+        for(int n=0;n<config.optJSONArray("sections").length();n++){
+            JSONObject item=config.optJSONArray("sections").optJSONObject(n);if(!item.optBoolean("visible"))continue;String id=item.optString("id");
+            if(id.equals("resume"))historyRow(true);
+            if(id.equals("recent"))historyRow(false);
+            if(id.equals("saved")&&config.optJSONArray("links").length()>0){section("Saved for later");LinearLayout r=row();JSONArray links=config.optJSONArray("links");for(int i=0;i<links.length();i++){JSONObject l=links.optJSONObject(i);r.addView(mediaTile(l.optString("label"),l.optString("route").equals("catalog")?"View title":"Open saved link","link-"+l.optString("id"),()->openLink(l),()->linkOptions(l)));}}
+            if(id.equals("collections")){JSONArray groups=config.optJSONArray("collections");for(int i=0;i<groups.length();i++){JSONObject group=groups.optJSONObject(i);JSONArray members=group.optJSONArray("items");if(members.length()==0)continue;section(group.optString("label"));LinearLayout r=row();for(int j=0;j<members.length();j++){String ref=members.optString(j);if(ref.startsWith("app:")){String component=ref.substring(4);r.addView(mediaTile(appLabel(component),"Open app","group-"+group.optString("id")+"-"+j,()->launchApp(component),()->appOptions(component)));}else{JSONArray links=config.optJSONArray("links");for(int k=0;k<links.length();k++){JSONObject l=links.optJSONObject(k);if(l.optString("id").equals(ref))r.addView(mediaTile(l.optString("label"),"Open saved link","group-"+group.optString("id")+"-"+j,()->openLink(l),()->linkOptions(l)));}}}}}
         }
-        restore(oldFocus); homeScroll.post(()->homeScroll.scrollTo(0,homeScrollY));
+        root.post(()->{View found=root.findViewWithTag(oldFocus);if(found!=null)found.requestFocus();else focusFirstHome();homeScroll.scrollTo(0,homeScrollY);});
+        refreshHomeApps();
     }
+    private int gridColumns(){int width=(int)(getResources().getDisplayMetrics().widthPixels/getResources().getDisplayMetrics().density)-80;return Math.max(2,Math.min(6,width/140));}
+    private int tileWidth(){int width=getResources().getDisplayMetrics().widthPixels-dp(80);return (width-dp(16)*gridColumns())/gridColumns();}
+    private void addGridTile(LinearLayout host,LauncherTile tile,int index){
+        int cols=gridColumns();LinearLayout r;if(index%cols==0){r=new LinearLayout(this);r.setClipChildren(false);r.setPadding(0,dp(8),0,dp(10));host.addView(r);}else r=(LinearLayout)host.getChildAt(host.getChildCount()-1);
+        LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(tileWidth(),dp(136));p.setMargins(dp(4),0,dp(12),0);r.addView(tile,p);
+    }
+    private void trackTile(LauncherTile tile,String tag){tile.setTag(tag);View.OnFocusChangeListener visual=tile.getOnFocusChangeListener();tile.setOnFocusChangeListener((v,f)->{if(visual!=null)visual.onFocusChange(v,f);if(f)focusKey=tag;});}
+    private LauncherTile makeTile(String label,String detail,String symbol,String tag,int color,Runnable open,Runnable more){
+        LauncherTile tile=new LauncherTile(this,label,detail,symbol,color,tileWidth(),!history.getBoolean("reducedMotion",false),open,more);trackTile(tile,tag);return tile;
+    }
+    private View mediaTile(String label,String detail,String tag,Runnable open,Runnable more){LauncherTile tile=makeTile(label,detail,"play",tag,0xff34384b,open,more);LinearLayout.LayoutParams p=new LinearLayout.LayoutParams(dp(214),dp(136));p.setMargins(dp(4),dp(6),dp(16),dp(8));tile.setLayoutParams(p);return tile;}
+    private void focusFirstHome(){View first=root.findViewWithTag(firstHomeTag);if(first!=null)first.requestFocus();}
+    private void renderHomeApps(List<LauncherApps.Entry> available){
+        if(homeAppsHost==null||!screen.equals("home"))return;String desired=homeRestore;View focused=root.findFocus();if(!firstHomeTag.isEmpty()&&focused!=null&&focused.getTag() instanceof String)desired=(String)focused.getTag();homeAppsHost.removeAllViews();firstHomeTag="";int index=0;JSONArray pinned=homeConfig.optJSONArray("apps");List<String> favorites=new ArrayList<>();
+        if(pinned.length()>0){for(int i=0;i<pinned.length();i++)favorites.add(pinned.optString(i));}
+        else for(LauncherApps.Entry app:available){if(favorites.size()==4)break;favorites.add(app.component);}
+        boolean youtube=false;for(String c:favorites)if(c.startsWith("com.google.android.youtube"))youtube=true;
+        for(String c:favorites){LauncherApps.Entry found=null;for(LauncherApps.Entry app:available)if(app.component.equals(c)){found=app;break;}String tag="app-"+c;String label=found==null?appLabel(c):found.label;
+            LauncherTile tile=makeTile(label,found==null?"Not installed":"",label,tag,0xff343e59,()->launchApp(c),()->appOptions(c));if(firstHomeTag.isEmpty())firstHomeTag=tag;addGridTile(homeAppsHost,tile,index++);if(found!=null)loadAppArtwork(tile,found);
+        }
+        if(pinned.length()==0&&!youtube){LauncherTile tile=makeTile("YouTube","Open website","play","tile-youtube",0xff883e56,()->external("https://www.youtube.com/","youtube"),null);if(firstHomeTag.isEmpty())firstHomeTag="tile-youtube";addGridTile(homeAppsHost,tile,index++);}
+        addGridTile(homeAppsHost,makeTile("From iPhone","Sharing options","phone","tile-phone",0xff414674,this::phone,null),index++);
+        addGridTile(homeAppsHost,makeTile("All Apps","Browse & organize","apps","tile-apps",0xff3c5268,this::apps,null),index++);
+        addGridTile(homeAppsHost,makeTile("Shared & Recent","Return to your media","recent","tile-shared",0xff3e5264,this::shared,null),index++);
+        // Drive is a deliberate preview destination, never a fake connected account.
+        if(history.getBoolean("showDrive",false))addGridTile(homeAppsHost,makeTile("Google Drive","Not connected","drive","tile-drive",0xff425b5a,this::drive,null),index++);
+        View target=root.findViewWithTag(desired);if(target!=null)target.requestFocus();else focusFirstHome();
+    }
+    private void refreshHomeApps(){
+        if(!screen.equals("home"))return;int token=generation;io.execute(()->{List<LauncherApps.Entry> found=LauncherApps.discover(this);handler.post(()->{if(token!=generation||!screen.equals("home"))return;installedApps.clear();installedApps.addAll(found);renderHomeApps(found);});});
+    }
+    private void loadAppArtwork(LauncherTile tile,LauncherApps.Entry app){
+        Bitmap cached=appArtwork.get(app.component);if(cached!=null){tile.artwork(new BitmapDrawable(getResources(),cached));return;}int token=generation;
+        io.execute(()->{try{android.graphics.drawable.Drawable image=app.info.loadBanner(getPackageManager());if(image==null)image=app.info.loadIcon(getPackageManager());int w=image.getIntrinsicWidth(),h=image.getIntrinsicHeight();float scale=Math.min(1f,Math.min(224f/Math.max(1,w),112f/Math.max(1,h)));w=Math.max(1,(int)(w*scale));h=Math.max(1,(int)(h*scale));Bitmap bitmap=Bitmap.createBitmap(w,h,Bitmap.Config.ARGB_8888);image.setBounds(0,0,w,h);image.draw(new android.graphics.Canvas(bitmap));appArtwork.put(app.component,bitmap);handler.post(()->{if(token==generation)tile.artwork(new BitmapDrawable(getResources(),bitmap));});}catch(Exception ignored){}});
+    }
+    private void launchApp(String component){
+        try{ComponentName target=ComponentName.unflattenFromString(component);if(target==null)throw new IllegalArgumentException();startActivity(new Intent(Intent.ACTION_MAIN).setComponent(target).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));}
+        catch(Exception e){new AlertDialog.Builder(this).setTitle("App unavailable").setMessage("This app may have been removed. You can update your favorites in All Apps.").setPositiveButton("All Apps",(d,n)->apps()).setNegativeButton("Close",null).show();}
+    }
+    private void phone(){
+        page("phone","From iPhone","Choose how you want to share.");
+        content.addView(text("Save a link for later",21,Color.WHITE));content.addView(text("Open the paired editor in Safari on your iPhone to save a YouTube or website link. Keep Nook open while editing.",16,muted));
+        content.addView(action("Pair a browser","phone-pair",this::pair));
+        content.addView(text("AirPlay and video files",21,Color.WHITE));content.addView(text("This preview does not receive AirPlay, mirror your screen or upload videos yet. If your TV already has a receiver app, open it from All Apps. Live sharing may require your phone again to replay.",16,muted));
+        content.addView(action("Open All Apps","phone-apps",this::apps));content.addView(action("Shared & Recent","phone-recent",this::shared));restore("phone-pair");
+    }
+    private void shared(){
+        page("shared","Shared & Recent","Saved links and playback you can return to.");
+        int before=content.getChildCount();historyRow(true);historyRow(false);JSONArray links=current().optJSONArray("links");if(links.length()>0){section("Saved links");LinearLayout r=row();for(int i=0;i<links.length();i++){JSONObject l=links.optJSONObject(i);r.addView(mediaTile(l.optString("label"),"Open saved link","shared-"+l.optString("id"),()->openLink(l),()->linkOptions(l)));}}
+        if(before==content.getChildCount()){content.addView(text("Your media starts here",24,Color.WHITE));content.addView(text("Save a link from your paired browser, or play a supported video. AirPlay sessions and phone files are not imported in this preview.",16,muted));}
+        content.addView(action("From iPhone","shared-phone",this::phone));content.addView(action("Manage viewing history","shared-manage",this::allHistory));restore("shared-phone");
+    }
+    private void drive(){
+        page("drive","Google Drive","Not connected");
+        content.addView(text("Drive media access is planned",23,Color.WHITE));content.addView(text("This prototype cannot sign into Drive, browse your files or play private Drive videos. Account authorization and selected-file playback are a later integration. Your Google password is never requested here.",16,muted));content.addView(action("Back Home","drive-home",this::home));restore("drive-home");
+    }
+    private void openLink(JSONObject link){String url=link.optString("url"),label=link.optString("label"),route=link.optString("route");if(route.equals("native"))play(url,label);else if(route.equals("web"))web(url,label);else if(route.equals("catalog"))details(Targets.imdb(url));else external(url,route);}
+    private void openHistory(JSONObject entry){String route=entry.optString("route");if(route.equals("native"))play(entry.optString("url"),entry.optString("label"),entry.optString("id"));else if(route.equals("web"))web(entry.optString("url"),entry.optString("label"));else external(entry.optString("url"),route);}
     private void historyRow(boolean resume) {
         try {
             JSONArray entries=viewing.ledger.snapshot().getJSONArray("entries"); boolean heading=false; LinearLayout r=null;
             for(int i=0;i<entries.length();i++) { JSONObject e=entries.getJSONObject(i); if(resume!=ViewingLedger.resumable(e)) continue;
                 if(!resume&&e.optString("status").equals("watched")) continue;
-                if(!heading) { section(resume?"Continue watching":"Recently opened"); r=row(); heading=true; }
+                if(!heading) { section(resume?"Continue Watching":"Recently opened"); r=row(); heading=true; }
                 String label=e.optString("label")+(resume?" | Resume "+time((int)e.optLong("position")):" | "+(e.optString("status").equals("failed")?"Failed attempt":"Open again"));
-                r.addView(action(label,"history-"+e.optString("id"),()->historyOptions(e)));
+                r.addView(mediaTile(e.optString("label"),resume?"Resume "+time((int)e.optLong("position")):(e.optString("status").equals("failed")?"Retry opening":"Open again"),"history-"+e.optString("id"),()->openHistory(e),()->historyOptions(e)));
             }
         } catch(Exception e) { message("Could not read viewing history."); }
     }
@@ -159,24 +213,27 @@ public final class MainActivity extends Activity implements EditorServer.Host {
         catch(Exception e) { ComponentName c=ComponentName.unflattenFromString(component); return (c==null?component:c.getPackageName())+" • Not installed"; }
     }
     private void apps() {
-        page("apps","Make yourself at home","Choose an app to open it or pin it to your dashboard.");
-        Map<String,String> discovered=new TreeMap<>(); PackageManager pm=getPackageManager();
-        for(String category:new String[]{Intent.CATEGORY_LEANBACK_LAUNCHER,Intent.CATEGORY_LAUNCHER}) for(ResolveInfo r:pm.queryIntentActivities(new Intent(Intent.ACTION_MAIN).addCategory(category),0)) {
-            if(r.activityInfo.packageName.equals(getPackageName())) continue;
-            String component=new ComponentName(r.activityInfo.packageName,r.activityInfo.name).flattenToString(); discovered.put(component,r.loadLabel(pm).toString());
-        }
-        List<Map.Entry<String,String>> list=new ArrayList<>(discovered.entrySet()); list.sort(Comparator.comparing(Map.Entry::getValue,String.CASE_INSENSITIVE_ORDER));
-        LinearLayout r=row(); int count=0;
-        for(Map.Entry<String,String> app:list) { if(count>0&&count%5==0) r=row(); r.addView(action(app.getValue(),"app-"+app.getKey(),()->appOptions(app.getKey()))); count++; }
-        if(count==0) content.addView(text("No launchable apps were reported by this device.",18,muted));
+        page("apps","All Apps","OK opens an app. Hold OK for options, or choose Edit favorites.");
+        LinearLayout host=vertical();content.addView(host);int token=generation;
+        content.addView(action("Edit favorites","apps-edit",this::editFavorites));
+        io.execute(()->{List<LauncherApps.Entry> list=LauncherApps.discover(this);handler.post(()->{if(token!=generation)return;int index=0;for(LauncherApps.Entry app:list){LauncherTile tile=makeTile(app.label,"",app.label,"app-"+app.component,0xff343e59,()->launchApp(app.component),()->appOptions(app.component));addGridTile(host,tile,index++);loadAppArtwork(tile,app);}if(list.isEmpty())host.addView(text("No launchable apps were reported by this device.",18,muted));if(!list.isEmpty())restore("app-"+list.get(0).component);});});
+    }
+    private void editFavorites(){
+        page("favorites","Edit favorites","Select an app for pinning or movement options. An empty list uses suggested installed apps.");
+        LinearLayout host=vertical();content.addView(host);int token=generation;
+        io.execute(()->{List<LauncherApps.Entry> list=LauncherApps.discover(this);handler.post(()->{if(token!=generation)return;JSONArray pinned=current().optJSONArray("apps");Set<String> shown=new HashSet<>();for(int i=0;i<pinned.length();i++){String c=pinned.optString(i);shown.add(c);host.addView(action(appLabel(c)+" · Pinned","edit-"+c,()->appOptions(c)));}for(LauncherApps.Entry app:list)if(shown.add(app.component))host.addView(action(app.label,"edit-"+app.component,()->appOptions(app.component)));});});
     }
     private void appOptions(String component) {
         boolean pinned=false; JSONArray apps=current().optJSONArray("apps"); for(int i=0;i<apps.length();i++) if(component.equals(apps.optString(i))) pinned=true;
         final boolean isPinned=pinned;
-        new AlertDialog.Builder(this).setTitle(appLabel(component)).setItems(new String[]{"Open",pinned?"Unpin from Home":"Pin to Home"},(d,n)->{
-            if(n==0) { try { startActivity(new Intent(Intent.ACTION_MAIN).setComponent(ComponentName.unflattenFromString(component)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)); } catch(Exception e) { message("This app is unavailable. You can unpin it."); } }
+        new AlertDialog.Builder(this).setTitle(appLabel(component)).setItems(new String[]{"Open",pinned?"Unpin from Home":"Pin to Home","Move earlier","Move later"},(d,n)->{
+            if(n==0) launchApp(component);
+            else if(n>=2) moveFavorite(component,n==2?-1:1);
             else try { JSONObject c=current(); JSONArray next=new JSONArray(); for(int i=0;i<apps.length();i++) if(!component.equals(apps.optString(i))) next.put(apps.optString(i)); if(!isPinned) next.put(component); c.put("apps",next); if(isPinned) DashboardDocument.removeReference(c,"app:"+component); store.save(c,c.getLong("revision"),UUID.randomUUID().toString()); home(); } catch(Exception e) { message("Could not save favorite."); }
         }).show();
+    }
+    private void moveFavorite(String component,int direction){
+        try{JSONObject config=current();JSONArray pinned=config.getJSONArray("apps");List<String> ordered=new ArrayList<>();for(int i=0;i<pinned.length();i++)ordered.add(pinned.optString(i));int index=ordered.indexOf(component);if(index<0){message("Pin this app before reordering it.");return;}int next=Math.max(0,Math.min(ordered.size()-1,index+direction));Collections.swap(ordered,index,next);config.put("apps",new JSONArray(ordered));store.save(config,config.getLong("revision"),UUID.randomUUID().toString());home();}catch(Exception e){message("Could not move favorite.");}
     }
     private void linkOptions(JSONObject link) {
         new AlertDialog.Builder(this).setTitle(link.optString("label")).setItems(new String[]{"Open • "+link.optString("route"),"Remove from saved links"},(d,n)->{
@@ -275,7 +332,16 @@ public final class MainActivity extends Activity implements EditorServer.Host {
     @Override public JSONObject config() throws Exception { if(!foreground) throw new IOException(); return store.read(); }
     @Override public JSONObject save(JSONObject input,long revision,String mutation) throws Exception { if(!foreground) throw new IOException(); DashboardDocument.validate(input); validateBackground(input); JSONObject result=store.save(input,revision,mutation); handler.post(()->{ if(screen.equals("home")) home(); }); return result; }
     private void settings() {
-        page("settings","Settings","Compatibility preview. Your saved dashboard stays on this TV.");
+        page("settings","Settings","Make Nook feel like home.");
+        content.addView(action("Default Home setup","settings-home",this::homeSetup));
+        content.addView(action("Customize from PC or iPhone","settings-pair",this::pair));
+        content.addView(action("Edit favorite apps","settings-apps",this::editFavorites));
+        content.addView(action("From iPhone","settings-phone",this::phone));
+        content.addView(action("Google Drive · Not connected","settings-drive",this::drive));
+        content.addView(action(history.getBoolean("showDrive",false)?"Hide Drive tile":"Show Drive tile","settings-drive-tile",()->{history.edit().putBoolean("showDrive",!history.getBoolean("showDrive",false)).apply();settings();}));
+        content.addView(action(history.getBoolean("reducedMotion",false)?"Enable focus animation":"Reduce motion","settings-motion",()->{history.edit().putBoolean("reducedMotion",!history.getBoolean("reducedMotion",false)).apply();settings();}));
+        content.addView(action("Movies & series","nav-watch",this::watch));
+        content.addView(action("Playback checks","settings-samples",this::samples));
         content.addView(action("Manage collections","settings-collections",this::manageCollections));
         content.addView(action("Viewing history","settings-history",this::allHistory));
         content.addView(action("Metadata API key","settings-api",this::metadataKey));
@@ -289,12 +355,32 @@ public final class MainActivity extends Activity implements EditorServer.Host {
         content.addView(action("Device diagnostics","settings-diagnostics",this::diagnostics));
         content.addView(text("Collections, layout, backgrounds and dashboard backup/restore are available in the PC editor. Provider playback and target-TV acceptance are still unverified.",16,muted));
     }
+    private ComponentName homeAlias(){return new ComponentName(this,"com.ismail.nooktv.HomeEntry");}
+    private boolean homeEnabled(){return getPackageManager().getComponentEnabledSetting(homeAlias())==PackageManager.COMPONENT_ENABLED_STATE_ENABLED;}
+    private boolean isDefaultHome(){ResolveInfo info=getPackageManager().resolveActivity(new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME),PackageManager.MATCH_DEFAULT_ONLY);return info!=null&&info.activityInfo!=null&&getPackageName().equals(info.activityInfo.packageName);}
+    private void homeSetup(){
+        page("home-setup","Your TV home",isDefaultHome()?"Nook is the selected Home app.":homeEnabled()?"Nook is available for Home selection.":"Choose Nook in your TV's Home settings.");
+        content.addView(text("Your original launcher stays installed. You can restore it in system Home settings. Support depends on your TV firmware.",16,muted));
+        content.addView(action(homeEnabled()?"Open system Home settings":"Enable Nook Home & open settings","home-enable",()->{getPackageManager().setComponentEnabledSetting(homeAlias(),PackageManager.COMPONENT_ENABLED_STATE_ENABLED,PackageManager.DONT_KILL_APP);openHomeSettings();}));
+        content.addView(action("Open system settings","home-system",()->{try{startActivity(new Intent(android.provider.Settings.ACTION_SETTINGS));}catch(Exception e){message("Open your TV's system settings from its remote.");}}));
+        content.addView(action("Refresh Home status","home-status",this::homeSetup));
+        if(homeEnabled())content.addView(action("Remove Nook from Home choices","home-disable",()->new AlertDialog.Builder(this).setTitle("Remove Nook Home option?").setMessage("Select your original launcher in system Home settings first. Nook remains available as an ordinary app.").setPositiveButton("Remove",(dialog,which)->{if(isDefaultHome()){message("Choose another default Home app first.");openHomeSettings();return;}getPackageManager().setComponentEnabledSetting(homeAlias(),PackageManager.COMPONENT_ENABLED_STATE_DISABLED,PackageManager.DONT_KILL_APP);homeSetup();}).setNegativeButton("Cancel",null).show()));
+        restore("home-enable");
+    }
+    private void openHomeSettings(){try{startActivity(new Intent(android.provider.Settings.ACTION_HOME_SETTINGS));}catch(Exception e){message("This firmware does not expose Home settings here. Try system Settings > Apps > Default apps. Nook has not disabled your original launcher.");}}
+    private void samples(){
+        page("samples","Playback checks","Diagnostic samples; not part of your daily Home.");
+        content.addView(action("MP4 sample","sample-mp4",()->play("https://storage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4","Big Buck Bunny | MP4")));
+        content.addView(action("HLS sample","sample-hls",()->play("https://devstreaming-cdn.apple.com/videos/streaming/examples/bipbop_4x3/bipbop_4x3_variant.m3u8","Apple BipBop | HLS")));
+        content.addView(action("DASH sample","sample-dash",()->play("https://storage.googleapis.com/wvmedia/clear/h264/tears/tears.mpd","Tears of Steel | DASH")));
+        content.addView(action("Web test","sample-web",()->web("","Controlled web test")));content.addView(action("Diagnostics","diagnostics",this::diagnostics));
+    }
     private void diagnostics() {
         page("diagnostics","Know your TV","No unique device identifiers, LAN addresses or session secrets are included below.");
-        ActivityManager am=(ActivityManager)getSystemService(ACTIVITY_SERVICE); StringBuilder s=new StringBuilder("Nook TV 0.2.0-preview\nAndroid "+Build.VERSION.RELEASE+" • API "+Build.VERSION.SDK_INT+"\nABI: "+String.join(", ",Build.SUPPORTED_ABIS)+"\nApp memory class: "+am.getMemoryClass()+" MB\nDisplay: "+getResources().getDisplayMetrics().widthPixels+" × "+getResources().getDisplayMetrics().heightPixels+"\n");
+        ActivityManager am=(ActivityManager)getSystemService(ACTIVITY_SERVICE); StringBuilder s=new StringBuilder("Nook TV 0.3.0-launcher-preview\nAndroid "+Build.VERSION.RELEASE+" • API "+Build.VERSION.SDK_INT+"\nABI: "+String.join(", ",Build.SUPPORTED_ABIS)+"\nApp memory class: "+am.getMemoryClass()+" MB\nDisplay: "+getResources().getDisplayMetrics().widthPixels+" × "+getResources().getDisplayMetrics().heightPixels+"\n");
         PackageInfo w=WebView.getCurrentWebViewPackage(); s.append("WebView: ").append(w==null?"Unavailable":w.packageName+" "+w.versionName).append("\n");
         for(String pkg:new String[]{"com.google.android.youtube.tv","com.google.android.youtube","com.brave.browser"}) { try { getPackageManager().getPackageInfo(pkg,0); s.append(pkg).append(": installed\n"); } catch(Exception e) { s.append(pkg).append(": not detected\n"); } }
-        int homes=getPackageManager().queryIntentActivities(new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME),0).size(); s.append("Home handlers: ").append(homes).append(" (not changed)\n\nVideo/audio decoders:\n");
+        int homes=getPackageManager().queryIntentActivities(new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME),0).size(); s.append("Home handlers: ").append(homes).append(homeEnabled()?" (Nook Home option enabled)\n\nVideo/audio decoders:\n":" (Nook Home option disabled)\n\nVideo/audio decoders:\n");
         try { for(MediaCodecInfo c:new MediaCodecList(MediaCodecList.REGULAR_CODECS).getCodecInfos()) if(!c.isEncoder()) { for(String type:c.getSupportedTypes()) if(type.equals("video/avc")||type.equals("video/hevc")||type.equals("video/av01")||type.equals("audio/mp4a-latm")) s.append(type).append(" • ").append(c.getName()).append("\n"); } } catch(Exception e) { s.append("Codec inventory unavailable\n"); }
         TextView details=text(s.toString(),16,muted); details.setTextIsSelectable(true); content.addView(details);
     }
@@ -382,6 +468,7 @@ public final class MainActivity extends Activity implements EditorServer.Host {
     }
     @Override public void onBackPressed() {
         if(!screen.equals("home")) { home(); return; }
+        if(isDefaultHome()||getIntent().hasCategory(Intent.CATEGORY_HOME)){homeScroll.smoothScrollTo(0,0);focusFirstHome();return;}
         new AlertDialog.Builder(this).setTitle("Leave Nook TV?").setPositiveButton("Exit",(d,n)->finish()).setNegativeButton("Stay",null).show();
     }
     @Override public boolean onKeyDown(int key,KeyEvent event) {

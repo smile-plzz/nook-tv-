@@ -4,7 +4,7 @@ Baseline 2.0 | 17 October 2026 | Current foundation plus proposed launcher desig
 
 ## Current implementation versus target
 
-Delivered 0.2 uses one Java/native-Views Android app, Media3 1.11.1, AtomicFile JSON dashboard/viewing stores, native OMDb client, and a foreground paired HTTP editor. It has no default-Home flow, iPhone receiver/file transfer or Drive integration. The new launcher is a design target, not a description of the existing APK.
+Delivered 0.2 uses one Java/native-Views Android app, Media3 1.11.1, AtomicFile JSON dashboard/viewing stores, native OMDb client, and a foreground paired HTTP editor. It has no default-Home flow, iPhone receiver/file transfer or Drive integration. That describes 0.2. The 0.3 [prototype](LAUNCHER-PREVIEW.md) adds LauncherTile/LauncherApps, native grid/direct launching and an opt-in HOME alias. The remaining integration boundaries below are design targets.
 
 Keep working persistence, migrations, validation, pairing and playback. Do not rewrite in Kotlin/Compose or migrate to Room solely for appearance. The earlier Room/Compose proposal is superseded by retaining the current stack unless evidence justifies a separate change. Refactor MainActivity into clear responsibilities as needed for the launcher; module proliferation is not a goal.
 
@@ -93,3 +93,4 @@ One isolated WebView with no editor privileges, unexpected scheme/popup/download
 No silent account/history/Photos import. Shared media visibility is owner-controlled; exports omit private credentials. Logs redact addresses/tokens/session URLs and device identifiers. No default telemetry or new cloud service.
 
 Keep app ID com.ismail.nooktv.compat and signing continuity unless a separately justified migration is approved. Build remains pinned Gradle 8.13 / AGP 8.13.2 / SDK 36, target 35, min 26. Same-key upgrades must preserve user state. CI is evidence of build/contracts; real TV and iPhone decide integration acceptance.
+

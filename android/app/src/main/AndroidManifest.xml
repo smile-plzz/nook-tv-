@@ -12,8 +12,11 @@
         <package android:name="com.google.android.youtube.tv" /><package android:name="com.google.android.youtube" /><package android:name="com.brave.browser" />
     </queries>
     <application android:label="Nook TV Preview" android:icon="@drawable/nook_icon" android:banner="@drawable/nook_banner" android:theme="@style/NookTheme" android:allowBackup="false" android:usesCleartextTraffic="false" android:supportsRtl="true">
-        <activity android:name="com.ismail.nooktv.MainActivity" android:exported="true" android:screenOrientation="landscape" android:configChanges="keyboard|keyboardHidden|navigation|orientation|screenSize" >
+        <activity android:name="com.ismail.nooktv.MainActivity" android:exported="true" android:launchMode="singleTask" android:screenOrientation="landscape" android:configChanges="keyboard|keyboardHidden|navigation|orientation|screenSize" >
             <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.LAUNCHER" /><category android:name="android.intent.category.LEANBACK_LAUNCHER" /></intent-filter>
         </activity>
+        <activity-alias android:name="com.ismail.nooktv.HomeEntry" android:targetActivity="com.ismail.nooktv.MainActivity" android:label="Nook TV" android:enabled="false" android:exported="true">
+            <intent-filter><action android:name="android.intent.action.MAIN" /><category android:name="android.intent.category.HOME" /><category android:name="android.intent.category.DEFAULT" /></intent-filter>
+        </activity-alias>
     </application>
 </manifest>
