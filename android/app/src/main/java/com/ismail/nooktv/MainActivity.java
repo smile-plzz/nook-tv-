@@ -32,6 +32,8 @@ public final class MainActivity extends Activity implements EditorServer.Host {
     private SourceStore sourceStore;
     private ContentSourceManager sourceManager;
     private LinearLayout sourceShelvesHost;
+    private boolean sourceRenderPending;
+    private static int imageCacheBudget(){return (int)Math.max(256*1024,Math.min(4*1024*1024,Runtime.getRuntime().maxMemory()/32));}
     private EditorServer server;
     private LinearLayout root, content;
     private String screen="home", focusKey="", returnFocus="", playingUrl="", playingLabel="";
@@ -44,7 +46,7 @@ public final class MainActivity extends Activity implements EditorServer.Host {
     private int generation;
     private ScrollView homeScroll;
     private int homeScrollY;
-    private final android.util.LruCache<String,Bitmap> appArtwork=new android.util.LruCache<String,Bitmap>(4*1024*1024){ @Override protected int sizeOf(String key,Bitmap value){return value.getByteCount();} };
+    private final android.util.LruCache<String,Bitmap> appArtwork=new android.util.LruCache<String,Bitmap>(imageCacheBudget()){ @Override protected int sizeOf(String key,Bitmap value){return value.getByteCount();} };
     private String firstHomeTag="";
     private final List<LauncherApps.Entry> installedApps=new ArrayList<>();
     private Bitmap backgroundBitmap;
@@ -73,7 +75,7 @@ public final class MainActivity extends Activity implements EditorServer.Host {
         super.onActivityResult(requestCode,resultCode,data);
         if(requestCode==HomeCoordinator.REQUEST_CODE_ROLE_HOME) {
             HomeCoordinator.State s=HomeCoordinator.inspect(this);
-            if(resultCode==RESULT_OK||s.isDefault()) message("Nook TV is now your default Home screen.");
+            if(s.isDefault()) message("Nook TV is now your default Home screen.");
             else message("Default Home selection was cancelled or not confirmed.");
             if(screen.equals("home-setup")) homeSetup();
         }
@@ -95,7 +97,9 @@ public final class MainActivity extends Activity implements EditorServer.Host {
         if(web!=null) { releaseWeb(); screen="home"; home(); }
         super.onStop();
     }
-    @Override public void onDestroy() { generation++; handler.removeCallbacksAndMessages(null); releasePlayback(); server.stop(); io.shutdown(); super.onDestroy(); }
+    @Override public void onDestroy() { generation++; handler.removeCallbacksAndMessages(null); releasePlayback(); server.stop(); if(sourceManager!=null)sourceManager.close(); io.shutdown(); super.onDestroy(); }
+
+    @Override public void onTrimMemory(int level){super.onTrimMemory(level);appArtwork.evictAll();mediaThumbnails.evictAll();}
 
     private int dp(int n) { return (int)(n*getResources().getDisplayMetrics().density+.5f); }
     private LinearLayout vertical() { LinearLayout l=new LinearLayout(this); l.setOrientation(LinearLayout.VERTICAL); return l; }
@@ -140,13 +144,19 @@ public final class MainActivity extends Activity implements EditorServer.Host {
             if(id.equals("saved")&&config.optJSONArray("links").length()>0){section("Saved for later");LinearLayout r=row();JSONArray links=config.optJSONArray("links");for(int i=0;i<links.length();i++){JSONObject l=links.optJSONObject(i);r.addView(mediaTile(l.optString("label"),"Open saved link","link-"+l.optString("id"),()->openLink(l),()->linkOptions(l)));}}
             if(id.equals("collections")){JSONArray groups=config.optJSONArray("collections");for(int i=0;i<groups.length();i++){JSONObject group=groups.optJSONObject(i);JSONArray members=group.optJSONArray("items");if(members.length()==0)continue;section(group.optString("label"));LinearLayout r=row();for(int j=0;j<members.length();j++){String ref=members.optString(j);if(ref.startsWith("app:")){String component=ref.substring(4);r.addView(mediaTile(appLabel(component),"Open app","group-"+group.optString("id")+"-"+j,()->launchApp(component),()->appOptions(component)));}else{JSONArray links=config.optJSONArray("links");for(int k=0;k<links.length();k++){JSONObject l=links.optJSONObject(k);if(l.optString("id").equals(ref))r.addView(mediaTile(l.optString("label"),"Open saved link","group-"+group.optString("id")+"-"+j,()->openLink(l),()->linkOptions(l)));}}}}}
         }
-        sourceShelvesHost=vertical();sourceShelvesHost.setTag("source-shelves");content.addView(sourceShelvesHost);renderSourceShelves();
+        sourceRenderPending=false;sourceShelvesHost=vertical();sourceShelvesHost.setTag("source-shelves");content.addView(sourceShelvesHost);
+        root.getViewTreeObserver().addOnGlobalFocusChangeListener((previous,next)->{if(sourceRenderPending&&!inSourceShelves(next)){root.post(()->{if(screen.equals("home")&&sourceRenderPending)renderSourceShelves();});}});
+        renderSourceShelves();
         root.post(()->{View found=root.findViewWithTag(oldFocus);if(found!=null)found.requestFocus();else focusFirstHome();homeScroll.scrollTo(0,homeScrollY);});
         refreshHomeApps();
     }
+    private boolean inSourceShelves(View view){while(view!=null){if(view==sourceShelvesHost)return true;android.view.ViewParent parent=view.getParent();view=parent instanceof View?(View)parent:null;}return false;}
     private void renderSourceShelves() {
         if(sourceShelvesHost==null||!screen.equals("home")) return;
         View focused=root!=null?root.findFocus():null;
+        if(inSourceShelves(focused)){sourceRenderPending=true;return;}
+        sourceRenderPending=false;
+        final int scrollY=homeScroll==null?0:homeScroll.getScrollY();
         String currentTag=focused!=null&&focused.getTag() instanceof String?(String)focused.getTag():"";
         sourceShelvesHost.removeAllViews();
         try {
@@ -171,7 +181,7 @@ public final class MainActivity extends Activity implements EditorServer.Host {
                 } else {
                     for(int j=0;j<Math.min(6,items.size());j++) {
                         FeedParser.FeedItem item=items.get(j);
-                        String tag="source-"+id+"-"+j;
+                        String tag=SourceDocument.itemTag(id,item.id,item.url);
                         String sub=label+(item.published.isEmpty()?"":" · "+item.published);
                         if(type.equals("youtube")) {
                             r.addView(mediaTile(item.title,sub,"youtube",tag,()->external(item.url,"youtube"),null));
@@ -186,6 +196,7 @@ public final class MainActivity extends Activity implements EditorServer.Host {
             View target=root.findViewWithTag(currentTag);
             if(target!=null) target.requestFocus();
         }
+        if(homeScroll!=null)homeScroll.scrollTo(0,scrollY);
     }
     private void showArticleDialog(FeedParser.FeedItem item,String sourceLabel){
         new AlertDialog.Builder(this)
@@ -251,7 +262,7 @@ public final class MainActivity extends Activity implements EditorServer.Host {
         content.addView(action("Shared & Recent","phone-recent",this::shared));content.addView(action("Manage saved videos","phone-storage",this::mediaStorage));
         content.addView(text("AirPlay and live mirroring are separate. This build receives saved file copies through Safari, not system AirPlay. You can still open an existing receiver app from All Apps.",15,muted));content.addView(action("Open All Apps","phone-apps",this::apps));restore("phone-pair");
     }
-    private final android.util.LruCache<String,Bitmap> mediaThumbnails=new android.util.LruCache<String,Bitmap>(4*1024*1024){ @Override protected int sizeOf(String key,Bitmap value){return value.getByteCount();} };
+    private final android.util.LruCache<String,Bitmap> mediaThumbnails=new android.util.LruCache<String,Bitmap>(imageCacheBudget()){ @Override protected int sizeOf(String key,Bitmap value){return value.getByteCount();} };
     private void loadMediaThumbnail(LauncherTile tile,String id){
         Bitmap cached=mediaThumbnails.get(id);
         if(cached!=null){tile.artwork(new BitmapDrawable(getResources(),cached));return;}
@@ -273,7 +284,7 @@ public final class MainActivity extends Activity implements EditorServer.Host {
         try{
             JSONArray raw=received.snapshot().getJSONArray("items");if(raw.length()==0)return;
             List<JSONObject> list=new ArrayList<>();
-            for(int i=0;i<raw.length();i++){JSONObject it=raw.getJSONObject(i);if(!it.optBoolean("hidden",false))list.add(it);}
+            for(int i=0;i<raw.length();i++){JSONObject it=raw.getJSONObject(i);if(!screen.equals("home")||!it.optBoolean("hidden",false))list.add(it);}
             if(list.isEmpty())return;
             list.sort((a,b)->{
                 boolean pa=a.optBoolean("pinned",false),pb=b.optBoolean("pinned",false);
@@ -326,7 +337,7 @@ public final class MainActivity extends Activity implements EditorServer.Host {
             io.execute(()->{
                 try{
                     received.update(id,new JSONObject().put("label",text));
-                    try{JSONObject h=viewing.ledger.find("local:"+id);if(h!=null){h.put("label",text);persistViewing();}}catch(Exception ignored){}
+                    try{viewing.ledger.rename("local:"+id,text);persistViewing();}catch(Exception ignored){}
                     handler.post(()->{dialog.dismiss();home();});
                 }catch(Exception e){handler.post(()->input.setError("Could not save name."));}
             });
@@ -369,7 +380,7 @@ public final class MainActivity extends Activity implements EditorServer.Host {
     private void historyRow(boolean resume) {
         try {
             JSONArray entries=viewing.ledger.snapshot().getJSONArray("entries"); boolean heading=false; LinearLayout r=null;
-            for(int i=0;i<entries.length();i++) { JSONObject e=entries.getJSONObject(i); if(resume!=ViewingLedger.resumable(e)) continue;
+            for(int i=0;i<entries.length();i++) { JSONObject e=entries.getJSONObject(i); if(screen.equals("home")&&!ViewingLedger.showOnHome(e,received.find(e.optString("id").replaceFirst("^local:",""))))continue; if(resume!=ViewingLedger.resumable(e)) continue;
                 if(!resume&&e.optString("status").equals("watched")) continue;
                 if(!heading) { section(resume?"Continue Watching":"Recently opened"); r=row(); heading=true; }
                 String label=e.optString("label")+(resume?" | Resume "+time((int)e.optLong("position")):" | "+(e.optString("status").equals("failed")?"Failed attempt":"Open again"));
@@ -555,7 +566,7 @@ public final class MainActivity extends Activity implements EditorServer.Host {
         if(!foreground)throw new IOException();
         JSONObject updated=received.update(id,patch);
         if(patch.has("label")){
-            try{JSONObject h=viewing.ledger.find("local:"+id);if(h!=null){h.put("label",updated.optString("label"));persistViewing();}}catch(Exception ignored){}
+            try{viewing.ledger.rename("local:"+id,updated.optString("label"));persistViewing();}catch(Exception ignored){}
         }
         handler.post(()->{if(foreground&&(screen.equals("home")||screen.equals("shared")||screen.equals("media-storage"))){if(screen.equals("home"))home();else if(screen.equals("shared"))shared();else mediaStorage();}});
         return updated;
@@ -650,7 +661,7 @@ public final class MainActivity extends Activity implements EditorServer.Host {
     }
     private void diagnostics() {
         page("diagnostics","Know your TV","No unique device identifiers, LAN addresses or session secrets are included below.");
-        ActivityManager am=(ActivityManager)getSystemService(ACTIVITY_SERVICE); StringBuilder s=new StringBuilder("Nook TV 0.4.0-phone-preview\nAndroid "+Build.VERSION.RELEASE+" • API "+Build.VERSION.SDK_INT+"\nABI: "+String.join(", ",Build.SUPPORTED_ABIS)+"\nApp memory class: "+am.getMemoryClass()+" MB\nDisplay: "+getResources().getDisplayMetrics().widthPixels+" × "+getResources().getDisplayMetrics().heightPixels+"\n");
+        ActivityManager am=(ActivityManager)getSystemService(ACTIVITY_SERVICE); StringBuilder s=new StringBuilder("Nook TV "+BuildConfig.VERSION_NAME+"\nAndroid "+Build.VERSION.RELEASE+" • API "+Build.VERSION.SDK_INT+"\nABI: "+String.join(", ",Build.SUPPORTED_ABIS)+"\nApp memory class: "+am.getMemoryClass()+" MB\nDisplay: "+getResources().getDisplayMetrics().widthPixels+" × "+getResources().getDisplayMetrics().heightPixels+"\n");
         PackageInfo w=WebView.getCurrentWebViewPackage(); s.append("WebView: ").append(w==null?"Unavailable":w.packageName+" "+w.versionName).append("\n");
         for(String pkg:new String[]{"com.google.android.youtube.tv","com.google.android.youtube","com.brave.browser"}) { try { getPackageManager().getPackageInfo(pkg,0); s.append(pkg).append(": installed\n"); } catch(Exception e) { s.append(pkg).append(": not detected\n"); } }
         int homes=getPackageManager().queryIntentActivities(new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME),0).size(); s.append("Home handlers: ").append(homes).append(homeEnabled()?" (Nook Home option enabled)\n\nVideo/audio decoders:\n":" (Nook Home option disabled)\n\nVideo/audio decoders:\n");
@@ -739,4 +750,5 @@ public final class MainActivity extends Activity implements EditorServer.Host {
         return super.onKeyDown(key,event);
     }
 }
+
 

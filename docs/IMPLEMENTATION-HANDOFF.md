@@ -1,33 +1,31 @@
-# Implementation handoff after TV feedback
+# Implementation handoff — F5 hardening candidate
 
-Baseline 2.2 | 17 October 2026
+17 October 2026. Read [F5-HARDENING](F5-HARDENING.md), [BUILD-STATUS](BUILD-STATUS.md), [PRD](PRD.md), and [DEVICE-TEST](DEVICE-TEST.md) first.
 
-## Build the next useful experience
+## Source reconciliation
 
-Nook is a default TV Home with Apple TV-inspired clarity, a stable favorite-app grid, a few configurable fresh-content cards, and convenient return to personal videos. The owner tested briefly on TV: apps and tried remote paths worked, appearance was only partially satisfactory, and Home/restart returned to the existing environment. File transfer/resume were not tested. Do not reset this evidence to "TV testing pending" or inflate it to acceptance.
+The initial audit found main at `273755c` (F2). PR #10/#11 targeted feature branches. During this task the owner merged PRs #12/#13; main is now `1bae04d`, whose tree is identical to F4 merge `1c65cf8`. PR #14 (`fix/f5-launcher-hardening`) contains the F5 repairs and targets main. Never merge without explicit owner instruction.
 
-Main includes PR #5 and merged feedback PR #6 at 5de2009e787417974a290bfd7a90d174ede9c4ee. Latest delivered APK is 0.4.0-phone-preview. The current revision removes embedded movie discovery and adds compatibility cleanup; no role prompt, dynamic sources or redesigned companion controls are delivered by it. A replacement owner APK is not yet delivered.
+## Current candidate
 
-## Read order
+Version `0.4.5-f5-hardening`, version code 5. F1 Home coordinator, F2 visual refinement, F3 selected-source companion/shelves and F4 saved-video organization are implemented in this candidate. F5 fixes source configuration/cache separation, honest partial-save results and draft/retry preservation, non-blocking two-worker refresh, identity-based focus with deferred shelf updates, hidden-media filtering in Home history, real ledger rename, bounded thumbnail decoding/cache budgets, safe offline source loading, and verified Home-result feedback.
 
-1. [Feedback and questions](TV-FEEDBACK.md), [PRD](PRD.md), [decisions](DECISIONS.md).
-2. [UX](UX-SPEC.md), [dynamic Home](DYNAMIC-HOME.md), [companion/media design](COMPANION-SPEC.md).
-3. [Development sequence F1-F6](DEVELOPMENT-PLAN.md), [architecture](ARCHITECTURE.md).
-4. [Acceptance](ACCEPTANCE.md), [device checklist](DEVICE-TEST.md), [build status](BUILD-STATUS.md).
-5. [Current transfer contract](PHONE-TRANSFER-PREVIEW.md), [phone/Drive feasibility](PHONE-AND-DRIVE.md).
+See build status for executed validation. Do not treat compile success or tablet emulator results as TV/iPhone acceptance. F5 is not fully accepted until actual-device gates pass.
 
-## Next implementation slices
+## Next work after PR review
 
-Start F1: capability-aware Home-role prompt, settings fallback, verified result/retry and recovery. Current MainActivity only enables the alias and opens Home settings. Test cancellation, missing role/activity, stale default status and process recreation; only the owner's hardware can close the Home/reboot gate. Collect exact model/firmware and setup screen behavior.
+1. Record installed version/signing certificate and back up dashboard.
+2. On owner's TV, select Nook as Home; test Home from YouTube, wake/reboot and restoration of the original launcher.
+3. In real Safari, pair through QR, save/test a chosen YouTube and RSS source, verify source-save errors retain drafts.
+4. Transfer a small Photos/Files MP4/MOV, wait for receipt, disconnect phone, restart and replay/resume. Test portrait/HEVC/HDR separately.
+5. Measure 20 cold starts and two-hour populated-Home/playback stability on the 2 GB device.
+6. Investigate the existing receiver package/protocol and conditional Drive only after these results. No native AirPlay/Cast/Drive capability is promised.
 
-F2: reviewable coherent visual refinement with empty/populated/offline/focus states. Keep one-OK app launch. F3: pair the content-source model with a usable phone/desktop editor; start chosen YouTube channels/playlists and public RSS/Atom, not arbitrary widgets or scraped personal recommendations. Refresh must not change the focused target. Verify credential provisioning before claiming automatic YouTube updates.
+## Constraints
 
-Test the existing Safari video route early; F4 improves guidance, QR address, thumbnails, titles, organization and storage based on that result. Keep AirPlay integration optional and separate from retained copies. F5 completes actual-device quality gates; Drive and broader integrations follow F6.
+Keep Java 8/native Views, Media3 1.11.1, Gradle 8.13, AGP 8.13.2, compile 36/target 35/min 26, app ID `com.ismail.nooktv.compat`, dashboard schema v2 and same-key upgrades. Sources remain independently versioned in `sources-v1.json`; received metadata in `received-media-v1.json`; history in `viewing-v1.json`. Backup remains dashboard-only.
 
-## Constraints and evidence
+Foreground HTTP port 8765, paired approval/auth/CSRF, 512 MiB/file, 1 GiB quota, 50 videos, 128 MiB reserve remain. Keep independent streaming applications generic. Do not disable system packages, fabricate external progress, silently import Photos, or transmit account secrets through LAN HTTP.
 
-Retain Java/native Views, AtomicFile, Media3 and pairing/revision contracts; refactor responsibilities instead of rewriting the stack. Keep com.ismail.nooktv.compat and owner signing continuity; never commit keys. Gradle 8.13 / AGP 8.13.2 / compile 36 / target 35 / min 26 remain. Current schema v2 stays unchanged until an implemented, tested migration. Hosted CI can resolve dependencies when local execution cannot.
+Update dev-log, changelog, build status and changed capability docs per slice. A practical Vim tip for this codebase: `/saveSources`, then `n`, finds source persistence call sites.
 
-Preserve relevant regression scenarios and browser-state checks; update counts after retiring obsolete contracts and adding upgrade/cleanup tests. None proves the new design or target-TV default behavior. No system-package disabling, no automatic account/Photos import, no provider credentials through LAN HTTP, no fake external progress. Foreground-only editor/transfer lifecycle remains unless deliberately redesigned. Dashboard backup excludes retained files and history.
-
-On each slice update capability status, tests, user guide and release evidence. A working APK or green CI does not close P0. Historical M1/0.3 evidence remains historical; old task sequences do not govern this work. Movie-discovery features belong in independent installed apps, discovered and launched generically.

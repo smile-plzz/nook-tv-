@@ -1,3 +1,5 @@
+> Current candidate: 0.4.5-f5-hardening, version code 5. Use the current PR's Compatibility APK artifact named nook-tv-0.4.5-f5-hardening; historical artifact/hash instructions below refer to earlier owner previews. CI debug signing is separate from the owner's original preview certificate. Never uninstall to resolve a signature mismatch without backing up and acknowledging that retained files/history are not in dashboard exports. See [F5](F5-HARDENING.md) and [build status](BUILD-STATUS.md) for current evidence. Update-in-place requires the same signing key.
+
 # Build and install | 0.4.0-phone-preview
 
 Baseline 2.2 documentation does not produce a new APK. PR #5 is merged; latest preview remains 0.4.0-phone-preview. A brief owner TV trial found default Home did not take effect (Home/restart returned elsewhere); do not treat installation or enabling the alias as success. Record exact installed version and setup screen, then follow [device checklist](DEVICE-TEST.md). The role-prompt improvement is planned in F1, not present in this APK.
@@ -85,3 +87,4 @@ From iPhone now links to the paired-browser saved-file workflow. See [transfer g
 ## Current-source scope change
 
 Embedded movie discovery and its key/provider settings are removed from current source. The last delivered 0.4 APK still reflects its original features until a replacement is built and installed. Upgrade using the same signing key; do not uninstall to apply this cleanup. Legacy saved URLs are retained as ordinary browser bookmarks and collection references stay intact. Only retired private service settings/cache are cleaned. Nook can pin/launch any separately installed TV app through All Apps.
+

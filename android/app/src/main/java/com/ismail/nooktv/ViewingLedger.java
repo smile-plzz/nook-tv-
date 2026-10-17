@@ -28,6 +28,9 @@ public final class ViewingLedger {
     public synchronized void failed(String id) throws JSONException { if(paused()) return; JSONObject e=find(id); if(e!=null) { if(!e.optString("status").equals("progress")) e.put("status","failed"); put(e); } }
     public synchronized void mark(String id,boolean watched) throws JSONException { JSONObject e=find(id); if(e!=null) { e.put("status",watched?"watched":"opened").put("position",0); if(!watched) e.put("duration",0); put(e); } }
     public synchronized void remove(String id) throws JSONException { JSONArray a=data.getJSONArray("entries"),next=new JSONArray(); for(int i=0;i<a.length();i++) if(!a.getJSONObject(i).getString("id").equals(id)) next.put(a.getJSONObject(i)); data.put("entries",next); }
+    public synchronized void rename(String id,String label) throws JSONException { JSONObject e=find(id); if(e!=null){e.put("label",label);put(e);} }
     private void put(JSONObject e) throws JSONException { remove(e.getString("id")); JSONArray old=data.getJSONArray("entries"),next=new JSONArray(); next.put(e); for(int i=0;i<Math.min(old.length(),99);i++) next.put(old.getJSONObject(i)); data.put("entries",next); }
     public static boolean resumable(JSONObject e) { return nativeRoute(e)&&e.optString("status").equals("progress")&&e.optLong("duration")>0&&e.optLong("position")>0; }
+    public static boolean showOnHome(JSONObject entry,JSONObject media) { return !entry.optString("route").equals("local") || media!=null&&!media.optBoolean("hidden",false); }
 }
+

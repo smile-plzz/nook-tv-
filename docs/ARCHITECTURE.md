@@ -1,3 +1,5 @@
+> Current implementation update (0.4.5): F1–F4 and the [F5 repairs](F5-HARDENING.md) are in this candidate. HomeCoordinator, SourceDocument/SourceStore, ContentSourceManager/SourceRefreshQueue, FeedParser and authenticated media mutation/thumbnail endpoints exist. Source configuration uses independent schema-v1 sources-v1.json; dashboard remains schema v2. Earlier schema-v3 and component names below are design proposals, not an implemented migration. The companion remains foreground-only.
+
 # Launcher architecture and implementation boundaries
 
 Baseline 2.2 | 17 October 2026 | Current foundation plus proposed launcher design
@@ -109,3 +111,4 @@ Companion areas share the Home model, accessible reordering and explicit revisio
 Embedded movie search, service-key UI, provider templates and their client classes are removed. Dashboard schema remains v2: migrate the old route marker to browser on load/import, preserving each saved URL/ID, collection membership and revision. Validation rejects new writes using that marker. Unsafe legacy URLs remain rejected; input backups are not mutated. Recovery imports use the same normalization. The compatibility marker is the only remaining source reference to the retired route and is not an enabled feature.
 
 RetiredFeatureCleanup runs on the IO executor and clears the obsolete private credential preference file, exact retired settings, per-title preferences and generated files from the old private response-cache directory. It never recursively deletes data, clears the whole launcher preferences, or touches received-media storage/history/dashboard. Repeating the cleanup is safe. No remote movie-metadata requests remain.
+

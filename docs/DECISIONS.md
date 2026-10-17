@@ -1,3 +1,5 @@
+> Current engineering decision (0.4.5): retain dashboard schema v2 and independent schema-v1 SourceStore rather than the earlier proposed dashboard-v3 migration. Public selected-source feeds are the implemented first adapter; richer official API work remains conditional. F1–F4 are implemented in this candidate, with [F5 repairs](F5-HARDENING.md). Earlier E15/E16 implementation-status wording below is historical. Never merge a PR without explicit owner instruction.
+
 # Decisions and scope record
 
 Baseline 2.2 | 17 October 2026 | Supersedes dashboard-first baseline
@@ -74,3 +76,4 @@ The initial TV-feedback request produced a documentation PR. The following owner
 The owner explicitly removes embedded movie/series discovery, movie-database API integration and provider templates from Nook. Such experiences belong in independently developed TV APKs; Nook only discovers/pins/launches them like any app. This supersedes earlier catalog plans entirely. Their old requirement IDs and source-audit document are removed, not deferred.
 
 The same PR now includes implementation removal and compatibility checks. Legacy saved links remain ordinary browser bookmarks after migration. Remove obsolete credentials/preferences/cache without deleting dashboard, collections, history or personal video copies. The current source differs from the last delivered 0.4 APK; a new build is needed to install the cleanup. Historical Git commits remain unchanged.
+

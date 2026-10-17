@@ -18,6 +18,7 @@ public final class ReceivedMediaStore {
     private final File folder;
     private final AtomicFile index;
     private final ReentrantLock writer=new ReentrantLock();
+    private final Object thumbnailLock=new Object();
     private JSONObject state;
     private boolean damaged;
 
@@ -28,7 +29,7 @@ public final class ReceivedMediaStore {
         // Only our generated partials are disposable; unindexed completed files remain visible in usage.
         if(!damaged){
             File[] files=folder.listFiles();
-            if(files!=null)for(File f:files)if(f.isFile()&&f.getName().matches("[a-f0-9]{32}\\.part"))f.delete();
+            if(files!=null)for(File f:files)if(f.isFile()&&f.getName().matches("[a-f0-9]{32}\\.(part|thumb\\.tmp)"))f.delete();
             if(files!=null)for(File f:files)if(f.isFile()&&f.getName().matches("[a-f0-9]{32}\\.trash")){String id=f.getName().substring(0,32);if(find(id)!=null)f.renameTo(path(id,".media"));else f.delete();}
         }
     }
@@ -61,12 +62,15 @@ public final class ReceivedMediaStore {
     }
 
     public File thumbnail(String id){
+        synchronized(thumbnailLock){
         if(!validId(id))return null;
+        if(find(id)==null)return null;
         File thumb=path(id,".thumb");
         if(thumb.isFile()&&thumb.length()>0)return thumb;
         File media=path(id,".media");
         if(media.isFile()){extractThumbnail(media,thumb);if(thumb.isFile()&&thumb.length()>0)return thumb;}
         return null;
+        }
     }
 
     public byte[] thumbnailBytes(String id){
@@ -82,22 +86,19 @@ public final class ReceivedMediaStore {
             MediaMetadataRetriever mmr=new MediaMetadataRetriever();
             try{
                 mmr.setDataSource(videoFile.getAbsolutePath());
-                Bitmap frame=mmr.getFrameAtTime(1000000,MediaMetadataRetriever.OPTION_CLOSEST_SYNC);
-                if(frame==null)frame=mmr.getFrameAtTime();
+                // API 26 has no bounded extraction API: prefer a vector fallback to a full-resolution allocation.
+                if(android.os.Build.VERSION.SDK_INT<27)return;
+                Bitmap frame=mmr.getScaledFrameAtTime(1000000,MediaMetadataRetriever.OPTION_CLOSEST_SYNC,320,180);
                 if(frame!=null){
-                    String rot=mmr.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION);
-                    int degrees=rot!=null?Integer.parseInt(rot):0;
-                    Matrix matrix=new Matrix();
-                    if(degrees!=0)matrix.postRotate(degrees);
-                    float scale=Math.min(320f/frame.getWidth(),180f/frame.getHeight());
-                    matrix.postScale(scale,scale);
-                    Bitmap scaled=Bitmap.createBitmap(frame,0,0,frame.getWidth(),frame.getHeight(),matrix,true);
-                    try(FileOutputStream fos=new FileOutputStream(thumbFile)){
-                        scaled.compress(Bitmap.CompressFormat.JPEG,80,fos);
+                    File temporary=new File(thumbFile.getPath()+".tmp");
+                    try{
+                    if(thumbFile.getParentFile().getUsableSpace()<HEADROOM+1024*1024||usage()+1024*1024>QUOTA)return;
+                    try(FileOutputStream fos=new FileOutputStream(temporary)){
+                        if(!frame.compress(Bitmap.CompressFormat.JPEG,80,fos))return;
                         fos.getFD().sync();
                     }
-                    if(scaled!=frame)scaled.recycle();
-                    frame.recycle();
+                    if(!temporary.renameTo(thumbFile))temporary.delete();
+                    }finally{temporary.delete();frame.recycle();}
                 }
             }finally{try{mmr.release();}catch(Exception ignored){}}
         }catch(Throwable ignored){
@@ -117,6 +118,7 @@ public final class ReceivedMediaStore {
             if(!e.has("collection"))e.put("collection","");
             if(!e.has("hidden"))e.put("hidden",false);
             if(file.isFile())indexed+=file.length();
+            if(thumb.isFile())indexed+=thumb.length();
             items.put(e);
         }
         long used=usage();
@@ -198,7 +200,6 @@ public final class ReceivedMediaStore {
             catch(EditorServer.RequestFailure e){throw e;}catch(Exception e){throw failure(415,"The TV could not read this video. Try a compatible MP4/MOV.");}finally{try{metadata.release();}catch(Exception ignored){}}
             if(!allowed.getAsBoolean())throw failure(401,"Transfer permission expired before saving.");
             if(!part.renameTo(complete))throw new IOException("Could not finalize video");renamed=true;
-            extractThumbnail(complete,path(id,".thumb"));
             JSONObject item=new JSONObject().put("id",id).put("label",name).put("size",length).put("duration",duration).put("receivedAt",System.currentTimeMillis()).put("origin","browser-transfer").put("pinned",false).put("collection","").put("hidden",false);
             synchronized(this){JSONObject next=new JSONObject(state.toString());JSONArray list=new JSONArray().put(item),previous=next.getJSONArray("items");for(int i=0;i<previous.length();i++)list.put(previous.getJSONObject(i));next.put("items",list);commit(next);}finalized=true;return item;
         }finally{if(!finalized&&renamed)complete.delete();part.delete();writer.unlock();}
@@ -206,9 +207,9 @@ public final class ReceivedMediaStore {
 
     public void delete(String id)throws Exception{
         if(!writer.tryLock())throw failure(409,"Wait for the transfer to finish before deleting.");
-        try{if(damaged)throw new IOException("Unreadable index preserved");File file=path(id,".media"),trash=path(id,".trash"),thumb=path(id,".thumb");if(file.exists()&&!file.renameTo(trash))throw new IOException("Could not remove video");
+        try{synchronized(thumbnailLock){if(damaged)throw new IOException("Unreadable index preserved");File file=path(id,".media"),trash=path(id,".trash"),thumb=path(id,".thumb");if(file.exists()&&!file.renameTo(trash))throw new IOException("Could not remove video");
             try{synchronized(this){JSONObject next=new JSONObject(state.toString());JSONArray items=new JSONArray(),old=next.getJSONArray("items");for(int i=0;i<old.length();i++)if(!old.getJSONObject(i).getString("id").equals(id))items.put(old.getJSONObject(i));next.put("items",items);commit(next);}}catch(Exception e){trash.renameTo(file);throw e;}
-            trash.delete();thumb.delete();
+            trash.delete();thumb.delete();}
         }finally{writer.unlock();}
     }
 
@@ -221,3 +222,4 @@ public final class ReceivedMediaStore {
         }finally{writer.unlock();}
     }
 }
+

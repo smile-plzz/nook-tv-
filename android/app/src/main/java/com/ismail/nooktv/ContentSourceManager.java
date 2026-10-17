@@ -27,20 +27,25 @@ public final class ContentSourceManager {
 
     private final SourceStore store;
     private final AtomicFile cacheFile;
-    private final ExecutorService fetchPool;
+    private final SourceRefreshQueue fetchPool = new SourceRefreshQueue();
+    private final Map<String, Long> attempts = new ConcurrentHashMap<>();
+    private volatile boolean closed;
+    private boolean refreshRequested;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private final Map<String, CachedSource> cache = new ConcurrentHashMap<>();
     private Listener listener;
-    private boolean refreshing;
+
 
     public static final class CachedSource {
         public final String sourceId;
+        public final String sourceKey;
         public final long lastRefresh;
         public final boolean stale;
         public final String status;
         public final FeedParser.FeedResult feed;
 
-        public CachedSource(String sourceId, long lastRefresh, boolean stale, String status, FeedParser.FeedResult feed) {
+        public CachedSource(String sourceId, String sourceKey, long lastRefresh, boolean stale, String status, FeedParser.FeedResult feed) {
+            this.sourceKey = sourceKey;
             this.sourceId = sourceId;
             this.lastRefresh = lastRefresh;
             this.stale = stale;
@@ -51,6 +56,7 @@ public final class ContentSourceManager {
         public JSONObject toJSON() throws JSONException {
             return new JSONObject()
                 .put("sourceId", sourceId)
+                .put("sourceKey", sourceKey)
                 .put("lastRefresh", lastRefresh)
                 .put("stale", stale)
                 .put("status", status)
@@ -60,6 +66,7 @@ public final class ContentSourceManager {
         public static CachedSource fromJSON(JSONObject obj) throws JSONException {
             return new CachedSource(
                 obj.getString("sourceId"),
+                obj.getString("sourceKey"),
                 obj.optLong("lastRefresh", 0),
                 obj.optBoolean("stale", false),
                 obj.optString("status", ""),
@@ -71,18 +78,6 @@ public final class ContentSourceManager {
     public ContentSourceManager(Context context, SourceStore store) {
         this.store = store;
         this.cacheFile = new AtomicFile(new File(context.getFilesDir(), "source-cache-v1.json"));
-        this.fetchPool = new ThreadPoolExecutor(
-            1, 2, 60L, TimeUnit.SECONDS,
-            new LinkedBlockingQueue<>(16),
-            new ThreadFactory() {
-                private int count = 0;
-                @Override public Thread newThread(Runnable r) {
-                    Thread t = new Thread(r, "nook-source-fetch-" + (++count));
-                    t.setDaemon(true);
-                    return t;
-                }
-            }
-        );
         loadCache();
     }
 
@@ -92,11 +87,11 @@ public final class ContentSourceManager {
 
     private synchronized void loadCache() {
         try {
-            if (!cacheFile.getBaseFile().exists()) return;
+            if (!cacheFile.getBaseFile().exists() || cacheFile.getBaseFile().length() > 1024 * 1024) return;
             JSONObject json = new JSONObject(new String(cacheFile.readFully(), StandardCharsets.UTF_8));
             JSONArray arr = json.optJSONArray("items");
             if (arr != null) {
-                for (int i = 0; i < arr.length(); i++) {
+                for (int i = 0; i < Math.min(arr.length(), SourceDocument.MAX_SOURCES); i++) {
                     CachedSource cs = CachedSource.fromJSON(arr.getJSONObject(i));
                     cache.put(cs.sourceId, cs);
                 }
@@ -111,9 +106,11 @@ public final class ContentSourceManager {
                 arr.put(cs.toJSON());
             }
             JSONObject envelope = new JSONObject().put("items", arr);
+            byte[] bytes = envelope.toString().getBytes(StandardCharsets.UTF_8);
+            if (bytes.length > 1024 * 1024 || cacheFile.getBaseFile().getParentFile().getUsableSpace() < ReceivedMediaStore.HEADROOM + bytes.length) return;
             FileOutputStream out = cacheFile.startWrite();
             try {
-                out.write(envelope.toString().getBytes(StandardCharsets.UTF_8));
+                out.write(bytes);
                 cacheFile.finishWrite(out);
             } catch (Exception e) {
                 cacheFile.failWrite(out);
@@ -121,77 +118,101 @@ public final class ContentSourceManager {
         } catch (Exception ignored) {}
     }
 
+    private static String key(String type, String url) { return type + ":" + url; }
+
     public CachedSource getCached(String sourceId) {
-        return cache.get(sourceId);
+        CachedSource cs = cache.get(sourceId);
+        if (cs == null) return null;
+        try {
+            JSONArray sources = store.read().getJSONArray("sources");
+            for (int i = 0; i < sources.length(); i++) {
+                JSONObject src = sources.getJSONObject(i);
+                if (sourceId.equals(src.getString("id")) && cs.sourceKey.equals(key(src.getString("type"), src.getString("url")))) {
+                    if (!cs.stale && System.currentTimeMillis() - cs.lastRefresh >= REFRESH_INTERVAL_MS)
+                        return new CachedSource(cs.sourceId, cs.sourceKey, cs.lastRefresh, true, "Cached · Refresh due", cs.feed);
+                    return cs;
+                }
+            }
+        } catch (Exception ignored) {}
+        return null;
     }
 
     public FeedParser.FeedResult testFetch(String type, String url) throws Exception {
         return fetchFeed(type, url);
     }
 
-    public void refresh(boolean force) {
-        if (refreshing) return;
-        refreshing = true;
-        fetchPool.execute(() -> {
-            try {
-                JSONObject config = store.read();
-                JSONArray sources = config.optJSONArray("sources");
-                if (sources == null || sources.length() == 0) {
-                    refreshing = false;
-                    notifyListener();
-                    return;
-                }
-
-                long now = System.currentTimeMillis();
-                List<Future<?>> tasks = new ArrayList<>();
-
-                for (int i = 0; i < sources.length(); i++) {
-                    JSONObject src = sources.optJSONObject(i);
-                    if (src == null || !src.optBoolean("enabled", true)) continue;
-
-                    String id = src.optString("id");
-                    String type = src.optString("type");
-                    String url = src.optString("url");
-                    CachedSource existing = cache.get(id);
-
-                    if (!force && existing != null && (now - existing.lastRefresh < REFRESH_INTERVAL_MS)) {
-                        continue;
+    public synchronized void refresh(boolean force) {
+        if (closed) return;
+        try {
+            JSONArray sources = store.read().getJSONArray("sources");
+            Set<String> active = new HashSet<>();
+            Set<String> attemptKeys = new HashSet<>();
+            List<Runnable> tasks = new ArrayList<>();
+            long now = System.currentTimeMillis();
+            for (int i = 0; i < sources.length(); i++) {
+                JSONObject src = sources.getJSONObject(i);
+                final String id = src.getString("id"), type = src.getString("type"), url = src.getString("url");
+                final String identity = key(type, url);
+                active.add(id);
+                attemptKeys.add(id+identity);
+                if (!src.getBoolean("enabled")) continue;
+                CachedSource existing = getCached(id);
+                Long attempt = attempts.get(id + identity);
+                long minimum = force ? 10000 : existing != null && !existing.stale ? REFRESH_INTERVAL_MS : 60000;
+                if (attempt != null && now - attempt < minimum) continue;
+                if (!force && existing != null && !existing.stale && now - existing.lastRefresh < REFRESH_INTERVAL_MS) continue;
+                tasks.add(() -> {
+                    if (closed) return;
+                    attempts.put(id + identity, System.currentTimeMillis());
+                    CachedSource updated;
+                    try {
+                        FeedParser.FeedResult feed = fetchFeed(type, url);
+                        updated = new CachedSource(id, identity, System.currentTimeMillis(), false, "Updated", feed);
+                    } catch (Exception e) {
+                        updated = new CachedSource(id, identity, existing == null ? 0 : existing.lastRefresh, true,
+                            existing == null ? "Feed unavailable" : "Offline · Cached",
+                            existing == null ? null : existing.feed);
                     }
-
-                    tasks.add(fetchPool.submit(() -> {
-                        try {
-                            FeedParser.FeedResult result = fetchFeed(type, url);
-                            CachedSource updated = new CachedSource(id, System.currentTimeMillis(), false, "Updated", result);
-                            cache.put(id, updated);
-                        } catch (Exception e) {
-                            if (existing != null) {
-                                cache.put(id, new CachedSource(id, existing.lastRefresh, true, "Offline · Cached", existing.feed));
-                            } else {
-                                cache.put(id, new CachedSource(id, 0, true, "Feed unavailable", new FeedParser.FeedResult("", Collections.emptyList())));
-                            }
-                        }
-                    }));
-                }
-
-                for (Future<?> f : tasks) {
-                    try { f.get(25, TimeUnit.SECONDS); } catch (Exception ignored) {}
-                }
-                saveCache();
-            } catch (Exception ignored) {
-            } finally {
-                refreshing = false;
-                notifyListener();
+                    if (!closed && configured(id, identity)) cache.put(id, updated);
+                });
             }
-        });
+            cache.keySet().retainAll(active);
+            attempts.keySet().retainAll(attemptKeys);
+            if(!tasks.isEmpty()&&!fetchPool.start(tasks,this::refreshFinished))refreshRequested=true;
+        } catch (Exception ignored) {}
+    }
+
+    private synchronized void refreshFinished(){
+        if(closed)return;
+        saveCache();notifyListener();
+        if(refreshRequested){refreshRequested=false;refresh(true);}
+    }
+
+    private boolean configured(String id, String identity) {
+        try {
+            JSONArray sources = store.read().getJSONArray("sources");
+            for (int i = 0; i < sources.length(); i++) {
+                JSONObject src = sources.getJSONObject(i);
+                if (id.equals(src.getString("id")) && src.getBoolean("enabled")
+                    && identity.equals(key(src.getString("type"), src.getString("url")))) return true;
+            }
+        } catch (Exception ignored) {}
+        return false;
     }
 
     private void notifyListener() {
-        mainHandler.post(() -> {
-            if (listener != null) listener.onSourcesRefreshed();
-        });
+        mainHandler.post(() -> { if (!closed && listener != null) listener.onSourcesRefreshed(); });
+    }
+
+    public void close() {
+        closed = true;
+        listener = null;
+        fetchPool.close();
+        mainHandler.removeCallbacksAndMessages(null);
     }
 
     public static FeedParser.FeedResult fetchFeed(String type, String rawUrl) throws Exception {
+        if (!"youtube".equals(type) && !"rss".equals(type)) throw new IllegalArgumentException("Unsupported source type");
         String targetUrl = rawUrl;
         if ("youtube".equals(type)) {
             targetUrl = SourceDocument.canonicalYouTubeFeed(rawUrl);
@@ -236,3 +257,4 @@ public final class ContentSourceManager {
         }
     }
 }
+

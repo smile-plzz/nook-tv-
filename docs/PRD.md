@@ -1,3 +1,5 @@
+> Implementation status (0.4.5 candidate): F1–F4 plus [F5 correctness repairs](F5-HARDENING.md) are implemented in this consolidation PR. All P0 requirements still require their acceptance evidence. Dashboard schema v2 remains; source configuration is separate schema v1. Planned schema-v3 references below are not shipped. Scope and owner observations remain authoritative; implementation status is recorded in [BUILD-STATUS](BUILD-STATUS.md).
+
 # Nook TV product requirements
 
 Current owner feedback: brief TV use partially confirms app launching/remote navigation, requests a more refined and dynamic Home, and reports Home/restart returning to the existing environment. Retained-file upload/resume were not tested. [TV feedback](TV-FEEDBACK.md) records evidence and uncertainties. Baseline 2.2 promotes selected YouTube/RSS content and companion refinement into P0; it does not claim these are implemented.
@@ -122,3 +124,4 @@ PRD owns scope; [UX](UX-SPEC.md) owns interactions, [architecture](ARCHITECTURE.
 Movie/series discovery, metadata-service credentials and streaming-provider templates are outside Nook. Independent TV apps own those experiences; Nook discovers, pins and launches them through its generic app inventory with no special coupling. Retain YouTube/RSS cards, the browser, received-file playback/history, conditional Drive and ordinary app access. Local video metadata and YouTube card metadata are still useful; this removes the separate movie database integration, not all metadata processing.
 
 Existing legacy saved-title URLs are normalized to browser links on load/import, preserving IDs, labels, collection references and revision. New saves cannot create the retired route. The private obsolete service credential, provider preferences and generated response cache are removed on upgrade; favorites, dashboard, viewing history and received files are preserved. No transfer of data to another application is assumed.
+

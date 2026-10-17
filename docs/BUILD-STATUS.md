@@ -1,33 +1,25 @@
-# Build status | 0.4 phone transfer preview
+# Build status — 0.4.5-f5-hardening candidate
 
-## Latest owner TV evidence and documentation revision
+## Current source: F1–F4 reconciliation and F5 fixes
 
-PR #5 merged into main at `247671613c9552fa9f67eda179a67528a680ddcf`. PR #6 merged the feedback plan at `5de2009e787417974a290bfd7a90d174ede9c4ee`. Baseline 2.2 removes embedded discovery from current source; latest delivered owner APK remains 0.4.0-phone-preview. The exact APK used during the brief TV trial was not confirmed.
+This candidate starts at F4 merge `1c65cf8`. Main was initially F2 `273755c`; during this task the owner merged PRs #12/#13, moving main to `1bae04d` with the identical F4 tree. PR #14 contains the F5 repairs and targets main. No PR is merged automatically.
 
-Owner reports Home is smooth and closer to the aesthetic, apps launch correctly, and tried remote navigation works. Visual acceptance is incomplete. Home from YouTube and TV restart return to the existing environment: **default-Home outcome failed in the reported test**, cause/setup path unconfirmed. File upload/retained replay were not tested. Reported external YouTube AirPlay use is not evidence of Nook integration. See [feedback](TV-FEEDBACK.md).
+Version code is 5. Implemented candidate capabilities include Home-role setup, visual refinement, selected-source shelves/companion, QR and retained-video organization. [F5-HARDENING](F5-HARDENING.md) documents the save/refresh/focus/privacy/memory repairs and the unchanged data formats/quotas.
 
-F1 implemented: supported RoleManager.ROLE_HOME request on API 29+, settings fallback coordinator, multi-signal verification and safe recovery guards.
-F2 implemented: cohesive Apple TV-inspired dark gradient, responsive 16:9 widescreen card geometry, smooth 1.04x focus animations with elevated depth and 3dp focus borders, and dedicated vector glyphs for YouTube channels and RSS feeds.
-F3 implemented: paired companion YouTube and RSS feed configuration with live on-TV feed testing, SSRF and XXE hardened parsers, responsive TV content shelves with 30-minute background caching, and remote focus identity preservation.
-F4 implemented: offline pure Java QR code generator (Versions 1–4, Byte mode, ECC L) for instant iPhone camera scanning, rotation-aware video thumbnail generation downscaled to 320x180 JPEG, personal video shelf on TV Home with pin priority and collection badges, TV remote context options dialog, and authenticated companion media management APIs with pre-upload storage boundary checks. Follow [F1-F6](DEVELOPMENT-PLAN.md); historical build/CI evidence below is preserved.
+**Executed locally:** 654 Java assertions (22 core, 485 QR structure, 8 refresh scheduling, 23 Home role, 38 HTTP handler, 43 document/viewing, 35 source/feed), plus editor and media browser-state suites. Source failure reproduction now passes as a regression requiring preserved drafts and honest partial-save reporting.
 
-Updated 17 October 2026. The owner briefly installed/explored 0.2 in BlueStacks: it boots, but the experience does not match the desired launcher. He confirmed default Home, Apple TV-style aesthetics, YouTube, iPhone video sharing and easier return to shared media; Spotify is tentative, browser rare and Google Drive conditional.
+**Verified application/test source commit:** `16118d7bd33f05b81906a665fdbdbe2d4dcb997b`.
 
-[PRD baseline 2.2](PRD.md) supersedes the dashboard-first roadmap. 0.3 implements the launcher prototype/Home plumbing. 0.4 adds the first retained-file transfer/playback path in L2. Actual iPhone/TV acceptance and AirPlay/Drive remain pending. See [phone transfer guide](PHONE-TRANSFER-PREVIEW.md). See [prototype guide](LAUNCHER-PREVIEW.md).
+- [Hosted APK + instrumentation build](https://github.com/smile-plzz/nook-tv-/actions/runs/39050796498): passed. Artifact: nook-tv-0.4.5-f5-hardening.
+- [Android API-35 runtime and same-key upgrade](https://github.com/smile-plzz/nook-tv-/actions/runs/39050796495): passed **64 storage/activity assertions** and **8 F4-to-F5 upgrade-preservation assertions**. Covers source focus/deferred refresh, hidden Home rows, bounded thumbnails, upload, storage recovery and production playback.
+- All production and Android-test Java sources also compile locally against cached SDK/dependencies. Full local Gradle packaging is blocked by this session's native/loopback restrictions; hosted packaging is the APK evidence.
+- The final follow-up only records documentation evidence; application and test source are unchanged from the verified commit. QR tests verify matrix structure; real iPhone QR scanning remains part of device acceptance.
 
-## Pivot coverage
+Physical owner evidence remains limited to the earlier trial: tried apps/remote paths worked; visual approval incomplete; default Home/restart returned to the existing environment. Real Safari transfer and target-device acceptance remain pending. Same-key owner APK continuity still requires access to the original private signing key; independently generated CI debug APKs are not promised as upgrades to the owner's installed preview.
 
-| New outcome | Actual status |
-|---|---|
-| Artwork app grid / direct app launch | Implemented; brief TV app use confirmed by owner, visual refinement still required |
-| Default Home setup, task behavior and recovery | Implemented (F1): RoleManager.ROLE_HOME prompt on Android 10+ (API 29+), multi-tier settings fallback (ACTION_HOME_SETTINGS -> ACTION_MANAGE_DEFAULT_APPS_SETTINGS -> ACTION_SETTINGS), multi-signal status verification (role held vs resolved default), onResume status refresh, onActivityResult handling, and active default removal guard. |
-| From iPhone / retained file transfer | Paired-browser MP4/MOV file upload, app-private retained copies, progress/cancel/retry and storage controls implemented; AirPlay/Cast/mirroring absent; real Safari/TV unverified |
-| Shared & Recent | Retained-copy row and measured local playback/resume added; live phone sessions still not imported |
-| Google Drive authorization/media | Not implemented; selected-file/scopes feasibility gate |
-| Spotify | Ordinary installed-app discovery may expose it; dedicated integration not implemented |
-| PC customization, collections, Media3 | Existing foundation retained, not proof of new UX acceptance |
+## Historical preview evidence
 
-Only the limited physical-TV observations above are claimed; no successful Nook default-Home or real iPhone retained-transfer result is claimed. Historical M1 evidence remains in [M1 status](M1-STATUS.md).
+The sections below preserve previous milestones and their exact CI evidence. Older present-tense descriptions refer to those milestones, not the F5 candidate.
 
 ## 0.4 verification and bounds
 
@@ -105,3 +97,4 @@ Follow the current [F1-F6 plan](DEVELOPMENT-PLAN.md): verified Home selection, c
 ## Current source: standalone launcher scope cleanup
 
 This PR now removes embedded movie/series search, its HTTP client, private service-key UI, provider-template engine/settings and related requirements/audit. It adds legacy saved-link normalization and narrowly scoped obsolete-settings/cache cleanup. Schema v2 and application ID are unchanged; received files, history and collections stay intact. The companion no longer offers the retired route. Historical CI counts/links above describe the delivered preview, not this revised source. No replacement owner APK has been delivered by this change; current validation is recorded below when executed.
+

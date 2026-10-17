@@ -3,6 +3,14 @@
 All notable changes to Nook TV are documented in this file.
 
 ## [Unreleased]
+### Fixed — F5 hardening candidate (0.4.5, version code 5)
+- Verify F3/F4 consolidation (owner-merged PRs #12/#13); deliver F5 repairs in PR #14 targeting main without merging.
+- Save source config without cache metadata; acknowledge partial failures honestly, preserve both drafts and retry uncertain source writes idempotently.
+- Run six feed jobs on two workers without self-blocking waits; throttle failures, invalidate changed-source cache, and stop workers on destruction.
+- Preserve feed item identity and defer focused-shelf updates; filter hidden clips from all Home rows; persist history renames.
+- Bound thumbnail decode/cache memory and disk writes, serialize thumbnail deletion, and keep offline source loading independent of DNS.
+- Require verified default-Home status for success feedback; keep dashboard schema v2, app ID, data files and quotas.
+- Add same-key F4-to-F5 emulator upgrade, focus/privacy, scheduling, source-save and bounded-thumbnail regressions.
 ### Added
 - **F1 Default Home Coordinator**: Supported system Home-role selection via `RoleManager.ROLE_HOME` on API 29+ (Android 10+).
 - **Graceful Settings Fallbacks**: Multi-level fallback routing from `RoleManager` to `Settings.ACTION_HOME_SETTINGS` to `Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS` and general `Settings.ACTION_SETTINGS`.
@@ -42,3 +50,4 @@ All notable changes to Nook TV are documented in this file.
 - Media3 video playback pipeline with HLS and DASH support.
 - Embedded local HTTP editor server with 6-digit pairing and session authentication.
 - Atomic file persistence for dashboard configuration and viewing history.
+

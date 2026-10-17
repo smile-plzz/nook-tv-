@@ -1,3 +1,5 @@
+> Current source (0.4.5): selected public channel/playlist YouTube XML feeds and public UTF-8 RSS/Atom are implemented without API credentials. Two-worker refresh, URL/type-aware cache, deferred focused-shelf updates and feed item identity are repaired in [F5](F5-HARDENING.md). Public feed reliability still needs actual-source evidence; this is not personalized YouTube or a claim that feeds replace all official API capabilities. Sources use an independent versioned store; dashboard remains v2. Specification targets below are not all accepted behavior.
+
 # Dynamic Home specification
 
 Baseline 2.2 | Proposed, not implemented in 0.4 | DYN-01, DYN-02, VIS-01, NAV-02
@@ -51,3 +53,4 @@ Primary references checked 17 October 2026:
 - [Android TV navigation](https://developer.android.com/design/ui/tv/guides/foundations/navigation-on-tv): directional focus, selection and manufacturer-dependent system keys.
 
 These references establish platform primitives; the layout, budgets and selected-source strategy are Nook design proposals, not platform guarantees.
+

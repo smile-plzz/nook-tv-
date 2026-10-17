@@ -1,5 +1,11 @@
 # Nook TV — Project Context
 
+## Current candidate
+- Version: 0.4.5-f5-hardening (code 5), F1–F4 plus F5 repairs in PR #14.
+- Main received F3/F4 via owner-merged PRs #12/#13 during the repair task; no automated merge.
+- Source configuration is independent schema-v1 sources-v1.json; dashboard remains schema v2.
+- F5 fixes and evidence: docs/F5-HARDENING.md and docs/BUILD-STATUS.md. Real TV/iPhone acceptance remains pending.
+
 ## Product Goals
 - **Default TV Home**: Nook TV serves as the primary default launcher on Android TV with modern, minimal, premium Apple TV-inspired aesthetics.
 - **Fast Access**: Quick, direct one-click launch for YouTube and installed applications.
@@ -22,3 +28,4 @@
 - **Signing & Data Continuity**: Preserve signing key continuity and existing user data. Never commit keystores or private keys.
 - **Home Role & Recovery**: Use `RoleManager.ROLE_HOME` on API 29+ where available; fall back gracefully to `ACTION_HOME_SETTINGS` and general system settings. Never disable system packages, intercept keys, or force launcher replacement. Retain standard launcher entry for recovery.
 - **Companion Quotas**: Foreground-only HTTP server. Video uploads capped at 512 MiB/file, 1 GiB retained quota, 50 files maximum, 128 MiB free-space reserve.
+

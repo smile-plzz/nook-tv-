@@ -75,7 +75,7 @@ public final class FeedParser {
             List<FeedItem> list = new ArrayList<>();
             JSONArray arr = obj.optJSONArray("items");
             if (arr != null) {
-                for (int i = 0; i < arr.length(); i++) {
+                for (int i = 0; i < Math.min(arr.length(),MAX_ITEMS); i++) {
                     list.add(FeedItem.fromJSON(arr.getJSONObject(i)));
                 }
             }
@@ -107,11 +107,14 @@ public final class FeedParser {
     private static DocumentBuilder createSecureBuilder() throws ParserConfigurationException {
         DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
         dbf.setNamespaceAware(true);
+        dbf.setExpandEntityReferences(false);
         try { dbf.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true); } catch (Exception ignored) {}
         try { dbf.setFeature("http://xml.org/sax/features/external-general-entities", false); } catch (Exception ignored) {}
         try { dbf.setFeature("http://xml.org/sax/features/external-parameter-entities", false); } catch (Exception ignored) {}
         try { dbf.setFeature(javax.xml.XMLConstants.FEATURE_SECURE_PROCESSING, true); } catch (Exception ignored) {}
-        return dbf.newDocumentBuilder();
+        DocumentBuilder builder=dbf.newDocumentBuilder();
+        builder.setEntityResolver((publicId,systemId)->{throw new org.xml.sax.SAXException("External entities are not permitted");});
+        return builder;
     }
 
     public static FeedResult parse(InputStream in) throws Exception {
@@ -125,6 +128,8 @@ public final class FeedParser {
             if (total > MAX_FEED_BYTES) throw new IllegalArgumentException("Feed body exceeds maximum limit (2 MiB)");
         }
         if (total == 0) throw new IllegalArgumentException("Empty feed response");
+        String xml=StandardCharsets.UTF_8.newDecoder().decode(java.nio.ByteBuffer.wrap(buffer.toByteArray())).toString();
+        if(xml.indexOf('\u0000')>=0||xml.toUpperCase(Locale.ROOT).contains("<!DOCTYPE"))throw new IllegalArgumentException("Feed must be UTF-8 XML without a DOCTYPE");
 
         DocumentBuilder builder = createSecureBuilder();
         Document doc = builder.parse(new ByteArrayInputStream(buffer.toByteArray()));
@@ -173,7 +178,7 @@ public final class FeedParser {
                     if (mediaThumb != null && mediaThumb.hasAttribute("url")) thumb = mediaThumb.getAttribute("url");
                 }
 
-                if (!link.isEmpty()) {
+                if (safeLink(link)) {
                     items.add(new FeedItem(guid, title, link, pubDate, thumb, desc));
                     if (items.size() >= MAX_ITEMS) break;
                 }
@@ -204,7 +209,7 @@ public final class FeedParser {
                 String link = "";
                 String thumb = "";
 
-                if (!videoId.isEmpty()) {
+                if (videoId.matches("[a-zA-Z0-9_-]{11}")) {
                     link = "https://www.youtube.com/watch?v=" + videoId;
                     thumb = "https://i.ytimg.com/vi/" + videoId + "/hqdefault.jpg";
                     if (id.isEmpty()) id = videoId;
@@ -240,7 +245,7 @@ public final class FeedParser {
                     }
                 }
 
-                if (!link.isEmpty()) {
+                if (safeLink(link)) {
                     items.add(new FeedItem(id, title, link, published, thumb, desc));
                     if (items.size() >= MAX_ITEMS) break;
                 }
@@ -248,6 +253,8 @@ public final class FeedParser {
         }
         return new FeedResult(feedTitle, items);
     }
+
+    private static boolean safeLink(String url){try{Targets.https(url);return true;}catch(IllegalArgumentException e){return false;}}
 
     private static Element getFirstChildByTag(Element parent, String tag) {
         NodeList list = parent.getChildNodes();
@@ -268,3 +275,4 @@ public final class FeedParser {
         return child.getTextContent() != null ? child.getTextContent().trim() : "";
     }
 }
+

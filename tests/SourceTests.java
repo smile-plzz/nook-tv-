@@ -130,6 +130,8 @@ public final class SourceTests {
             xxeBlocked = true;
         }
         check(xxeBlocked, "DOCTYPE and external entity injection blocked");
+        boolean utf16Blocked=false;try{FeedParser.parse(new ByteArrayInputStream(xxeXml.getBytes("UTF-16")));}catch(Exception e){utf16Blocked=true;}
+        check(utf16Blocked,"non-UTF-8 XML cannot bypass DOCTYPE rejection");
 
         // 9. FeedParser: Oversized input rejected
         byte[] large = new byte[FeedParser.MAX_FEED_BYTES + 100];
@@ -141,7 +143,15 @@ public final class SourceTests {
             oversizedRejected = true;
         }
         check(oversizedRejected, "oversized feed body > 2 MiB rejected");
+        JSONObject offline=SourceDocument.defaults();offline.getJSONArray("sources").put(makeSource("offline","rss","Offline feed","https://cannot-resolve.nook.invalid/feed",true));
+        SourceDocument.validate(offline);check(true,"saved hostname configuration validates without network/DNS");
+        String stable=SourceDocument.itemTag("one","video-a","https://example.com/a");
+        check(stable.equals(SourceDocument.itemTag("one","video-a","https://example.com/changed")),"focus identity follows stable feed ID after reorder or URL change");
+        check(!stable.equals(SourceDocument.itemTag("one","video-b","https://example.com/b")),"different feed items never share an index-based focus tag");
+        expectInvalid(s->s.getJSONArray("sources").put(makeSource("local","rss","Private IPv6","https://[fd00::1]/feed",true)),"private IPv6 rejected");
+        expectInvalid(s->s.getJSONArray("sources").put(makeSource("shared","rss","Shared IP","https://100.64.0.1/feed",true)),"shared network address rejected");
 
         System.out.println("PASS: " + count + " dynamic content source and secure feed assertions");
     }
 }
+

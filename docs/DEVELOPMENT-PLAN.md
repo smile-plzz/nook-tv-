@@ -1,3 +1,22 @@
+# Development plan — current F5 candidate
+
+17 October 2026. [F5 hardening](F5-HARDENING.md) and [build status](BUILD-STATUS.md) supersede older implementation-status statements below.
+
+| Slice | Source status | Acceptance remaining |
+|---|---|---|
+| F1 | Home role, fallbacks, diagnostics and recovery guard implemented | Target-TV Home, wake/reboot and rollback |
+| F2 | Visual refinement implemented | Owner visual/remote approval |
+| F3 | Companion selected sources, parser/cache and shelves implemented; save/scheduling/focus repaired in F5 | Owner sources, real network/Safari and offline UX |
+| F4 | QR, retained-video organization and thumbnails implemented; privacy/memory/rename repaired in F5 | Real phone files, portrait/HEVC/HDR and replay |
+| F5 | Hardening candidate with focused regressions and upgrade fixture | Hosted evidence and target 2 GB performance gates |
+| F6 | Conditional investigation only | Receiver identification and Drive authorization feasibility |
+
+Main was initially F2 `273755c`; the owner merged PRs #12/#13 during this task, bringing main to F4 `1bae04d` (same tree as `1c65cf8`). PR #14 targets main with F5 repairs. Do not merge without explicit owner instruction. Keep schema-v2 dashboard and independent versioned sources/media/history stores.
+
+## Original sequencing and acceptance reference
+
+The baseline plan below remains useful for scope and exit gates; statements that a now-implemented slice is still planned are historical.
+
 # Development plan after TV feedback
 
 Baseline 2.2 | 17 October 2026 | Replaces L0-L5 execution order; historical labels remain in preview guides
@@ -34,3 +53,4 @@ Read [dynamic Home](DYNAMIC-HOME.md) and [companion](COMPANION-SPEC.md). Propose
 Preserve relevant regression coverage, editor/transfer state checks and Android runtime scenarios. Remove retired provider tests and add migration/cleanup checks; the historical 82-local/43-Android counts describe the delivered preview, not the revised suite. Add behavior tests for role outcome states, parser/URL bounds, source refresh, stable focus, migrations and new mutations when implemented. Use real TV/iPhone evidence for Home, handlers, codec, UX and performance. Check documentation links and requirement coverage on every scope change. Record source commit/APK/device/steps/results; no new deadline or version is promised until a slice is built.
 
 Default Home, the refined visual design, configurable selected YouTube/RSS content, companion usability and one proven retained-file path are first-usable-launcher requirements. Full broader product scope still includes requested conditional integrations; see [PRD](PRD.md) and [acceptance](ACCEPTANCE.md).
+

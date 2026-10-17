@@ -1,5 +1,21 @@
 # Development Log
 
+## 2026-10-17T22:50:30+06:00 — F5 verification complete; PR #14 ready for review
+- Verified code/test commit 16118d7bd33f05b81906a665fdbdbe2d4dcb997b.
+- Hosted Compatibility APK run 39050796498 passed; Android runtime run 39050796495 passed 64 storage/activity assertions and eight same-key F4-to-F5 upgrade checks.
+- Local full suites passed 654 Java assertions plus editor/media browser-state checks; all app/instrumentation sources also compiled against cached SDK dependencies.
+- Upgrade checks run through the packaged SmokeInstrumentation runner. The focus fixture waits for layout and injects D-pad input before testing deferred updates.
+- Owner merged PRs #12/#13 during this task; main became 1bae04d with the same F4 tree. PR #14 contains the F5 repairs and remains unmerged.
+- Updated evidence/docs only after source verification. Real TV/iPhone, two-hour 2 GB performance, codecs, Home/reboot/recovery and owner signing-key continuity remain release gates. No F6 integration is claimed.
+
+## 2026-10-17T22:30:00+06:00 — F5 repair and branch reconciliation candidate
+- Verified main at 273755c and F4 merge at 1c65cf8. PR #10 and #11 were merged into feature branches; this work targets main without merging.
+- Reproduced source-save false success/draft loss; repaired cache/config projection, partial acknowledgement and retry/draft recovery.
+- Replaced self-blocking feed scheduling, added stable focus/deferred refresh, fixed hidden-history visibility and detached ledger rename.
+- Bounded lazy thumbnail extraction, heap-aware LRUs, disk reserve/cache limits, offline source loading and XML/entity handling; bumped version to 0.4.5/code 5.
+- Local suites: 654 Java assertions plus editor/media browser-state checks passed. Local Gradle blocked by native/loopback restrictions; hosted APK, focus/privacy/thumbnail runtime and F4-to-F5 same-key upgrade checks pending.
+- Updated README, handoff, status/spec annotations, changelog and F5-HARDENING. F6 receiver/Drive stays conditional; owner TV/iPhone acceptance is still pending.
+
 ## 2026-10-17T20:30:00+06:00 — Session Start: PR #7 Verification & Documentation Reconciliation
 - Verified merged PR #7 (`ef193f1`) and hosted CI results:
   - Run 39040451993 (Compatibility APK): `success`.
@@ -110,6 +126,7 @@
   - Total headless Java assertions passing: 635 assertions.
   - `gradlew.bat assembleDebug`: SUCCESS (built `app-debug.apk`, copied to `outputs/nook-tv-0.4.4-f4-personal-shelf.apk`).
   - `gradlew.bat compileDebugAndroidTestJavaWithJavac`: SUCCESS.
+
 
 
 

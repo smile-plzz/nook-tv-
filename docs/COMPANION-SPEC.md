@@ -1,3 +1,5 @@
+> Current source (0.4.5): guided source editing/testing, QR address setup and authenticated rename/pin/collection/hide/reset/delete/thumbnail endpoints are implemented. [F5](F5-HARDENING.md) separates cache from saved source config and requires both save acknowledgements before clearing drafts. A failed source write explicitly retains its draft. Companion thumbnail display and broader tabbed redesign remain future refinements; the existence of a thumbnail endpoint is not evidence of a rendered browser thumbnail. Real Safari acceptance remains pending.
+
 # Companion and personal media design
 
 Baseline 2.2 | Planned improvements to the existing paired browser | PC-03, PHONE-03
@@ -38,3 +40,4 @@ The browser currently has metadata/upload endpoints, not a general download or r
 The owner reports external YouTube sharing worked and explicitly makes AirPlay replay optional. First identify the TV receiver and sending gesture. If a documented integration supplies a durable media reference, show Open again; only show Resume if actual position and replay access are available. Otherwise provide an optional receiver shortcut and an honest Start sharing again instruction. No interception, recording or extraction of someone else's session is assumed. Drive remains a later conditional source under [phone/Drive feasibility](PHONE-AND-DRIVE.md).
 
 Acceptance: A13 companion usability, A14 saved-video experience and A15 optional receiver capability. The first real transfer test is more valuable than adding many options before proving the route.
+

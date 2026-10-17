@@ -36,6 +36,15 @@ public final class DocumentTests {
         ledger.pause(false); ledger.observe("episode2",95000,100000,false,false); check(ledger.find("episode2").getString("status").equals("watched"),"watched threshold"); ledger.mark("episode2",false); check(ledger.find("episode2").getLong("position")==0,"start over clears position");
         ledger.opened("live","Live","https://example.com/live.m3u8","native"); ledger.observe("live",100000,1000000,true,false); check(ledger.find("live").getLong("duration")==0&&!ViewingLedger.resumable(ledger.find("live")),"live has no fabricated percentage");
         ViewingLedger restarted=new ViewingLedger(ledger.snapshot()); check(restarted.find("web")!=null,"snapshot rehydrates"); ledger.pause(true); ledger.clear(); check(ledger.paused()&&ledger.snapshot().getJSONArray("entries").length()==0,"clear preserves privacy setting");
+        ledger.pause(false);String media="0123456789abcdef0123456789abcdef";ledger.openedLocal(media,"Original");ledger.observe("local:"+media,1000,10000,false,false);
+        JSONObject local=ledger.find("local:"+media),visible=new JSONObject().put("hidden",false),hidden=new JSONObject().put("hidden",true);
+        check(ViewingLedger.showOnHome(local,visible),"visible retained video may appear in Home history");
+        check(!ViewingLedger.showOnHome(local,hidden),"hidden retained video excluded from resume and recent Home rows");
+        check(!ViewingLedger.showOnHome(local,null),"removed local copy not exposed in Home history");
+        check(ViewingLedger.showOnHome(restarted.find("web"),null),"external opens are unaffected by local-media privacy");
+        ledger.rename("local:"+media,"Renamed");
+        check(new ViewingLedger(ledger.snapshot()).find("local:"+media).getString("label").equals("Renamed"),"rename updates persisted ledger rather than a detached copy");
         System.out.println("PASS: "+count+" document, migration and viewing assertions");
     }
 }
+
