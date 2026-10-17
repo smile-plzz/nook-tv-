@@ -4,8 +4,23 @@ Your personal space on the big screen: apps, Continue Watching, YouTube, NowShow
 
 ## Status
 
-**Documentation v1.0 finalized — 17 October 2026. Implementation has not started.**
-The owner will explicitly say when to start building. Do not treat this planning baseline as permission to scaffold, install dependencies, configure CI, build an APK or deploy anything.
+**Implementation authorized — 17 October 2026. Milestone 1 compatibility preview built locally.**
+The owner instructed “initiate the build accordingly.” The documentation hold is released. This branch introduces the first test APK; target-TV acceptance remains pending. It is not the first usable release or a claim of full product completion.
+
+Start with [build and installation](docs/BUILD-AND-INSTALL.md), [current implementation status](docs/BUILD-STATUS.md), and the [TV test checklist](docs/DEVICE-TEST.md).
+
+### What this APK can do
+
+- Remote-friendly native Home, Apps, Settings and diagnostics.
+- Discover, pin, launch and unpin installed apps.
+- Save/reorder HTTPS links from an authenticated PC browser editor with explicit TV pairing approval, revision conflicts and browser revocation.
+- Probe MP4/HLS using Android's platform player, with actual measured resume for the most recent finite native video.
+- Hand off YouTube to its installed app or an external browser.
+- Open an isolated web screen with visible exit/browser controls and a controlled test page.
+
+### What remains
+
+Media3/DASH, the native NowShowing catalog and source adapters, full collections/layout/background editing, Room-backed per-episode history, backup import, Brave-specific routing, filtering, widgets and launcher replacement remain future work. Native playback, PC connectivity and remote navigation need actual-TV testing. The full [PRD](docs/PRD.md) remains the delivery scope.
 
 Primary target: the owner's Sony Plus TV, reported **Android 14 / 2 GB RAM**. Actual API level, ABI, WebView, codecs and launcher behavior await device testing.
 
@@ -35,7 +50,10 @@ The first usable release and full requested scope are distinct. Launcher/web-pro
 | [Architecture](docs/ARCHITECTURE.md) | Data, playback, local editor and lifecycle design |
 | [Development plan](docs/DEVELOPMENT-PLAN.md) | Milestones and dependencies after authorization |
 | [Acceptance scenarios](docs/ACCEPTANCE.md) | Requirement coverage and actual-device test protocol |
-| [Implementation handoff](docs/IMPLEMENTATION-HANDOFF.md) | Starting instructions, implementation hold and readiness |
+| [Implementation handoff](docs/IMPLEMENTATION-HANDOFF.md) | Authorization, starting instructions and remaining work |
+| [Build status](docs/BUILD-STATUS.md) | Executed checks, limitations and milestone coverage |
+| [Build and installation](docs/BUILD-AND-INSTALL.md) | Repeatable builds, signing, install/update/rollback |
+| [Device test](docs/DEVICE-TEST.md) | Owner TV checklist and evidence template |
 
 ## Key feasibility facts
 
@@ -45,6 +63,5 @@ A website embed is not automatically a native media stream. Brave Shields is not
 
 ## Documentation verification
 
-All relative document links and requirement-to-acceptance mappings are checked during finalization. No application tests, provider playback tests or real-TV tests have been run.
+The initial documentation baseline was reviewed before implementation. Current executable checks and unrun tests are recorded in [build status](docs/BUILD-STATUS.md). A successful APK build is not evidence of provider playback or real-TV compatibility.
 
-When authorized, the first milestone is an installable compatibility APK testing remote navigation, sample playback, web-player isolation, YouTube handoff and PC pairing.

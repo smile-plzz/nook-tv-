@@ -23,7 +23,8 @@ The owner's explicit instructions take precedence. PRD owns current scope and ac
 | D11 | Kotlin, Compose candidate, Room and vanilla TypeScript editor | Proposed implementation | Validate hardware/toolchain before committing to versions |
 | D12 | No background editor server initially | Proposed scope/performance tradeoff | External-app handoff disconnects editor |
 | D13 | Explicit personal choices rather than imported profile data | Product privacy default | Start with editable collections; no silent account or personal-context ingestion |
-| D14 | Build only when the owner says to start | Explicit owner instruction, latest turn | No app scaffolding, dependencies, CI, APK or deployment during docs finalization |
+| D14 | Build only when the owner says to start | Released: owner said “initiate the build accordingly” on 2026-10-17 | Implementation and APK work are now authorized |
+| D15 | M1 uses Java native Views, platform VideoView and atomic JSON config | Temporary engineering choice under unavailable shell downloads | Builds with installed SDK only; Media3/DASH, Room and full history remain tracked; this is not the final stack decision |
 
 ## Release vocabulary
 
@@ -53,3 +54,4 @@ P1 timing is a delivery proposal. It must not be used to silently remove an expl
 ## Change discipline
 
 Record the trigger, affected requirement IDs, new behavior, acceptance changes and implementation impact. Update PRD and relevant companion documents together. External constraints should be reported as constraints, not attributed to an owner decision. No calendar or budget commitments have been supplied.
+

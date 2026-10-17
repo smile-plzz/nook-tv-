@@ -79,3 +79,4 @@ Not inspected yet: full API/mood implementation, complete routing/pages, license
 ## Documentation baseline 1.0
 
 This targeted audit is retained as evidence, not expanded into a claim of full review. [Requirements analysis](REQUIREMENTS-ANALYSIS.md) records its product implications; [acceptance](ACCEPTANCE.md) defines future integration checks. Documentation finalization has not tested any provider or changed the upstream source.
+

@@ -1,8 +1,8 @@
 # Nook TV — Product Requirements Document
 
-Version 1.0 | 2026-10-17 | Owner: Ismail Hossain | Status: documentation finalized; implementation not authorized
+Version 1.0 scope | 2026-10-17 | Owner: Ismail Hossain | Status: implementation authorized; M1 compatibility preview built
 
-This is the planning baseline, not evidence of implemented or device-verified features. The owner will explicitly say when to start building. [Decision record](DECISIONS.md) distinguishes owner requirements from proposed implementation choices.
+This is the planning baseline, not evidence that all features are implemented or device-verified. The owner has now instructed implementation. [Build status](BUILD-STATUS.md) records actual coverage; [decision record](DECISIONS.md) distinguishes requirements from implementation choices.
 
 ## 1. Problem statement
 
@@ -124,7 +124,7 @@ YouTube playback remains in the official app initially. Nook's Play Later is dis
 - No DRM bypass, video hosting, transcoding or downloading initiative.
 - Source availability, embedding permission, account requirements and device DRM are tested individually.
 - No promise of ad-free YouTube through the official API integration.
-- No modification to NowShowing-Stream upstream in this planning task.
+- Preserve NowShowing-Stream upstream; implementation changes belong in Nook unless separately requested.
 
 ## 9. Error and empty states
 
@@ -167,3 +167,4 @@ Signed, versioned APK; installation/update/rollback instructions; actual-TV acce
 ## 14. Document ownership
 
 PRD owns scope and requirement IDs; [UX](UX-SPEC.md) owns interaction detail; [architecture](ARCHITECTURE.md) owns technical proposals; [acceptance](ACCEPTANCE.md) owns verification scenarios; [handoff](IMPLEMENTATION-HANDOFF.md) owns execution readiness and the implementation hold. If they conflict, follow explicit owner instructions, then PRD, and resolve the other documents before implementation.
+

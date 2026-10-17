@@ -4,11 +4,11 @@ Baseline 1.0 — 2026-10-17.
 
 ## Current authorization and status
 
-**Documentation is finalized. Do not start building until Ismail explicitly instructs you to start.** The latest request authorizes document review/refinement only.
+**Implementation authorized on 2026-10-17:** Ismail instructed “initiate the build accordingly.” The documentation-only hold below is historical and has been released. Continue the planned milestones; no additional build permission is needed.
 
-No application source, scaffold, Gradle setup, dependency installation, CI workflow, APK build, deployment, or device change is authorized by this document alone. A later explicit build instruction releases this hold; do not ask for duplicate permission then.
+The instruction authorizes application source, build tooling, CI and APK work. Do not replace the stock TV launcher automatically. See [build status](BUILD-STATUS.md) for what has actually been implemented and verified.
 
-No APK or device validation exists. Docs describe future behavior and proposed targets, not delivered features.
+A locally compiled and debug-signed M1 APK now exists. Device validation is pending. Planning documents continue to describe future behavior beyond this preview.
 
 ## Read order
 
@@ -32,10 +32,10 @@ No APK or device validation exists. Docs describe future behavior and proposed t
 - Do not import private user context or connected-account content without an explicit task.
 - Preserve the upstream repo; work here unless separately asked to modify upstream.
 
-## First work after a future build instruction
+## Execution sequence after the build instruction
 
 1. Read current repo/AGENTS instructions and recheck changes since this baseline.
-2. Inspect available build environment; the previous shell connection was unavailable, so local Android tooling is not verified. Use available permitted tooling, and report actual blockers.
+2. Local Java 21 and SDK API 35/build-tools 35.0.1 are verified. Shell network downloads and local ADB startup failed. Use the checked-in offline build script; run device tests when possible.
 3. Pin the selected upstream revision and inspect licensing before copying source/assets.
 4. Select current compatible Android toolchain and dependencies using official docs; record choices and license inventory.
 5. Implement the M1 compatibility APK only as the first milestone; continue independent work when device feedback is pending, without claiming unrun tests passed.
@@ -57,3 +57,4 @@ Built/signed versioned APK, build instructions and dependency versions; install/
 ## Documentation review outcome
 
 The 1.0 refinement aligns every explicit request with requirements, adds P0 personalization and first-run behavior, separates measured progress from selected episodes/recent opens, defines edit/backup lifecycle, and makes outstanding device/provider checks visible. This completes documentation work only.
+

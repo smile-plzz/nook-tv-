@@ -1,0 +1,8 @@
+<resources>
+    <style name="NookTheme" parent="android:style/Theme.Material.NoActionBar">
+        <item name="android:fontFamily">sans</item><item name="android:colorAccent">#9CE5C5</item>
+        <item name="android:windowLightStatusBar">false</item><item name="android:windowActionModeOverlay">true</item>
+        <item name="android:windowBackground">#101619</item><item name="android:windowFullscreen">true</item>
+        <item name="android:windowNoTitle">true</item><item name="android:colorControlHighlight">#416B62</item>
+    </style>
+</resources>
