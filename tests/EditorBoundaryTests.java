@@ -64,8 +64,14 @@ public final class EditorBoundaryTests {
         check(invoke(server,"POST","/api/media/upload",base+origin+auth,raw).startsWith("HTTP/1.1 415"),"raw route rejects JSON upload content type");
         check(invoke(server,"POST","/api/media/upload",base+binary+auth,"tiny").startsWith("HTTP/1.1 413"),"raw route validates file size");
         check(invoke(server,"POST","/api/media/upload",base+binary+auth+"Transfer-Encoding: chunked\r\n",raw).startsWith("HTTP/1.1 403"),"raw route rejects ambiguous chunk framing");
+        check(invoke(server,"GET","/api/sources",base+auth,"").startsWith("HTTP/1.1 200"),"authenticated sources listing");
+        String saveSources=new JSONObject().put("expectedRevision",0).put("mutationId","valid-mutation-src").put("config",new JSONObject().put("sources",new JSONArray())).toString();
+        check(invoke(server,"POST","/api/sources",base+origin+auth,saveSources).startsWith("HTTP/1.1 200"),"authenticated sources mutation");
+        String testSource=new JSONObject().put("type","youtube").put("url","https://www.youtube.com/watch?v=dQw4w9WgXcQ").toString();
+        check(invoke(server,"POST","/api/sources/test",base+origin+auth,testSource).startsWith("HTTP/1.1 200"),"authenticated source testing");
         pairing.revoke();check(invoke(server,"POST","/api/media/upload",base+binary+auth,raw).startsWith("HTTP/1.1 401")&&host.uploads==1,"revoked upload blocked");
         check(invoke(server,"POST","/api/config",base+origin+auth,save).startsWith("HTTP/1.1 401")&&host.saves==1,"revoke prevents writes");
+        check(invoke(server,"GET","/api/sources",base+auth,"").startsWith("HTTP/1.1 401"),"revoke prevents sources reads");
         System.out.println("PASS: "+count+" actual editor-handler assertions (in-memory transport; no device/network claim)");
     }
 }
