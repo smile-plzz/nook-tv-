@@ -19,7 +19,7 @@ Implemented source includes:
 
 ## Evidence and remaining work
 
-Local headless regressions pass; see [build status](docs/BUILD-STATUS.md) for exact current counts and hosted evidence. The latest source is a release candidate, not target-device acceptance.
+Verification passed: 654 Java assertions, both browser-state suites, hosted APK packaging, 64 Android runtime assertions and eight same-key F4-to-F5 upgrade checks. See [build status](docs/BUILD-STATUS.md) for exact commits and CI links. The latest source is a release candidate, not target-device acceptance.
 
 The owner briefly confirmed smooth app launch and tried remote paths, but default Home/restart failed in that earlier trial. The tested APK/firmware was not recorded. Real iPhone Safari retained-file transfer, target-TV Home/reboot/recovery, HEVC/HDR/portrait clips, two-hour stability and low-RAM measurements remain required.
 

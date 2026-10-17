@@ -32,4 +32,6 @@ Run both PowerShell suites, Gradle assembleDebug/assembleAndroidTest, and Androi
 
 The emulator workflow seeds the F4 APK with dashboard/favorites, sources, media bytes/organization/thumbnail, history and appearance settings, updates to F5 with the same runner signing key, then verifies preservation before smoke tests. This proves fixture continuity in the emulator, not owner signing-key possession or physical-device compatibility.
 
-Current executed counts and CI URLs belong in BUILD-STATUS. Target-TV performance, real Safari, portrait/HEVC/HDR, Home/reboot and original-launcher recovery remain pending. F6 remains conditional; no receiver/Drive implementation is added.
+Verified at `16118d7`: 654 local Java assertions, both browser-state suites, hosted APK/test build, 64 Android storage/activity assertions and eight same-key upgrade checks. See [BUILD-STATUS](BUILD-STATUS.md) for exact CI links. The focus fixture waits for layout and uses actual D-pad input before asserting focus; it does not treat a rejected offscreen request as a refresh failure.
+
+Target-TV performance, real Safari, portrait/HEVC/HDR, Home/reboot and original-launcher recovery remain pending. F6 remains conditional; no receiver/Drive implementation is added.

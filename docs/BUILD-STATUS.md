@@ -8,7 +8,12 @@ Version code is 5. Implemented candidate capabilities include Home-role setup, v
 
 **Executed locally:** 654 Java assertions (22 core, 485 QR structure, 8 refresh scheduling, 23 Home role, 38 HTTP handler, 43 document/viewing, 35 source/feed), plus editor and media browser-state suites. Source failure reproduction now passes as a regression requiring preserved drafts and honest partial-save reporting.
 
-Local Gradle execution is blocked by this session's native-library/loopback-socket restrictions. Hosted build and emulator/upgrade evidence will be recorded below when complete. No successful local APK build is claimed.
+**Verified application/test source commit:** `16118d7bd33f05b81906a665fdbdbe2d4dcb997b`.
+
+- [Hosted APK + instrumentation build](https://github.com/smile-plzz/nook-tv-/actions/runs/39050796498): passed. Artifact: nook-tv-0.4.5-f5-hardening.
+- [Android API-35 runtime and same-key upgrade](https://github.com/smile-plzz/nook-tv-/actions/runs/39050796495): passed **64 storage/activity assertions** and **8 F4-to-F5 upgrade-preservation assertions**. Covers source focus/deferred refresh, hidden Home rows, bounded thumbnails, upload, storage recovery and production playback.
+- All production and Android-test Java sources also compile locally against cached SDK/dependencies. Full local Gradle packaging is blocked by this session's native/loopback restrictions; hosted packaging is the APK evidence.
+- The final follow-up only records documentation evidence; application and test source are unchanged from the verified commit. QR tests verify matrix structure; real iPhone QR scanning remains part of device acceptance.
 
 Physical owner evidence remains limited to the earlier trial: tried apps/remote paths worked; visual approval incomplete; default Home/restart returned to the existing environment. Real Safari transfer and target-device acceptance remain pending. Same-key owner APK continuity still requires access to the original private signing key; independently generated CI debug APKs are not promised as upgrades to the owner's installed preview.
 
