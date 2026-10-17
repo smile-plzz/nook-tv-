@@ -1,6 +1,6 @@
 # Development plan and verification gates
 
-2026-10-17 | Planning deliverable; no implementation is claimed.
+2026-10-17 | Documentation baseline v1.0 finalized. **Implementation is on hold until the owner explicitly says to start building.**
 
 ## Delivery policy
 
@@ -34,7 +34,8 @@ Gate: APK installs on the owner's TV; diagnostics and remote checklist captured;
 ## Milestone 2 — Personal dashboard and editor
 
 Tasks:
-- Durable layout, favorite apps, links, background and empty states.
+- Durable layout, favorite apps, links, background, editable personal collections and empty states.
+- Remote-only first run, pin first app, browser Save for later without interrupting playback.
 - Browser editing, preview, Save acknowledgement and revision conflicts.
 - Typed config validation and versioned import/export.
 - History privacy controls, paired-device management and cache quotas.
@@ -82,7 +83,7 @@ Gate: no claim of account-wide YouTube history sync, universal ad blocking or in
 ## Milestone 6 — Personalization, launcher and release
 
 Tasks:
-- NowShowing-derived mood discovery and editable interest collections.
+- NowShowing-derived mood discovery and suggestions built on the existing editable P0 collections.
 - Optional weather/photos, bounded refresh and offline states.
 - Explicit opt-in home-launcher test with documented rollback.
 - Accessibility and 2 GB performance profiling.
@@ -123,3 +124,15 @@ Do not add tests that only repeat implementation details. Unit tests prove contr
 - Known limitations and owner acceptance:
 
 Until populated, these are pending checks, not passed tests.
+
+## Release boundaries and dependencies
+
+M1 proves compatibility; it is not a production release. M2-M4 plus the P0 YouTube handoff from M1/M5 form the first usable release. M5 web protection and M6 launcher resolve broader requested scope. Do not label the project complete simply because a P0 APK is available.
+
+Implementation sequence may bring YouTube favorites forward into M2. P0 YouTube does not wait for optional API browsing or embedded-player research. P0 collections likewise do not wait for the mood engine.
+
+No third-party source is marked supported before successful actual-TV playback and D-pad checks. Device-test results may narrow supported sources, but any change to the user's core requested experience must be recorded and discussed rather than hidden behind a fallback.
+
+## Handoff and acceptance
+
+Read [implementation handoff](IMPLEMENTATION-HANDOFF.md) before execution. [Acceptance scenarios](ACCEPTANCE.md) map requirement IDs to observable checks. The docs-only review validates these documents; it does not execute any milestone above or populate device evidence.
