@@ -1,6 +1,6 @@
 # Implementation status — 0.1.0-m1
 
-Baseline 2.1 navigation note: this archive is unchanged evidence for M1. The later [TV feedback](TV-FEEDBACK.md) and [F1-F6 plan](DEVELOPMENT-PLAN.md) govern current work, including the unresolved default Home and requested dynamic content. Do not use this archive's next-execution or old capability statements as current scope.
+Baseline 2.2 navigation note: this archive is unchanged evidence for M1. The later [TV feedback](TV-FEEDBACK.md) and [F1-F6 plan](DEVELOPMENT-PLAN.md) govern current work, including the unresolved default Home and requested dynamic content. Do not use this archive's next-execution or old capability statements as current scope.
 
 > Historical M1 evidence, preserved after the 17 October 2026 launcher pivot. The current product is a default Home with Apple TV-style aesthetics and iPhone-media convenience; see [PRD](PRD.md). Any standalone-first or optional-launcher wording below describes the old milestone, not current scope. No historical result proves the new launcher.
 
@@ -38,7 +38,6 @@ No app runtime, emulator, target-TV, media-source, LAN pairing, two-hour playbac
 ## Explicit M1 limitations
 
 - Platform player is a compatibility probe. It does not implement Media3, DASH, track selection, live/DVR state or production per-episode history. Only the most recent native VOD is resumed; previously watched entries are not a complete library.
-- No NowShowing catalog/provider source is enabled or verified. Selected upstream commit: `5fc8b1870a028b2ee84bf324a11f6529e85f22a1`. No upstream source/assets copied because a root reuse license was not found during inspection.
 - No default launcher change, Brave-specific launch option, ad filtering, widgets, art cache, metadata credentials, backup import, arbitrary media proxy or cloud service.
 - YouTube handoff and generic HTTPS links are supported; comprehensive video/channel/playlist URL canonicalization is later work.
 - Config writes are atomic. Mutation receipts and browser credentials last only for the app process; reconnect/restart requires reading current revision. Lost-save retry is idempotent within that process (128 recent mutation IDs). Export covers dashboard configuration only.
@@ -48,4 +47,4 @@ No app runtime, emulator, target-TV, media-source, LAN pairing, two-hour playbac
 
 ## Next execution
 
-Run [device tests](DEVICE-TEST.md), record actual evidence, and address compatibility failures. Independent work can proceed on data models, Media3 dependency setup and catalog adapters without treating pending device tests as passes. Keep all P0/P1 requests in the PRD; this preview does not reduce them.
+Run [device tests](DEVICE-TEST.md), record actual evidence, and address compatibility failures. Independent work can proceed on data models, Media3 dependency setup and launcher/phone flows without treating pending device tests as passes. Keep all P0/P1 requests in the PRD; this preview does not reduce them.

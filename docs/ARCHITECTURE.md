@@ -1,10 +1,10 @@
 # Launcher architecture and implementation boundaries
 
-Baseline 2.1 | 17 October 2026 | Current foundation plus proposed launcher design
+Baseline 2.2 | 17 October 2026 | Current foundation plus proposed launcher design
 
 ## Current implementation versus target
 
-Delivered 0.2 uses one Java/native-Views Android app, Media3 1.11.1, AtomicFile JSON dashboard/viewing stores, native OMDb client, and a foreground paired HTTP editor. It has no default-Home flow, iPhone receiver/file transfer or Drive integration. That describes 0.2. The 0.3 [prototype](LAUNCHER-PREVIEW.md) adds LauncherTile/LauncherApps, native grid/direct launching and an opt-in HOME alias. 0.4 adds ReceivedMediaStore, authenticated binary upload and stable local playback; see [transfer guide](PHONE-TRANSFER-PREVIEW.md). Remaining receiver/Drive boundaries below are design targets.
+Delivered 0.2 uses one Java/native-Views Android app, Media3 1.11.1, AtomicFile JSON dashboard/viewing stores and a foreground paired HTTP editor. It has no default-Home flow, iPhone receiver/file transfer or Drive integration. That describes 0.2. The 0.3 [prototype](LAUNCHER-PREVIEW.md) adds LauncherTile/LauncherApps, native grid/direct launching and an opt-in HOME alias. 0.4 adds ReceivedMediaStore, authenticated binary upload and stable local playback; see [transfer guide](PHONE-TRANSFER-PREVIEW.md). Remaining receiver/Drive boundaries below are design targets.
 
 Keep working persistence, migrations, validation, pairing and playback. Do not rewrite in Kotlin/Compose or migrate to Room solely for appearance. The earlier Room/Compose proposal is superseded by retaining the current stack unless evidence justifies a separate change. Refactor MainActivity into clear responsibilities as needed for the launcher; module proliferation is not a goal.
 
@@ -22,7 +22,7 @@ Keep working persistence, migrations, validation, pairing and playback. Do not r
 | Drive adapter, conditional | Scoped authorization, file discovery/selection, fresh resolution, revocation and seek behavior |
 | Editor | Foreground pairing, revision-safe layout mutations, portable dashboard backup |
 | Settings/diagnostics | Home setup/recovery, sources/accounts, data controls and compatibility tools |
-| Catalog/web adapters | Optional NowShowing/YouTube discovery and source-specific web routes; lower priority |
+| Content/web adapters | Selected YouTube/RSS sources and generic saved-link routes; no embedded movie-discovery service |
 
 ## Android Home contract
 
@@ -74,7 +74,7 @@ TV remains authoritative. Same-LAN code plus explicit TV approval, authenticated
 
 Stop listener/clients on leaving foreground. Browser preserves drafts, displays disconnected and re-reads revision before an explicit retry. No automatic mutation replay. A default launcher returning often does not justify a hidden background server.
 
-Current dashboard backup is schema-v1/v2 JSON only: layout/links/apps/collections/background. It excludes viewing history, source templates, episode selections, credentials and media bytes. Import previews/replaces after confirmation and keeps a pre-import recovery snapshot. Any new export schema must explicitly state included references, absent local media and account reconnection; it must not falsely imply copying phone video payloads.
+Current dashboard backup is schema-v1/v2 JSON only: layout/links/apps/collections/background. It excludes viewing history, credentials and media bytes. Import previews/replaces after confirmation and keeps a pre-import recovery snapshot. Any new export schema must explicitly state included references, absent local media and account reconnection; it must not falsely imply copying phone video payloads.
 
 HTTP is not encrypted; pairing does not provide on-path confidentiality. Do not provision provider or Google secrets through it. Evaluate protected transport before a credential-bearing extension. Background images remain bounded JPEG derivatives decoded off main thread.
 
@@ -84,7 +84,7 @@ Native player saves about every 5 seconds and on pause/seek/stop where allowed. 
 
 Route contract: nativeDirect, retainedLocal, Drive-authorized, webEmbed, externalApp/browser or phoneSession. Declare canReplay, canObservePosition, canSeek and whether a sender/account/receiver is required. Handoff or iframe load is not PlayingConfirmed. TimedOut is inconclusive. Validate any web event's exact origin/session/media identity; no privileged bridge or cross-origin scraping.
 
-NowShowing remains selected upstream behavior reference. No automatic provider enablement or copied code/assets while license is unresolved. YouTube/Spotify playback remains with actual eligible handlers initially; richer integration requires its own tested contract.
+Independent installed TV apps own their own catalogs/accounts/provider logic. Nook has no special streaming-platform dependency. YouTube/Spotify playback uses eligible handlers; richer integration requires its own tested contract.
 
 ## Isolation, privacy and distribution
 
@@ -94,7 +94,7 @@ No silent account/history/Photos import. Shared media visibility is owner-contro
 
 Keep app ID com.ismail.nooktv.compat and signing continuity unless a separately justified migration is approved. Build remains pinned Gradle 8.13 / AGP 8.13.2 / SDK 36, target 35, min 26. Same-key upgrades must preserve user state. CI is evidence of build/contracts; real TV and iPhone decide integration acceptance.
 
-## Baseline 2.1 implementation boundaries
+## Baseline 2.2 implementation boundaries
 
 Introduce HomeSetupCoordinator for alias eligibility, role availability/request result, settings fallback and status recheck on return. Android API 29+ role methods require guards; availability and actual default resolution are separate from enabling the alias. A generic chooser cannot promise persistent default selection. Record unresolved/unsupported states, preserve normal app entry and safe rollback. See F1 in [plan](DEVELOPMENT-PLAN.md).
 
@@ -103,3 +103,9 @@ Add a SourceRepository and small provider adapters (YouTube selected source, pub
 Proposed dashboard v3 stores module/source configuration and portable appearance preferences. Migrate v1/v2 with atomic recovery and stable IDs; preserve existing local appearance settings on first migration. Keep cached content/status, secrets, received files/index and measured viewing data outside exported configuration. Never persist signed URLs as identity. Schema limits and validation must be implemented on TV and companion together; old backups remain importable, future backups are rejected safely by older code.
 
 Companion areas share the Home model, accessible reordering and explicit revision-safe saves. QR contains only the pairing address, not a credential. New browser media metadata/mutation/thumbnail/play endpoints are proposed, not present: define authorization, privacy, bounded responses, idempotency and destructive confirmations before adding them. Existing server foreground lifecycle remains. See [companion](COMPANION-SPEC.md).
+
+## Retired-feature compatibility
+
+Embedded movie search, service-key UI, provider templates and their client classes are removed. Dashboard schema remains v2: migrate the old route marker to browser on load/import, preserving each saved URL/ID, collection membership and revision. Validation rejects new writes using that marker. Unsafe legacy URLs remain rejected; input backups are not mutated. Recovery imports use the same normalization. The compatibility marker is the only remaining source reference to the retired route and is not an enabled feature.
+
+RetiredFeatureCleanup runs on the IO executor and clears the obsolete private credential preference file, exact retired settings, per-title preferences and generated files from the old private response-cache directory. It never recursively deletes data, clears the whole launcher preferences, or touches received-media storage/history/dashboard. Repeating the cleanup is safe. No remote movie-metadata requests remain.

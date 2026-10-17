@@ -16,6 +16,22 @@ public final class SmokeInstrumentation extends Instrumentation {
     private void check(boolean condition,String description) { assertions++; if(!condition) throw new AssertionError(description); }
     private void onMain(Runnable run) { final Throwable[] failure={null}; runOnMainSync(()->{ try { run.run(); } catch(Throwable e) { failure[0]=e; } }); if(failure[0]!=null) throw new AssertionError("Main-thread test operation failed",failure[0]); }
     private View awaitTag(Activity activity,String tag) throws Exception { final View[] found={null};long deadline=System.currentTimeMillis()+10000;while(System.currentTimeMillis()<deadline){onMain(()->found[0]=activity.getWindow().getDecorView().findViewWithTag(tag));if(found[0]!=null)return found[0];Thread.sleep(80);}throw new AssertionError("Missing view: "+tag); }
+    private void retiredSettings(Context context) throws Exception {
+        long revision=new DashboardStore(context).read().getLong("revision");
+        context.getSharedPreferences("secrets",0).edit().putString("retired-token","test-only").commit();
+        android.content.SharedPreferences settings=context.getSharedPreferences("nook",0);
+        settings.edit().putString("sources","[]").putInt("tt1234567-season",2).putBoolean("unrelated-test",true).commit();
+        java.io.File directory=new java.io.File(context.getCacheDir(),"metadata");directory.mkdirs();
+        java.io.File generated=new java.io.File(directory,"1a2b.json"),unrelated=new java.io.File(directory,"keep.txt");
+        try(java.io.FileOutputStream out=new java.io.FileOutputStream(generated)){out.write(1);}
+        try(java.io.FileOutputStream out=new java.io.FileOutputStream(unrelated)){out.write(1);}
+        RetiredFeatureCleanup.run(context);RetiredFeatureCleanup.run(context);
+        check(context.getSharedPreferences("secrets",0).getAll().isEmpty(),"retired service credential removed");
+        check(!settings.contains("sources")&&!settings.contains("tt1234567-season")&&settings.getBoolean("unrelated-test",false),"retired preferences removed without clearing launcher settings");
+        check(!generated.exists()&&unrelated.exists(),"cleanup removes only owned response-cache files");
+        check(new DashboardStore(context).read().getLong("revision")==revision,"repeated cleanup preserves dashboard");
+        unrelated.delete();directory.delete();settings.edit().remove("unrelated-test").commit();
+    }
     private void loopbackTransfer(Activity activity,Context context,byte[] fixture)throws Exception{
         java.lang.reflect.Field field=MainActivity.class.getDeclaredField("pairing");field.setAccessible(true);Pairing pairing=(Pairing)field.get(activity);String code=pairing.begin(),ticket=pairing.request(code,"Instrumentation");pairing.approve();String[] session=pairing.claim(ticket);String id="44444444444444444444444444444444";
         String headers="POST /api/media/upload HTTP/1.1\r\nHost: 127.0.0.1:8765\r\nOrigin: http://127.0.0.1:8765\r\nX-Nook-Client: editor-v1\r\nAuthorization: Bearer "+session[0]+"\r\nX-Nook-CSRF: "+session[1]+"\r\nContent-Type: application/octet-stream\r\nX-Nook-Filename: Loopback%20video.mp4\r\nX-Nook-Upload-Id: "+id+"\r\nContent-Length: "+fixture.length+"\r\n\r\n";
@@ -27,7 +43,7 @@ public final class SmokeInstrumentation extends Instrumentation {
     @Override public void onStart() {
         Bundle result=new Bundle();
         try {
-            Context context=getTargetContext(); DashboardStore store=new DashboardStore(context); JSONObject original=store.read(); long revision=original.getLong("revision");
+            Context context=getTargetContext();retiredSettings(context); DashboardStore store=new DashboardStore(context); JSONObject original=store.read(); long revision=original.getLong("revision");
             JSONObject input=new JSONObject(original.toString()).put("title","নুক | Android storage test"); String mutation="instrumentation-save-0001";
             JSONObject saved=store.save(input,revision,mutation); check(saved.getLong("revision")==revision+1,"acknowledgement follows persistence");
             DashboardStore reopened=new DashboardStore(context); check(reopened.read().getString("title").equals(input.getString("title")),"AtomicFile survives repository recreation");
@@ -53,7 +69,7 @@ public final class SmokeInstrumentation extends Instrumentation {
             onMain(()->check(activity.getWindow().getDecorView().findViewWithTag("shared-phone")!=null,"Shared and Recent destination reachable"));
             sendKeyDownUpSync(KeyEvent.KEYCODE_BACK);waitForIdleSync();
             onMain(()->{ View root=activity.getWindow().getDecorView(); View home=root.findViewWithTag("nav-home"); check(home!=null&&home.isFocusable(),"native Home navigation"); root.findViewWithTag("nav-settings").performClick(); }); waitForIdleSync();
-            onMain(()->{ View root=activity.getWindow().getDecorView(); check(root.findViewWithTag("settings-collections")!=null,"collections settings reachable"); root.findViewWithTag("settings-collections").performClick(); }); waitForIdleSync();
+            onMain(()->{ View root=activity.getWindow().getDecorView();check(root.findViewWithTag("nav-watch")==null&&root.findViewWithTag("settings-api")==null&&root.findViewWithTag("settings-source")==null&&root.findViewWithTag("settings-cache")==null,"Settings excludes retired discovery and provider setup"); check(root.findViewWithTag("settings-collections")!=null,"collections settings reachable"); root.findViewWithTag("settings-collections").performClick(); }); waitForIdleSync();
             onMain(()->check(activity.getWindow().getDecorView().findViewWithTag("manage-add")!=null,"remote-only collection creation reachable"));
             sendKeyDownUpSync(KeyEvent.KEYCODE_BACK); waitForIdleSync(); onMain(()->check(activity.getWindow().getDecorView().findViewWithTag("tile-phone")!=null,"Back returns to launcher Home"));
             onMain(()->activity.getWindow().getDecorView().findViewWithTag("nav-settings").performClick());waitForIdleSync();

@@ -15,6 +15,12 @@ public final class DashboardDocument {
     public static JSONObject migrate(JSONObject old) throws JSONException {
         JSONObject s=new JSONObject(old.toString());
         if(s.optInt("schemaVersion")==1) { if(s.length()!=5) throw new IllegalArgumentException("Unknown v1 fields"); JSONObject d=defaults(); for(String f:new String[]{"collections","background","accent","sections"}) s.put(f,d.get(f)); s.put("schemaVersion",2); }
+        // Keep old saved links and collection identities without reviving a retired route.
+        JSONArray links=s.optJSONArray("links");
+        if(links!=null) for(int i=0;i<links.length();i++) {
+            JSONObject link=links.optJSONObject(i);
+            if(link!=null&&"catalog".equals(link.optString("route"))) link.put("route","browser");
+        }
         validate(s); return s;
     }
     private static void require(boolean yes,String m) { if(!yes) throw new IllegalArgumentException(m); }
@@ -30,8 +36,8 @@ public final class DashboardDocument {
         for(int i=0;i<links.length();i++) {
             JSONObject l=links.getJSONObject(i); String id=text(l,"id",80),route=text(l,"route",20),url=text(l,"url",2048);
             require(l.length()==4&&id.matches("[a-zA-Z0-9-]{1,80}")&&ids.add(id)&&!text(l,"label",100).trim().isEmpty(),"Invalid or duplicate link");
-            require(Arrays.asList("native","web","browser","youtube","catalog").contains(route),"Invalid route"); Targets.https(url);
-            if(route.equals("youtube")) require(Targets.youtube(url),"Invalid YouTube URL"); if(route.equals("catalog")) require(Targets.imdb(url)!=null,"Invalid catalog URL"); refs.add(id);
+            require(Arrays.asList("native","web","browser","youtube").contains(route),"Invalid route"); Targets.https(url);
+            if(route.equals("youtube")) require(Targets.youtube(url),"Invalid YouTube URL"); refs.add(id);
         }
         Set<String> pinned=new HashSet<>(); for(int i=0;i<apps.length();i++) { String c=apps.getString(i); require(c.matches("[a-zA-Z0-9_.]+/[a-zA-Z0-9_.$]+")&&pinned.add(c),"Invalid or duplicate app"); refs.add("app:"+c); }
         Set<String> usedGroups=new HashSet<>(); int count=0;

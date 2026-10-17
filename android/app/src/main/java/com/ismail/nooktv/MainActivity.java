@@ -36,7 +36,6 @@ public final class MainActivity extends Activity implements EditorServer.Host {
     private PlayerView playerView;
     private ViewingStore viewing;
     private ReceivedMediaStore received;
-    private CatalogClient catalog;
     private String playingId="";
     private final ExecutorService io=Executors.newSingleThreadExecutor();
     private int generation;
@@ -60,7 +59,8 @@ public final class MainActivity extends Activity implements EditorServer.Host {
 
     @Override public void onCreate(Bundle b) {
         super.onCreate(b); getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-        store=new DashboardStore(this); history=getSharedPreferences("nook",MODE_PRIVATE); focusKey=history.getString("lastFocus",""); homeScrollY=history.getInt("homeScroll",0); viewing=new ViewingStore(this); received=new ReceivedMediaStore(this); catalog=new CatalogClient(this); server=new EditorServer(pairing,this);
+        store=new DashboardStore(this); history=getSharedPreferences("nook",MODE_PRIVATE); focusKey=history.getString("lastFocus",""); homeScrollY=history.getInt("homeScroll",0); viewing=new ViewingStore(this); received=new ReceivedMediaStore(this); server=new EditorServer(pairing,this);
+        io.execute(()->RetiredFeatureCleanup.run(this));
         if(getIntent().hasCategory(Intent.CATEGORY_HOME)) { focusKey=""; homeScrollY=0; } home();
     }
     @Override protected void onNewIntent(Intent intent) { super.onNewIntent(intent);setIntent(intent);if(intent.hasCategory(Intent.CATEGORY_HOME)){focusKey="";returnFocus="";homeScrollY=0;home();} }
@@ -119,7 +119,7 @@ public final class MainActivity extends Activity implements EditorServer.Host {
             JSONObject item=config.optJSONArray("sections").optJSONObject(n);if(!item.optBoolean("visible"))continue;String id=item.optString("id");
             if(id.equals("resume"))historyRow(true);
             if(id.equals("recent"))historyRow(false);
-            if(id.equals("saved")&&config.optJSONArray("links").length()>0){section("Saved for later");LinearLayout r=row();JSONArray links=config.optJSONArray("links");for(int i=0;i<links.length();i++){JSONObject l=links.optJSONObject(i);r.addView(mediaTile(l.optString("label"),l.optString("route").equals("catalog")?"View title":"Open saved link","link-"+l.optString("id"),()->openLink(l),()->linkOptions(l)));}}
+            if(id.equals("saved")&&config.optJSONArray("links").length()>0){section("Saved for later");LinearLayout r=row();JSONArray links=config.optJSONArray("links");for(int i=0;i<links.length();i++){JSONObject l=links.optJSONObject(i);r.addView(mediaTile(l.optString("label"),"Open saved link","link-"+l.optString("id"),()->openLink(l),()->linkOptions(l)));}}
             if(id.equals("collections")){JSONArray groups=config.optJSONArray("collections");for(int i=0;i<groups.length();i++){JSONObject group=groups.optJSONObject(i);JSONArray members=group.optJSONArray("items");if(members.length()==0)continue;section(group.optString("label"));LinearLayout r=row();for(int j=0;j<members.length();j++){String ref=members.optString(j);if(ref.startsWith("app:")){String component=ref.substring(4);r.addView(mediaTile(appLabel(component),"Open app","group-"+group.optString("id")+"-"+j,()->launchApp(component),()->appOptions(component)));}else{JSONArray links=config.optJSONArray("links");for(int k=0;k<links.length();k++){JSONObject l=links.optJSONObject(k);if(l.optString("id").equals(ref))r.addView(mediaTile(l.optString("label"),"Open saved link","group-"+group.optString("id")+"-"+j,()->openLink(l),()->linkOptions(l)));}}}}}
         }
         root.post(()->{View found=root.findViewWithTag(oldFocus);if(found!=null)found.requestFocus();else focusFirstHome();homeScroll.scrollTo(0,homeScrollY);});
@@ -206,7 +206,7 @@ public final class MainActivity extends Activity implements EditorServer.Host {
         page("drive","Google Drive","Not connected");
         content.addView(text("Drive media access is planned",23,Color.WHITE));content.addView(text("This prototype cannot sign into Drive, browse your files or play private Drive videos. Account authorization and selected-file playback are a later integration. Your Google password is never requested here.",16,muted));content.addView(action("Back Home","drive-home",this::home));restore("drive-home");
     }
-    private void openLink(JSONObject link){String url=link.optString("url"),label=link.optString("label"),route=link.optString("route");if(route.equals("native"))play(url,label);else if(route.equals("web"))web(url,label);else if(route.equals("catalog"))details(Targets.imdb(url));else external(url,route);}
+    private void openLink(JSONObject link){String url=link.optString("url"),label=link.optString("label"),route=link.optString("route");if(route.equals("native"))play(url,label);else if(route.equals("web"))web(url,label);else external(url,route);}
     private void openHistory(JSONObject entry){String route=entry.optString("route");if(route.equals("local")){playReceived(entry.optString("id").replaceFirst("^local:",""));return;}if(route.equals("native"))play(entry.optString("url"),entry.optString("label"),entry.optString("id"));else if(route.equals("web"))web(entry.optString("url"),entry.optString("label"));else external(entry.optString("url"),route);}
     private void historyRow(boolean resume) {
         try {
@@ -264,7 +264,7 @@ public final class MainActivity extends Activity implements EditorServer.Host {
     }
     private void linkOptions(JSONObject link) {
         new AlertDialog.Builder(this).setTitle(link.optString("label")).setItems(new String[]{"Open • "+link.optString("route"),"Remove from saved links"},(d,n)->{
-            if(n==0) { String u=link.optString("url"), label=link.optString("label"), route=link.optString("route"); if(route.equals("native")) play(u,label); else if(route.equals("web")) web(u,label); else if(route.equals("catalog")) details(Targets.imdb(u)); else external(u,route); }
+            if(n==0) { String u=link.optString("url"), label=link.optString("label"), route=link.optString("route"); if(route.equals("native")) play(u,label); else if(route.equals("web")) web(u,label); else external(u,route); }
             else try { JSONObject c=current(); JSONArray a=c.getJSONArray("links"), next=new JSONArray(); for(int i=0;i<a.length();i++) if(!a.getJSONObject(i).getString("id").equals(link.optString("id"))) next.put(a.getJSONObject(i)); c.put("links",next); DashboardDocument.removeReference(c,link.optString("id")); store.save(c,c.getLong("revision"),UUID.randomUUID().toString()); home(); } catch(Exception e) { message("Could not remove link."); }
         }).show();
     }
@@ -376,21 +376,17 @@ public final class MainActivity extends Activity implements EditorServer.Host {
         content.addView(action("Google Drive · Not connected","settings-drive",this::drive));
         content.addView(action(history.getBoolean("showDrive",false)?"Hide Drive tile":"Show Drive tile","settings-drive-tile",()->{history.edit().putBoolean("showDrive",!history.getBoolean("showDrive",false)).apply();settings();}));
         content.addView(action(history.getBoolean("reducedMotion",false)?"Enable focus animation":"Reduce motion","settings-motion",()->{history.edit().putBoolean("reducedMotion",!history.getBoolean("reducedMotion",false)).apply();settings();}));
-        content.addView(action("Movies & series","nav-watch",this::watch));
         content.addView(action("Playback checks","settings-samples",this::samples));
         content.addView(action("Manage collections","settings-collections",this::manageCollections));
         content.addView(action("Viewing history","settings-history",this::allHistory));
         content.addView(action("Saved video storage","settings-media",this::mediaStorage));
-        content.addView(action("Metadata API key","settings-api",this::metadataKey));
-        content.addView(action("Manage web sources","settings-source",this::manageSources));
-        content.addView(action("Clear metadata cache","settings-cache",()->io.execute(()->{ catalog.clear(); handler.post(()->message("Metadata cache cleared. Your dashboard and viewing history stay.")); })));
         if(store.canRecover()) content.addView(action("Undo last dashboard import","settings-undo",()->new AlertDialog.Builder(this).setTitle("Restore the pre-import dashboard?").setMessage("Current dashboard changes will be replaced. A recovery snapshot is kept.").setPositiveButton("Restore",(d,n)->io.execute(()->{ try { store.undoImport(); handler.post(this::home); } catch(Exception e) { handler.post(()->message("Could not restore snapshot.")); } })).setNegativeButton("Cancel",null).show()));
         content.addView(action("Add a saved link","settings-add",this::addLink));
         content.addView(action(viewing.ledger.paused()?"Resume recording playback history":"Pause playback history","history-pause",()->{ try { viewing.ledger.pause(!viewing.ledger.paused()); persistViewing(); settings(); } catch(Exception e) { message("Could not change history setting."); } }));
         content.addView(action("Clear viewing history","history-clear",()->new AlertDialog.Builder(this).setTitle("Clear viewing history?").setMessage("Saved links and favorite apps stay.").setPositiveButton("Clear",(d,n)->{ try { viewing.ledger.clear(); persistViewing(); message("Viewing history cleared."); } catch(Exception e) { message("Could not clear history."); } }).setNegativeButton("Cancel",null).show()));
         content.addView(action("Revoke paired browsers","settings-revoke",()->{ pairing.revoke(); message("Browser sessions revoked."); }));
         content.addView(action("Device diagnostics","settings-diagnostics",this::diagnostics));
-        content.addView(text("Collections, layout, backgrounds and dashboard backup/restore are available in the PC editor. Provider playback and target-TV acceptance are still unverified.",16,muted));
+        content.addView(text("Collections, layout, backgrounds and dashboard backup/restore are available in the PC editor. Target-TV acceptance is still incomplete.",16,muted));
     }
     private ComponentName homeAlias(){return new ComponentName(this,"com.ismail.nooktv.HomeEntry");}
     private boolean homeEnabled(){return getPackageManager().getComponentEnabledSetting(homeAlias())==PackageManager.COMPONENT_ENABLED_STATE_ENABLED;}
@@ -433,7 +429,7 @@ public final class MainActivity extends Activity implements EditorServer.Host {
         dialog.setOnShowListener(d->dialog.getButton(-1).setOnClickListener(v->{ try { JSONObject c=current(); c.getJSONArray("collections").put(new JSONObject().put("id",UUID.randomUUID().toString()).put("label",input.getText().toString().trim()).put("items",new JSONArray())); store.save(c,c.getLong("revision"),UUID.randomUUID().toString()); dialog.dismiss(); home(); } catch(Exception e) { input.setError("Use a name of 1-80 characters; maximum 20 collections."); } })); dialog.show();
     }
     private void manageCollections() {
-        page("collections","Your collections","Collections group your saved links, titles and favorite apps. Removing a collection keeps those saved items.");
+        page("collections","Your collections","Collections group your saved links and favorite apps. Removing a collection keeps those saved items.");
         JSONArray groups=current().optJSONArray("collections");
         for(int i=0;i<groups.length();i++) { JSONObject g=groups.optJSONObject(i); String id=g.optString("id"); content.addView(action(g.optString("label"),"manage-"+id,()->new AlertDialog.Builder(this).setTitle(g.optString("label")).setItems(new String[]{"Choose items","Rename","Remove collection"},(d,n)->{ if(n==0) collectionMembers(id); else if(n==1) renameCollection(id); else new AlertDialog.Builder(this).setTitle("Remove this collection?").setMessage("Saved links and app favorites remain.").setPositiveButton("Remove",(x,y)->{ try { JSONObject c=current(); JSONArray old=c.getJSONArray("collections"),next=new JSONArray(); for(int k=0;k<old.length();k++) if(!old.getJSONObject(k).getString("id").equals(id)) next.put(old.getJSONObject(k)); c.put("collections",next); store.save(c,c.getLong("revision"),UUID.randomUUID().toString()); manageCollections(); } catch(Exception e) { message("Could not remove collection."); } }).setNegativeButton("Cancel",null).show(); }).show())); }
         content.addView(action("+ Create collection","manage-add",this::createCollection));
@@ -450,51 +446,6 @@ public final class MainActivity extends Activity implements EditorServer.Host {
             if(refs.isEmpty()) { message("Save a link or pin an app first."); return; } JSONObject target=group;
             new AlertDialog.Builder(this).setTitle(group.getString("label")).setMultiChoiceItems(labels.toArray(new String[0]),selected,(d,n,checked)->selected[n]=checked).setPositiveButton("Save",(d,n)->{ try { JSONArray next=new JSONArray(); for(int i=0;i<selected.length;i++) if(selected[i]) next.put(refs.get(i)); target.put("items",next); store.save(config,config.getLong("revision"),UUID.randomUUID().toString()); home(); } catch(Exception e) { message("Dashboard changed. Reopen this collection and try again."); } }).setNegativeButton("Cancel",null).show();
         } catch(Exception e) { message("Could not read collection."); }
-    }
-    private void metadataKey() {
-        EditText input=new EditText(this); input.setHint("Your OMDb API key"); input.setInputType(android.text.InputType.TYPE_CLASS_TEXT|android.text.InputType.TYPE_TEXT_VARIATION_PASSWORD);
-        AlertDialog dialog=new AlertDialog.Builder(this).setTitle("OMDb metadata key").setMessage("Optional. Enables movie and series metadata; does not provide streaming availability. Stored only on this TV. Sent over HTTPS to OMDb; excluded from browser editing and backups.").setView(input).setPositiveButton("Save",null).setNeutralButton("Remove",(d,n)->{ getSharedPreferences("secrets",0).edit().remove("omdb").apply(); catalog.clear(); }).setNegativeButton("Cancel",null).create();
-        dialog.setOnShowListener(d->dialog.getButton(-1).setOnClickListener(v->{ String key=input.getText().toString().trim(); if(!key.matches("[a-zA-Z0-9]{4,64}")) { input.setError("Check your API key."); return; } getSharedPreferences("secrets",0).edit().putString("omdb",key).apply(); io.execute(catalog::clear); dialog.dismiss(); message("Metadata key saved on TV."); })); dialog.show();
-    }
-    private void configureSource() {
-        LinearLayout fields=vertical(); EditText label=new EditText(this),movie=new EditText(this),series=new EditText(this); label.setHint("Source name"); movie.setHint("HTTPS movie URL with {imdb}"); series.setHint("HTTPS series URL with {imdb}, {season}, {episode}"); fields.addView(label); fields.addView(movie); fields.addView(series);
-        AlertDialog dialog=new AlertDialog.Builder(this).setTitle("Add your permitted web source").setMessage("No source is preverified. Use the site's documented IMDb embed URL contract. Playback remains a web route without timestamp resume.").setView(fields).setPositiveButton("Save",null).setNegativeButton("Cancel",null).create();
-        dialog.setOnShowListener(d->dialog.getButton(-1).setOnClickListener(v->{ try { String name=label.getText().toString().trim(),m=movie.getText().toString().trim(),t=series.getText().toString().trim(); if(name.isEmpty()||name.length()>60) throw new IllegalArgumentException(); SourceTemplate.build(m,"tt1234567",0,0); if(!t.isEmpty()) SourceTemplate.build(t,"tt1234567",1,1); JSONArray sources=new JSONArray(history.getString("sources","[]")); if(sources.length()>=10) throw new IllegalArgumentException(); sources.put(new JSONObject().put("id",UUID.randomUUID().toString()).put("label",name).put("movie",m).put("series",t)); history.edit().putString("sources",sources.toString()).apply(); dialog.dismiss(); message("Source saved as unverified."); } catch(Exception e) { movie.setError("Check the name, HTTPS URL placeholders, or 10-source limit."); } })); dialog.show();
-    }
-    private void manageSources() {
-        page("sources","Web sources","Owner-configured HTTPS sources. No provider has confirmed compatibility on your TV.");
-        try { JSONArray sources=new JSONArray(history.getString("sources","[]"));
-            for(int i=0;i<sources.length();i++) { JSONObject source=sources.getJSONObject(i); String id=source.getString("id"); content.addView(action(source.optString("label")+" | Unverified","source-"+id,()->new AlertDialog.Builder(this).setTitle(source.optString("label")).setMessage("Remove this source? Saved titles and viewing history remain.").setPositiveButton("Remove",(d,n)->{ try { JSONArray current=new JSONArray(history.getString("sources","[]")),next=new JSONArray(); for(int j=0;j<current.length();j++) if(!current.getJSONObject(j).getString("id").equals(id)) next.put(current.getJSONObject(j)); history.edit().putString("sources",next.toString()).apply(); manageSources(); } catch(Exception e) { message("Could not remove source."); } }).setNegativeButton("Cancel",null).show())); }
-        } catch(Exception e) { content.addView(text("Source configuration is unavailable.",16,muted)); }
-        content.addView(action("+ Add web source","source-add",this::configureSource));
-    }
-    private void watch() {
-        page("watch","Watch something good","Native movie and series browsing. Metadata requires your optional OMDb key in TV Settings.");
-        LinearLayout form=new LinearLayout(this); EditText query=new EditText(this); query.setHint("Movie or series title"); query.setSingleLine(true); form.addView(query,new LinearLayout.LayoutParams(0,-2,1)); form.addView(action("Search","catalog-search",()->searchCatalog(query.getText().toString(),1))); content.addView(form);
-        content.addView(text("Your saved movie and series titles are in Saved for later. No provider is assumed to work until tested.",16,muted));
-    }
-    private void searchCatalog(String query,int pageNumber) {
-        page("search","Results for “"+query+"”","Loading metadata..."); int token=generation; TextView status=text("Searching...",16,muted); content.addView(status);
-        io.execute(()->{ try { JSONObject result=catalog.search(query,pageNumber); handler.post(()->{ if(token!=generation) return; status.setText(result.optBoolean("nookStale")?"Offline cached metadata":"Metadata results; playback availability is separate."); JSONArray matches=result.optJSONArray("Search"); if(matches==null) return; for(int i=0;i<matches.length();i++) { JSONObject title=matches.optJSONObject(i); String id=title.optString("imdbID"); if(!id.matches("tt[0-9]{7,10}")) continue; content.addView(action(title.optString("Title")+" | "+title.optString("Year")+" | "+title.optString("Type"),"result-"+id,()->details(id))); } if(pageNumber<20&&result.optInt("totalResults")>pageNumber*10) content.addView(action("Next page","results-next",()->searchCatalog(query,pageNumber+1))); }); } catch(Exception e) { handler.post(()->{ if(token==generation) { status.setText(e.getMessage()); content.addView(action("Settings","catalog-settings",this::settings)); content.addView(action("Try again","catalog-retry",()->searchCatalog(query,pageNumber))); } }); } });
-    }
-    private void details(String id) {
-        page("detail","Title details","Loading..."); int token=generation; TextView status=text("Loading metadata...",16,muted); content.addView(status);
-        io.execute(()->{ try { JSONObject title=catalog.detail(id,0); handler.post(()->{ if(token!=generation) return; status.setText(title.optString("Title")+" ("+title.optString("Year")+")\n"+title.optString("Genre")+" | "+title.optString("Runtime")+"\n\n"+title.optString("Plot")+(title.optBoolean("nookStale")?"\nCached metadata":"")); boolean series=title.optString("Type").equals("series"); int season=history.getInt(id+"-season",1),episode=history.getInt(id+"-episode",1); TextView selection=text(series?"Selected S"+season+" E"+episode:"Movie",18,muted); content.addView(selection);
-            if(series) content.addView(action("Choose season / episode","select-episode",()->chooseEpisode(id,title)));
-            content.addView(action("Play / choose source","catalog-play",()->sourceOptions(id,title.optString("Title"),series)));
-            content.addView(action("Save for later","catalog-save",()->{ try { JSONObject c=current(); String linkId="imdb-"+id; JSONArray links=c.getJSONArray("links"); for(int i=0;i<links.length();i++) if(links.getJSONObject(i).getString("id").equals(linkId)) { message("Already saved."); return; } links.put(new JSONObject().put("id",linkId).put("label",title.optString("Title")).put("url","https://www.imdb.com/title/"+id+"/").put("route","catalog")); store.save(c,c.getLong("revision"),UUID.randomUUID().toString()); message("Saved. Add it to a collection from Home or the PC editor."); } catch(Exception e) { message("Could not save title."); } }));
-            content.addView(action("Open IMDb information","imdb-info",()->external("https://www.imdb.com/title/"+id+"/","browser")));
-        }); } catch(Exception e) { handler.post(()->{ if(token==generation) { status.setText(e.getMessage()); content.addView(action("Settings","detail-settings",this::settings)); } }); } });
-    }
-    private void chooseEpisode(String id,JSONObject title) {
-        LinearLayout fields=vertical(); NumberPicker season=new NumberPicker(this),episode=new NumberPicker(this); season.setMinValue(1); season.setMaxValue(Math.max(1,Math.min(100,title.optInt("totalSeasons",30)))); season.setValue(Math.min(season.getMaxValue(),history.getInt(id+"-season",1))); episode.setMinValue(1); episode.setMaxValue(1000); episode.setValue(Math.min(1000,history.getInt(id+"-episode",1))); fields.addView(text("Season",16,muted)); fields.addView(season); fields.addView(text("Episode (verify availability with the source)",16,muted)); fields.addView(episode);
-        new AlertDialog.Builder(this).setTitle("Choose episode").setView(fields).setPositiveButton("Save",(d,n)->{ history.edit().putInt(id+"-season",season.getValue()).putInt(id+"-episode",episode.getValue()).apply(); details(id); }).setNegativeButton("Cancel",null).show();
-    }
-    private void sourceOptions(String id,String label,boolean series) {
-        try { JSONArray sources=new JSONArray(history.getString("sources","[]")); List<JSONObject> available=new ArrayList<>(); List<String> names=new ArrayList<>(); for(int i=0;i<sources.length();i++) { JSONObject source=sources.getJSONObject(i); if(series&&source.optString("series").isEmpty()) continue; available.add(source); names.add(source.optString("label")+" | Unverified web source"); }
-            if(available.isEmpty()) { message("Configure a permitted web source in TV Settings first. No provider is enabled by default."); return; }
-            new AlertDialog.Builder(this).setTitle("Choose source | Progress unavailable").setItems(names.toArray(new String[0]),(d,n)->{ try { JSONObject source=available.get(n); int season=series?history.getInt(id+"-season",1):0,episode=series?history.getInt(id+"-episode",1):0; String url=SourceTemplate.build(source.getString(series?"series":"movie"),id,season,episode); history.edit().putString(id+"-source",source.getString("id")).apply(); web(url,label+(series?" | S"+season+" E"+episode:"")); } catch(Exception e) { message("This source does not support the selected title or episode contract."); } }).show();
-        } catch(Exception e) { message("Source configuration is unreadable."); }
     }
     @Override public JSONObject restore(JSONObject input,long revision,String mutation) throws Exception { if(!foreground) throw new IOException(); JSONObject normalized=DashboardDocument.migrate(input); validateBackground(normalized); JSONObject result=store.restore(normalized,revision,mutation); handler.post(()->{ if(screen.equals("home")) home(); }); return result; }
     private void validateBackground(JSONObject input) throws Exception {

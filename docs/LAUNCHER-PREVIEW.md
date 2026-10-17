@@ -18,7 +18,7 @@ This is the first working interface after the default-Home / Apple TV-style pivo
 
 With no pinned favorites, Home suggests up to four installed apps with YouTube/Spotify preferred when present. A YouTube website fallback appears only when there is no pinned layout and no YouTube favorite; it is not a fake installed app. Existing pinned layouts are preserved. App artwork is loaded off the UI thread into a bounded cache. Missing apps stay editable.
 
-Home keeps From iPhone, All Apps and Shared & Recent reachable. Continue Watching and nonempty saved/collection rows retain the existing data. Old samples-section settings remain in backups for compatibility, but samples no longer render on Home. Samples, diagnostics, pairing and movie catalog access are in Settings. Favorites are always the top grid; section order applies to the remaining content rows.
+Home keeps From iPhone, All Apps and Shared & Recent reachable. Continue Watching and nonempty saved/collection rows retain the existing data. Old samples-section settings remain in backups for compatibility, but samples no longer render on Home. Samples, diagnostics and pairing are in Settings. Favorites are always the top grid; section order applies to the remaining content rows.
 
 Settings offers reduced motion and an optional Drive preview tile, hidden by default. The Drive screen states that account/file access is not implemented.
 

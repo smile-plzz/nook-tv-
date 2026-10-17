@@ -2,7 +2,7 @@
 
 TV feedback partially validates the direction, not the finished design. Next: coherent premium/minimal styling and a small configurable content shelf; see [dynamic Home](DYNAMIC-HOME.md) for card states/tokens and [companion design](COMPANION-SPEC.md) for browser/mobile flows. All new behavior below is planned unless recorded in [build status](BUILD-STATUS.md).
 
-Baseline 2.1 | 17 October 2026 | Proposed implementation of the confirmed Apple TV-style default-home direction
+Baseline 2.2 | 17 October 2026 | Proposed implementation of the confirmed Apple TV-style default-home direction
 
 0.4 implements the paired-browser retained-file path and local playback/storage controls; see [current transfer guide](PHONE-TRANSFER-PREVIEW.md). AirPlay, QR setup and Drive account access are not delivered by this slice. The design below still includes planned behavior.
 
@@ -19,7 +19,7 @@ Borrow Apple TV's clarity and focus behavior; keep Nook's own branding, artwork 
 - From iPhone utility tile stays easy to find. Drive is optional and labeled with setup status; Spotify only if wanted/installed.
 - Continue Watching appears only for measured, resumable sessions.
 - Shared & Recent emphasizes phone media with source/availability labels.
-- Owner-selected YouTube/RSS content cards and collections below; optional NowShowing rows do not overtake the launcher. Hide empty modules and keep content refresh from stealing focus.
+- Owner-selected YouTube/RSS content cards and collections below; independent streaming apps stay in the app grid rather than creating embedded movie-discovery rows. Hide empty modules and keep content refresh from stealing focus.
 
 No playback samples, diagnostics, API setup, pair codes, empty collections or routine management buttons on Home. Keep one unobtrusive Customize action. All Apps and Settings remain reachable regardless of hidden rows.
 

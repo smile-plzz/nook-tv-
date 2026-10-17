@@ -1,6 +1,6 @@
 # Build and install | 0.4.0-phone-preview
 
-Baseline 2.1 documentation does not produce a new APK. PR #5 is merged; latest preview remains 0.4.0-phone-preview. A brief owner TV trial found default Home did not take effect (Home/restart returned elsewhere); do not treat installation or enabling the alias as success. Record exact installed version and setup screen, then follow [device checklist](DEVICE-TEST.md). The role-prompt improvement is planned in F1, not present in this APK.
+Baseline 2.2 documentation does not produce a new APK. PR #5 is merged; latest preview remains 0.4.0-phone-preview. A brief owner TV trial found default Home did not take effect (Home/restart returned elsewhere); do not treat installation or enabling the alias as success. Record exact installed version and setup screen, then follow [device checklist](DEVICE-TEST.md). The role-prompt improvement is planned in F1, not present in this APK.
 
 ## Scope of this APK
 
@@ -33,7 +33,7 @@ The old SDK-only M1 pipeline cannot compile Media3. `scripts/build-offline.ps1` 
 ./scripts/test-editor.ps1 -AndroidSdk 'C:\path\to\Android\Sdk'
 ```
 
-These execute 82 core/document/source/viewing/HTTP-boundary assertions plus editor/transfer browser-state and syntax checks. Handler/document tests need `sources;android-35` for the SDK's AOSP JSON implementation. The helper strips annotations only in ignored test output; SDK sources are not redistributed in the APK.
+These execute core/document/migration/viewing/HTTP-boundary assertions plus editor/transfer browser-state and syntax checks. Current counts are recorded in build status; historical preview counts are not the current suite size. Handler/document tests need `sources;android-35` for the SDK's AOSP JSON implementation. The helper strips annotations only in ignored test output; SDK sources are not redistributed in the APK.
 
 The Compatibility APK workflow builds the app/test APKs and runs those checks. The Android runtime smoke workflow installs them in an API-35 emulator and runs a custom platform Instrumentation entrypoint:
 
@@ -72,12 +72,6 @@ On TV choose Pair PC. Open the displayed local HTTP address from a PC on the sam
 
 Keep Nook foregrounded. Opening external apps stops the editor listener, closes its clients and cancels pending pairing; the browser keeps its draft. Reopen Nook and reload latest data before applying changes. Codes expire; sessions can be revoked on TV. No router forwarding, provider credentials or cloud account are needed.
 
-## Metadata / sources
-
-TV Settings accepts an optional OMDb key for native search/details. It is not editable over HTTP and is not exported. It supplies metadata, not streaming rights or availability.
-
-For a site you can use, TV Settings accepts its documented HTTPS movie/series URL templates with `{imdb}` and, for series, `{season}`/`{episode}`. IMDb IDs are never substituted into TMDB fields. No provider is enabled by default or marked tested. Choose source at title details; opaque websites retain selected episode/recent opens without timestamp claims.
-
 ## Rollback
 
 Select and verify the original launcher in system Home settings before removing Nook or uninstalling the preview; keep ordinary app access available for recovery. A lower-version-code APK may require uninstalling. Export your dashboard first if preserving it matters. Dashboard exports do not copy retained video bytes; uninstalling/clearing app storage deletes them, so preserve phone originals separately. Full target-TV acceptance remains pending; CI and emulator results are recorded separately from physical-device evidence.
@@ -87,3 +81,7 @@ Select and verify the original launcher in system Home settings before removing 
 Settings > Default Home setup enables Nook's Home option and opens system Home settings. Select Nook there if supported. Installation alone does not change your default. To revert, select the original Home first, then Remove Nook from Home choices. Removal is blocked while Nook is detected as default. Ordinary app entry remains. Exact settings vary by TV; do not execute speculative package-disabling/ADB commands or assume BlueStacks settings match the TV. Record Home from other apps, wake/reboot and successful rollback before launcher acceptance.
 
 From iPhone now links to the paired-browser saved-file workflow. See [transfer guide](PHONE-TRANSFER-PREVIEW.md). This is not AirPlay, Cast or screen mirroring. Drive sign-in/media access is likewise not present. See [phone and Drive feasibility](PHONE-AND-DRIVE.md).
+
+## Current-source scope change
+
+Embedded movie discovery and its key/provider settings are removed from current source. The last delivered 0.4 APK still reflects its original features until a replacement is built and installed. Upgrade using the same signing key; do not uninstall to apply this cleanup. Legacy saved URLs are retained as ordinary browser bookmarks and collection references stay intact. Only retired private service settings/cache are cleaned. Nook can pin/launch any separately installed TV app through All Apps.

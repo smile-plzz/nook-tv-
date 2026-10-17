@@ -8,7 +8,7 @@ The owner has not tested Nook file transfer, but wants to explore it as a useful
 
 The [0.4 transfer guide](PHONE-TRANSFER-PREVIEW.md) describes current binary upload, saved-copy playback and storage controls. Other protocol/account routes below remain proposals. No real iPhone/owner-TV acceptance is claimed.
 
-The owner wants native-feeling iPhone video sharing and a simple way back to previously shared media. Google Drive access is requested if feasible. These outcomes are now tracked separately from NowShowing and arbitrary website playback.
+The owner wants native-feeling iPhone video sharing and a simple way back to previously shared media. Google Drive access is requested if feasible. These outcomes remain separate from arbitrary website playback and independent installed apps.
 
 ## Phone routes must remain distinct
 

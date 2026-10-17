@@ -1,12 +1,12 @@
 # Implementation handoff after TV feedback
 
-Baseline 2.1 | 17 October 2026
+Baseline 2.2 | 17 October 2026
 
 ## Build the next useful experience
 
 Nook is a default TV Home with Apple TV-inspired clarity, a stable favorite-app grid, a few configurable fresh-content cards, and convenient return to personal videos. The owner tested briefly on TV: apps and tried remote paths worked, appearance was only partially satisfactory, and Home/restart returned to the existing environment. File transfer/resume were not tested. Do not reset this evidence to "TV testing pending" or inflate it to acceptance.
 
-Main includes merged PR #5 at 247671613c9552fa9f67eda179a67528a680ddcf. Latest delivered APK is 0.4.0-phone-preview. The current task updates documentation only; no role prompt, dynamic sources or new companion controls are delivered by it.
+Main includes merged PR #5 at 247671613c9552fa9f67eda179a67528a680ddcf. Latest delivered APK is 0.4.0-phone-preview. The current revision removes embedded movie discovery and adds compatibility cleanup; no role prompt, dynamic sources or redesigned companion controls are delivered by it. A replacement owner APK is not yet delivered.
 
 ## Read order
 
@@ -28,6 +28,6 @@ Test the existing Safari video route early; F4 improves guidance, QR address, th
 
 Retain Java/native Views, AtomicFile, Media3 and pairing/revision contracts; refactor responsibilities instead of rewriting the stack. Keep com.ismail.nooktv.compat and owner signing continuity; never commit keys. Gradle 8.13 / AGP 8.13.2 / compile 36 / target 35 / min 26 remain. Current schema v2 stays unchanged until an implemented, tested migration. Hosted CI can resolve dependencies when local execution cannot.
 
-Preserve 82 local assertions and browser state checks, plus 43 Android smoke assertions. None proves the new design or target-TV default behavior. No system-package disabling, no automatic account/Photos import, no provider credentials through LAN HTTP, no fake external progress. Foreground-only editor/transfer lifecycle remains unless deliberately redesigned. Dashboard backup excludes retained files and history.
+Preserve relevant regression scenarios and browser-state checks; update counts after retiring obsolete contracts and adding upgrade/cleanup tests. None proves the new design or target-TV default behavior. No system-package disabling, no automatic account/Photos import, no provider credentials through LAN HTTP, no fake external progress. Foreground-only editor/transfer lifecycle remains unless deliberately redesigned. Dashboard backup excludes retained files and history.
 
-On each slice update capability status, tests, user guide and release evidence. A working APK or green CI does not close P0. Historical M1/0.3 and NowShowing audit evidence remain historical; their old task sequence does not govern this work.
+On each slice update capability status, tests, user guide and release evidence. A working APK or green CI does not close P0. Historical M1/0.3 evidence remains historical; old task sequences do not govern this work. Movie-discovery features belong in independent installed apps, discovered and launched generically.
