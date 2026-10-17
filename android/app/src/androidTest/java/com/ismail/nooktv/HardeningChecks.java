@@ -22,8 +22,12 @@ final class HardeningChecks {
         FeedParser.FeedItem a=new FeedParser.FeedItem("a","A","https://www.youtube.com/watch?v=dQw4w9WgXcQ","","",""),b=new FeedParser.FeedItem("b","B","https://www.youtube.com/watch?v=aqz-KE-bpKQ","","","");
         cache.put("focus-source",new ContentSourceManager.CachedSource("focus-source","youtube:"+url,System.currentTimeMillis(),false,"Updated",new FeedParser.FeedResult("Focus fixture",Arrays.asList(a,b))));
         onMain(test,()->invoke(activity,"home"));test.waitForIdleSync();
-        test.setInTouchMode(false);
-        View[] before={null};onMain(test,()->{before[0]=activity.getWindow().getDecorView().findViewWithTag(tag);check(before[0]!=null,"source item has stable identity tag");check(before[0].requestFocus(),"source tile accepts remote focus");check(before[0].hasFocus(),"source tile holds focus before refresh");});test.waitForIdleSync();
+        // View.post() restoration and the first traversal must finish before offscreen focus requests.
+        long focusDeadline=android.os.SystemClock.uptimeMillis()+5000;boolean[] laidOut={false};
+        do{onMain(test,()->{View v=activity.getWindow().getDecorView().findViewWithTag(tag);laidOut[0]=v!=null&&v.isLaidOut()&&v.isShown()&&v.hasWindowFocus();});if(!laidOut[0])Thread.sleep(50);}while(!laidOut[0]&&android.os.SystemClock.uptimeMillis()<focusDeadline);
+        check(laidOut[0],"source shelf is laid out in the foreground window");
+        test.sendKeyDownUpSync(KeyEvent.KEYCODE_DPAD_DOWN);test.waitForIdleSync();
+        View[] before={null};onMain(test,()->{before[0]=activity.getWindow().getDecorView().findViewWithTag(tag);check(before[0]!=null,"source item has stable identity tag");check(before[0].requestFocus(),"source tile accepts remote focus; touchMode="+before[0].isInTouchMode()+", size="+before[0].getWidth()+"x"+before[0].getHeight());check(before[0].hasFocus(),"source tile holds focus before refresh");});test.waitForIdleSync();
         cache.put("focus-source",new ContentSourceManager.CachedSource("focus-source","youtube:"+url,System.currentTimeMillis(),false,"Updated",new FeedParser.FeedResult("Focus fixture",Arrays.asList(b,a))));
         onMain(test,()->{invoke(activity,"renderSourceShelves");View root=activity.getWindow().getDecorView();check(root.findViewWithTag(tag)==before[0]&&before[0].hasFocus(),"feed refresh defers reorder while focused; sameView="+(root.findViewWithTag(tag)==before[0])+", actualFocus="+(root.findFocus()==null?"none":root.findFocus().getTag()));root.findViewWithTag("nav-settings").requestFocus();});test.waitForIdleSync();
         onMain(test,()->{View root=activity.getWindow().getDecorView();check(root.findViewWithTag(tag)!=before[0],"deferred feed update applies after focus leaves shelf");check(root.findViewWithTag("nav-settings").hasFocus(),"refresh does not steal focus from navigation");});
