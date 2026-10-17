@@ -18,6 +18,8 @@ jobs:
         with:
           node-version: '22'
       - uses: android-actions/setup-android@v3
+        with:
+          packages: platform-tools
       - name: Install pinned SDK packages
         shell: pwsh
         run: sdkmanager 'platforms;android-35' 'build-tools;35.0.1' 'sources;android-35'
