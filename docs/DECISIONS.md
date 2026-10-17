@@ -1,8 +1,8 @@
 # Decisions and scope record
 
-Baseline 2.0 | 17 October 2026 | Supersedes dashboard-first baseline
+Baseline 2.1 | 17 October 2026 | Supersedes dashboard-first baseline
 
-Owner instructions govern; [PRD](PRD.md) is current scope. A design proposal is not an implemented capability. Baseline 2.0 was documentation-only. Subsequent owner authorization produced the 0.3 [launcher prototype](LAUNCHER-PREVIEW.md); it is not full device acceptance.
+Owner instructions govern; [PRD](PRD.md) is current scope. A design proposal is not an implemented capability. Baseline 2.1 was documentation-only. Subsequent owner authorization produced the 0.3 [launcher prototype](LAUNCHER-PREVIEW.md); it is not full device acceptance.
 
 ## Confirmed direction
 
@@ -27,10 +27,10 @@ Owner instructions govern; [PRD](PRD.md) is current scope. A design proposal is 
 |---|---|---|
 | E01 | Retain Java/native Views, Media3 and versioned AtomicFile stores | Existing implementation; replaces earlier default Compose/Room proposal |
 | E02 | Redesign Home before more catalog expansion | New sequencing proposal reflecting confirmed priorities |
-| E03 | One-OK app launch, hold OK/context alternative for management | UX design; not yet implemented throughout |
+| E03 | One-OK app launch, hold OK/context alternative for management | Implemented for launcher apps; owner partially confirms navigation; added shortcuts remain planned |
 | E04 | Local-first core; same-LAN companion, no always-on PC/account | Retained design; Drive/services optional |
-| E05 | Retained Safari file-transfer prototype plus receiver capability assessment | Proposed first durable phone path; not owner acceptance of upload instead of AirPlay |
-| E06 | Home alias/system default selection with restore path | Proposed implementation, firmware-dependent; no automatic package disabling |
+| E05 | Retained Safari file-transfer prototype plus receiver capability assessment | Implemented in 0.4, awaiting owner transfer test; external AirPlay integration now optional under D18 |
+| E06 | Home alias/system default selection with restore path | Alias/settings path implemented; observed Home outcome fails; role prompt planned under E15 |
 | E07 | Foreground editor retained; background receiving separately assessed | No assumption that launcher status changes server lifecycle |
 | E08 | Drive selected-file access first; scope/picker proof before folders | Conditional design; tokens never through editor HTTP |
 | E09 | Native progress vs external opens vs live phone sessions | Required truthfulness; no universal cross-app history |
@@ -55,3 +55,19 @@ Earlier owner messages authorized implementation and continuing without immediat
 
 Exact iPhone source/gesture (AirPlay, Photos, Files, app cast or URL), actual receiver/TV support, selected Drive authorization UX, transfer storage/transport limits and exact launcher layout metrics need validation. They do not block documenting or prototyping the confirmed default-home and Apple TV direction. Any narrower substitute for a core outcome must be explicit and owner-accepted.
 
+## Baseline 2.1 decisions after physical-TV feedback
+
+| ID | Decision | Status / consequence |
+|---|---|---|
+| D13 | Basic remote/app paths feel functional; appearance only partially meets intent | Owner observation from a few minutes, not exhaustive acceptance |
+| D14 | Default Home and restart return to existing environment | Observed failed outcome; exact destination/setup/firmware unknown; F1 highest priority |
+| D15 | Add dynamic YouTube cards and mobile/PC-configurable RSS | Confirmed request; DYN-01/02 P0; start selected public sources, exact provider design proposed |
+| D16 | Modern, minimal and premium across Home and companion | Confirmed; shared visual language, helpful controls and inline guidance; PC-03 |
+| D17 | Explore and refine retained iPhone videos | Confirmed interest; upload not owner-tested; personal shelf proposal PHONE-03 |
+| D18 | External AirPlay replay/integration is optional | Explicit owner instruction; AIR-01 conditional, not a core release blocker |
+| E13 | F1-F6 replaces L0-L5 execution order | Plan updated; historical preview stage names retained as evidence |
+| E14 | Small Nook-rendered content modules, bounded refresh, no autoplay | Engineering/design proposal; no arbitrary widget framework |
+| E15 | Home role request plus capability fallback and verified status | Proposed fix path; current code only enables alias/opens settings |
+| E16 | Schema v3 for source/module settings with migration | Proposed only; 0.4 remains v2, media/cache/secrets separate |
+
+This request authorizes analysis and repository documentation updates. The resulting documentation PR does not implement the planned features or claim a new build. All earlier engineering proposals must be read with current implementation evidence in [build status](BUILD-STATUS.md), and the [feedback record](TV-FEEDBACK.md) supersedes earlier claims that no TV observations exist.

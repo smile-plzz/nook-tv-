@@ -24,3 +24,7 @@ NowShowing-Stream at commit `5fc8b1870a028b2ee84bf324a11f6529e85f22a1`: https://
 The 17 October 2026 documentation pivot introduces no new runtime dependency or copied code/assets. Apple TV is a visual/interaction reference, not an Apple product integration; use Nook branding and licensed artwork, not copied Apple assets. Projectivy, FLauncher and Dispatch are research references, not incorporated dependencies.
 
 AirPlay/Cast receiver code, transfer libraries, Google Drive/Google sign-in SDKs, Spotify clients, icon packs and filtering engines are not added by the documentation change. Review actual dependency licenses, protocol/service requirements and distribution terms before selecting or bundling any integration. No receiver certification, Apple/Google affiliation or universal interoperability is claimed.
+
+## TV-feedback refinement: planned sources only
+
+Baseline 2.1 documentation adds no libraries, feed content, thumbnail assets or receiver code. Planned YouTube/RSS modules use independent Nook rendering. Before implementation, check provider API/branding/cache requirements and publisher image/excerpt rights; attribute sources and avoid republishing full articles. XML/QR/image helpers, if added, require a dependency/license inventory update. No Apple icons/fonts or arbitrary third-party widget code are authorized by the Apple-like visual direction. See [dynamic Home](docs/DYNAMIC-HOME.md).

@@ -1,5 +1,7 @@
 # NowShowing-Stream source audit
 
+Baseline 2.1 priority note: [TV feedback](TV-FEEDBACK.md) promotes refined Home, selected YouTube/RSS modules and companion usability ahead of catalog expansion. This audit remains historical; its Room/DataStore mapping is superseded by current Java/AtomicFile [architecture](ARCHITECTURE.md). No provider has been newly tested by this documentation update.
+
 > Scope after the 17 October 2026 pivot: NowShowing-Stream remains the selected streaming reference, but catalog/provider work is secondary to default Home, the Apple TV-style app grid and iPhone sharing/reopen. The source findings below are historical inspection evidence, not proof of launcher, receiver, Drive or provider support. Current priorities are in [PRD](PRD.md).
 
 Reviewed: 2026-10-17.
@@ -81,4 +83,3 @@ Not inspected yet: full API/mood implementation, complete routing/pages, license
 ## Documentation baseline 1.0
 
 This targeted audit is retained as evidence, not expanded into a claim of full review. [Requirements analysis](REQUIREMENTS-ANALYSIS.md) records its product implications; [acceptance](ACCEPTANCE.md) defines future integration checks. Documentation finalization has not tested any provider or changed the upstream source.
-

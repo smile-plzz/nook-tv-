@@ -1,6 +1,8 @@
 # Requirements analysis and launcher pivot
 
-Baseline 2.0 | 17 October 2026 | Reconciles original intent, 0.2 implementation and BlueStacks feedback
+The second feedback round is now physical-TV evidence: a usable but incomplete visual foundation, working tried remote/app paths, failed observed Home/reboot outcome and demand for useful dynamic cards plus a richer companion. Upload/resume were not tested. See [feedback analysis](TV-FEEDBACK.md) for exact interpretation and questions.
+
+Baseline 2.1 | 17 October 2026 | Reconciles original intent, 0.2 implementation and BlueStacks feedback
 
 ## What changed
 
@@ -14,8 +16,8 @@ The implementation optimized infrastructure and editable dashboard breadth befor
 |---|---|---|
 | Default Home | Confirmed | LAUNCH-01 promoted to P0 |
 | Apple TV-style aesthetics and experience | Confirmed | App grid, artwork and remote focus central; exact layout proposed |
-| YouTube | Confirmed main use | One-click app access first, richer integration retained later |
-| iPhone video sharing | Confirmed core use | From iPhone plus at least one tested route; protocol not yet selected |
+| YouTube | Confirmed main use plus dynamic content | Preserve app access; selected-source video cards now near-term, richer embedded player later |
+| iPhone video sharing | Confirmed core use | Retained Safari transfer implemented but not owner-tested; external receiver protocol still unknown |
 | Returning to phone-shared media | Confirmed core use | Durable identity, replayability and progress capability |
 | Spotify | Tentative | Optional shortcut; no assumed account integration |
 | Browser | Rare use | Secondary access; avoid browser-first Home |
@@ -28,7 +30,7 @@ The implementation optimized infrastructure and editable dashboard breadth befor
 
 ## Priority reconciliation
 
-The earlier standalone-first baseline made launcher support P1 and placed discovery before everyday navigation. That ordering is superseded. Launcher, recognizable app grid and phone-media return are P0. NowShowing/provider work, richer YouTube and Brave/filtering remain requested P1 work. Mood/weather/widgets become optional P2. Spotify/Drive do not become mandatory accounts for Home.
+The earlier standalone-first baseline made launcher support P1 and placed discovery before everyday navigation. That ordering is superseded. Launcher, recognizable app grid and phone-media return are P0. NowShowing/provider work, richer YouTube browsing/embedded-player evaluation and Brave/filtering remain requested P1 work; selected-source YouTube cards are separately promoted to P0. Selected YouTube/RSS modules are now P0 (DYN-01/02); mood/weather and arbitrary widget hosting remain P2. Spotify/Drive do not become mandatory accounts for Home.
 
 The pivot baseline was documentation-only, then the owner merged it and requested the next steps. The 0.3 [prototype](LAUNCHER-PREVIEW.md) now implements grid/direct-app and initial Home setup. 0.4 now adds the [retained-file workflow](PHONE-TRANSFER-PREVIEW.md); real iPhone/Safari acceptance, AirPlay and Drive remain future work. Follow the new sequence.
 
@@ -68,3 +70,10 @@ Research supports the pivot; it does not authorize copying launcher code/assets 
 
 Design decisions remain in [DECISIONS](DECISIONS.md), measurable outcomes in [PRD](PRD.md), and delivery order in [plan](DEVELOPMENT-PLAN.md).
 
+## Approach after the TV trial
+
+Address reliability and desirability together: fix the supported default-Home selection flow, refine a small coherent layout, then connect a few useful sources through a companion that is easy to use. More widgets alone would not solve elegance; more animation would not establish premium quality. Freshness, direct actions, predictable focus and fast access are the useful changes.
+
+Source inspection found an actionable Home gap: MainActivity currently enables the alias and opens ACTION_HOME_SETTINGS but does not request ROLE_HOME. This is a missing path, not a proven sole cause of the owner's result. Android documents role availability checks and a user-consent request; actual TV support must be tested. See [RoleManager](https://developer.android.com/reference/android/app/role/RoleManager) and [Home settings](https://developer.android.com/reference/android/provider/Settings#ACTION_HOME_SETTINGS).
+
+Official [YouTube playlist retrieval](https://developers.google.com/youtube/v3/docs/playlistItems/list) supports chosen playlists but explicitly excludes Watch Later/watch history. Therefore selected channels/playlists with precise video actions are the practical first scope. No personal-recommendation scraping or opaque progress import is assumed. The detailed proposal and primary references are in [dynamic Home](DYNAMIC-HOME.md).

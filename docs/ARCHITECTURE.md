@@ -1,6 +1,6 @@
 # Launcher architecture and implementation boundaries
 
-Baseline 2.0 | 17 October 2026 | Current foundation plus proposed launcher design
+Baseline 2.1 | 17 October 2026 | Current foundation plus proposed launcher design
 
 ## Current implementation versus target
 
@@ -94,3 +94,12 @@ No silent account/history/Photos import. Shared media visibility is owner-contro
 
 Keep app ID com.ismail.nooktv.compat and signing continuity unless a separately justified migration is approved. Build remains pinned Gradle 8.13 / AGP 8.13.2 / SDK 36, target 35, min 26. Same-key upgrades must preserve user state. CI is evidence of build/contracts; real TV and iPhone decide integration acceptance.
 
+## Baseline 2.1 implementation boundaries
+
+Introduce HomeSetupCoordinator for alias eligibility, role availability/request result, settings fallback and status recheck on return. Android API 29+ role methods require guards; availability and actual default resolution are separate from enabling the alias. A generic chooser cannot promise persistent default selection. Record unresolved/unsupported states, preserve normal app entry and safe rollback. See F1 in [plan](DEVELOPMENT-PLAN.md).
+
+Add a SourceRepository and small provider adapters (YouTube selected source, public RSS/Atom, retained local media). Keep stable source/item IDs, explicit target action/capabilities, last successful fetch, bounded cache and error state. Home observes snapshots and applies updates without stealing focus. Network/parse/image work stays off the UI thread; no hidden polling service in the first version. Validate remote destinations at every redirect/resolution and disable unsafe XML features. Concrete limits and source decisions: [dynamic Home](DYNAMIC-HOME.md).
+
+Proposed dashboard v3 stores module/source configuration and portable appearance preferences. Migrate v1/v2 with atomic recovery and stable IDs; preserve existing local appearance settings on first migration. Keep cached content/status, secrets, received files/index and measured viewing data outside exported configuration. Never persist signed URLs as identity. Schema limits and validation must be implemented on TV and companion together; old backups remain importable, future backups are rejected safely by older code.
+
+Companion areas share the Home model, accessible reordering and explicit revision-safe saves. QR contains only the pairing address, not a credential. New browser media metadata/mutation/thumbnail/play endpoints are proposed, not present: define authorization, privacy, bounded responses, idempotency and destructive confirmations before adding them. Existing server foreground lifecycle remains. See [companion](COMPANION-SPEC.md).

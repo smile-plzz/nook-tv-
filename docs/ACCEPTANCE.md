@@ -1,6 +1,6 @@
 # Launcher acceptance and verification
 
-Baseline 2.0 | 17 October 2026 | Target-TV/iPhone execution pending
+Baseline 2.1 | 17 October 2026 | Brief target-TV observations recorded; comprehensive acceptance and iPhone transfer pending
 
 The 0.2 build has existing contract/emulator evidence, and the owner reports brief BlueStacks boot/exploration. Neither proves the new launcher experience. This document defines future acceptance against [PRD](PRD.md).
 
@@ -19,6 +19,11 @@ The 0.2 build has existing contract/emulator evidence, and the owner reports bri
 | A09 Drive/Spotify | DRIVE-01, DRIVE-02, SPOT-01 | Conditional P1 |
 | A10 Retained broader scope | NS-01, NS-02, NS-03, WEB-01, YT-02, YT-03, BLOCK-01, BLOCK-02 | P1 |
 | A11 Optional future | DISC-01, WIDGET-01, LANMEDIA-01, PROFILES-01, CLOUD-01 | P2, separate delivery |
+| A12 Dynamic Home | DYN-01, DYN-02, VIS-01, PERF-01 | P0 |
+| A13 Companion refinement | PC-03, PC-02, DATA-01 | P0 |
+| A14 Personal video shelf | PHONE-03, PHONE-02, RECENT-01, PRIV-01 | P0 |
+| A15 Optional receiver | AIR-01 | Optional P1 |
+| A16 Shortcut discoverability | NAV-02, NAV-01 | P0 |
 
 ## A01 - Useful first run
 
@@ -97,5 +102,32 @@ For each scenario record commit/APK hash, actual device, sender/receiver/source,
 
 First usable launcher requires all P0 outcomes and explicit owner experience review on target TV/iPhone. Later conditional/requested scope needs delivered behavior or owner-accepted limitations. No unresolved data loss, unauthorized access, launcher lockout or remote navigation trap is acceptable.
 
-Documentation links/coverage were validated. The 0.3 prototype passed 24 Android emulator storage/player/UI assertions; see [build status](BUILD-STATUS.md) for exact coverage. 0.4 adds retained-file/HTTP/production-player tests; current results are recorded in [build status](BUILD-STATUS.md). Physical TV/iPhone and full scenario acceptance remain unrun.
+Documentation links/coverage were validated. The 0.3 prototype passed 24 Android emulator storage/player/UI assertions; see [build status](BUILD-STATUS.md) for exact coverage. 0.4 adds retained-file/HTTP/production-player tests; current results are recorded in [build status](BUILD-STATUS.md). Brief physical-TV observations are recorded in [feedback](TV-FEEDBACK.md): partial visual/app/remote confirmation, observed default-Home failure. Real iPhone file transfer and comprehensive scenario acceptance remain unrun.
 
+## Baseline 2.1 scenario extensions
+
+### A04 extension: system selection, not just eligibility
+
+Test role available/not available, API below 29, selected/not selected, denied/canceled prompt, missing settings activity, return/recreation and unresolved status. Enabling alias or showing a dialog never counts as success. On target TV select Nook, press Home from YouTube and another app, wake/restart, then restore stock Home. Record actual handler/status and setup steps. Current owner report fails the outcome; root cause is not established.
+
+### A12 - Dynamic content
+
+Configure an owner-selected public YouTube channel/playlist and a public RSS/Atom source from phone/PC. New items appear after permitted refresh with title/source/time and thumbnails when available. Select a YouTube card and verify the exact video opens; external playback creates no invented resume. RSS detail is plain text with an explicit article route. Private/deleted/unavailable videos, empty feed, no credentials, quota, malformed XML, oversize content, disallowed destinations and redirects produce useful states without blocking app access.
+
+Exercise offline/stale/cache expiry, conditional fetch where supported, backoff/manual refresh bounds, source hide/remove/reorder and restart. Refresh while a card is focused: the selected identity and scroll do not jump. Malicious feed markup/XML cannot execute scripts, resolve external entities or fetch local admin services. A08 additionally uses 6 sources with 20 cached items each and bounded images; record actual fixture, timings and memory. No autoplay or perpetual animation.
+
+### A13 - Companion refinement
+
+On desktop and real iPhone Safari, pair, change Home order/visibility, configure/test each source, preview, explicitly save and see TV acknowledgement. Use touch, keyboard and button alternatives to drag. Inline examples/help work without hover. At narrow width/zoom no essential control is clipped. Test disconnect mid-edit, two-editor conflict, rejected source, revoked session, and schema v1/v2 upgrade/v3 export/import with original state preserved on failure. Preview cannot claim changes are saved before acknowledgement.
+
+### A14 - Personal video shelf
+
+First run A05/A06 on the actual phone/TV. Then test address QR and approval, title/thumbnail fallback/rotation, saved-copy receipt, storage-before-send, rename/collection/pin, privacy visibility, start over and confirmed deletion. Disconnect phone and restart Nook: saved file and measured resume remain valid. Collection/history deletion leaves bytes; explicit file deletion updates all references. Dashboard export contains no videos or secrets. Proposed browser controls cannot be marked passed before their endpoints exist.
+
+### A15 - Optional receiver
+
+Identify the reported YouTube-sharing receiver/protocol. Only a documented durable-reference/progress integration can earn replay/resume claims. Otherwise show Open receiver/Start sharing again. Failure to import an opaque external session is a documented optional limitation, not failure of retained-copy replay. Never label upload as AirPlay.
+
+### A16 - Shortcuts
+
+Every shortcut has a visible action; test hold-OK and its alternative on the owner's remote. Quick actions are reachable by D-pad, optional Menu key behaves consistently, Back restores focus, and system Home/volume behavior is not intercepted. Gesture-only or rapid-double-press actions cannot be essential.

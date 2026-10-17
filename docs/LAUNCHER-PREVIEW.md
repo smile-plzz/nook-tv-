@@ -1,5 +1,7 @@
 # Launcher prototype | 0.3.0-launcher-preview
 
+Historical 0.3 guide. Later brief TV feedback partially validates app launching/remote use and asks for stronger visual refinement and dynamic YouTube/RSS content. Home/restart returned to the existing environment in that trial; exact tested APK is unconfirmed. Current next work is [F1-F6](DEVELOPMENT-PLAN.md), with evidence in [TV feedback](TV-FEEDBACK.md). The screenshot and 0.3 capability statements below are historical, not a preview of the planned redesign.
+
 17 October 2026 | L0 prototype and initial L1 Home plumbing; not target-TV acceptance
 
 ## Emulator screenshot

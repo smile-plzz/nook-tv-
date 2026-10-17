@@ -1,70 +1,36 @@
-# Launcher development plan
+# Development plan after TV feedback
 
-Baseline 2.0 | 17 October 2026 | Supersedes old M1-M6 delivery order
+Baseline 2.1 | 17 October 2026 | Replaces L0-L5 execution order; historical labels remain in preview guides
 
-## Starting position
+## Starting point
 
-M1 compatibility and 0.2 dashboard/editor/player/catalog infrastructure exist. The owner briefly used 0.2 in BlueStacks, confirmed boot but rejected the overall experience as the intended launcher. Do not restart storage/pairing work or extend catalogs before correcting the home experience.
+PR #5 is merged at 247671613c9552fa9f67eda179a67528a680ddcf. Main contains 0.4 retained transfer plus the 0.3 launcher foundation. The owner's brief TV trial partially confirms smoothness, app launching and remote use; visual quality needs refinement and default Home fails in the observed use. File transfer/resume were not tested. Exact tested APK/firmware remain to be recorded. See [feedback](TV-FEEDBACK.md).
 
-0.3 implements L0/L1 prototype plumbing; 0.4 adds the first L2 retained-file upload/playback path. Visual review and real-device gates remain. Build work follows these stages; no deadline is assumed. Physical TV tests remain pending, but design and independent checks can proceed.
+This is a documentation/planning revision, not a new APK or implementation claim. Deliver small reviewable changes with updated docs/evidence. Do not expand catalog work or rewrite the UI stack before resolving daily-use gaps.
 
-## L0 - Reviewable launcher prototype
+| Stage | Deliverable | Exit evidence |
+|---|---|---|
+| F1 Home selection and diagnosis | Explicit system Home-role request where available, fallback settings, verified status, retry and recovery | Owner TV: select Nook, Home from YouTube, restart/wake, restore original; inability is recorded as blocked core behavior |
+| F2 Coherent visual design | Unified grid/cards/typography/spacing/focus, reduced motion, populated and empty examples of a small content shelf | Owner approves TV screenshots and remote flow; preserve direct launch; no focus jumps |
+| F3 Companion and first live sources | Responsive guided editor, shared preview vocabulary, source validation and visibility/order; YouTube selected-source and RSS adapters | A12/A13 including exact-video launch, stale/offline, invalid feed, safe credentials, conflict/draft and migration tests |
+| F4 Personal video shelf | First verify 0.4 real transfer; then QR/help, thumbnails, titles, organization and storage refinement | Real Safari upload, saved receipt, phone disconnect, replay/resume, interruption/codec/storage checks; A14 |
+| F5 Daily-use hardening | Shortcut discoverability, populated-Home profiling, two-hour stability, upgrades and recovery | All P0 gates on target TV/iPhone; explicit owner visual approval |
+| F6 Conditional integrations | Optional external receiver metadata/replay, Drive selected-file proof, optional Spotify; retained NowShowing/YouTube player/Brave scope | Each integration has its own capability evidence and owner-accepted limits |
 
-Deliver Apple TV-inspired Home with app grid/artwork, YouTube priority, From iPhone entry, optional Spotify/Drive/browser, Shared & Recent and Settings. Include empty/offline/missing-app/focus/menu states. Remove samples/pairing/configuration tools from normal Home.
+F1 and F2 can progress independently. Run the existing phone transfer test as soon as the owner is available, without waiting for F3; use the result to shape F4. F3 provider credentials/quotas are an early spike, not a late surprise. Ship the companion/source slice only when it produces useful real content; fixtures alone do not satisfy DYN-01/02. F1 failure must not be hidden by a prettier Home. AirPlay is optional and does not block F5.
 
-Gate: owner can assess the actual first screen and remote task flow before integration expansion. Do not treat a technically functioning button grid as design acceptance. Exact layout is proposed until reviewed.
+## F1 implementation detail
 
-## L1 - Default Home and direct app access
+Current MainActivity enables HomeEntry and opens ACTION_HOME_SETTINGS, with manual status refresh. It does not call RoleManager. Add a coordinator that enables the eligible alias on explicit setup, checks API 29+ and isRoleAvailable(ROLE_HOME), skips prompting if held, and calls createRequestRoleIntent when supported. Handle cancel/denial/unavailable activity without claiming success. On return/resume re-read role/default handler; where signals disagree show unresolved status. Older or unsupported systems use resolvable Home settings then general-settings guidance. An ACTION_CHOOSER dialog does not itself establish a persistent default.
 
-Implement system-supported HOME entry/setup/recovery, one-OK app launch, favorites management, All Apps, focus restoration and root Back behavior. Keep normal app entry and original-launcher recovery. Migrate 0.2 favorites/layout without losing data.
+Keep ordinary app entry and stock launcher, document recovery and retain the guard against removing Nook while default. Do not force Home by disabling packages, intercepting keys, a boot activity launch or accessibility workaround. Record exact firmware if normal selection is blocked; any alternative needs a separate product decision.
 
-Gate: Home from another app opens Nook; reboot/wake/task reuse behave predictably; original default restored successfully on target TV. BlueStacks validates visuals/navigation only. Firmware blockage is recorded as blocked core functionality, not a completed launcher.
+## Design and engineering dependencies
 
-## L2 - iPhone workflow and Shared & Recent
+Read [dynamic Home](DYNAMIC-HOME.md) and [companion](COMPANION-SPEC.md). Proposed schema v3 includes module/source settings and portable appearance choices, with migration from v1/v2; caches, credentials and retained media stay separate. Extract Home setup, content aggregation and presentation responsibilities from MainActivity incrementally, preserving storage/player contracts. No Compose/Room rewrite is assumed.
 
-Implementation slice: [0.4 retained-file preview](PHONE-TRANSFER-PREVIEW.md). The paired browser can send videos and the TV can retain/play/resume them. This does not pass the real iPhone/TV gate or implement AirPlay.
+## Validation and release
 
-Assess actual TV AirPlay/Cast/receiver support and owner sending gesture. Prototype a paired Safari retained-file path and stable-link submission without claiming AirPlay. Add a truthful From iPhone route selector, transfer progress/cancel/storage errors and replayability-aware media records.
+Preserve the existing 82 local assertions, editor/transfer state checks and 43 Android assertions; counts describe prior evidence, not this docs-only change. Add behavior tests for role outcome states, parser/URL bounds, source refresh, stable focus, migrations and new mutations when implemented. Use real TV/iPhone evidence for Home, handlers, codec, UX and performance. Check documentation links and requirement coverage on every scope change. Record source commit/APK/device/steps/results; no new deadline or version is promised until a slice is built.
 
-Native retained files play/resume after phone disconnect and TV restart. External/live sessions show reconnect or open-app actions, with no invented progress. Define thumbnail/privacy/data deletion and backup boundaries. New file upload is separate from existing JSON editor.
-
-Gate: one real iPhone video workflow tested end-to-end, with documented receiver dependency/retention and replay limitations. Test interruption, low space, unsupported codec, app restart and history controls. A desktop upload test is insufficient.
-
-## L3 - Cohesive launcher polish
-
-Bring PC companion preview/editing into the new grid model; phone Safari layout works. Verify contrast, long names, safe margins, reduced motion, missing artwork, remote context alternatives and responsive startup. Keep diagnostics in Settings. Test schema migrations, backup/restore and key continuity.
-
-Gate: all launcher P0 scenarios pass on actual TV/iPhone; owner confirms the daily experience fits. Performance and two-hour testing use representative media/artwork. Only then label first usable launcher ready.
-
-## L4 - Conditional Drive and optional services
-
-Prove Drive OAuth client/scopes and existing-file selection before folder-browser implementation. Build selected-media access/playback, stable references, range seeking, refresh/reconnect and disconnect privacy. Do not promise full Drive through TV device-code scopes or pass tokens through HTTP companion.
-
-Spotify is optional app access; richer account/music features require a separate request. Evaluate Android TV channels/Watch Next only against accessible platform data and participating apps, without universal history claims.
-
-Gate: chosen Drive workflow demonstrated with a real authorized file and truthful limits; scope decision recorded if it cannot meet the intended experience. Drive is requested conditional scope, not silently dropped.
-
-## L5 - Remaining entertainment scope
-
-Retain NowShowing-Stream catalog/episode/source work, richer YouTube browsing, Brave routing and separately evaluated filtering. Each provider/app route must pass remote/playback checks before support claims. No iframe-success or inherited-Shields assumptions. Optional mood/weather/widgets follow core quality; PC media/profile/cloud-sync work stays separate future scope.
-
-Gate: record each requested integration's supported behavior or owner-accepted limitation. Full product is not closed by L3 alone.
-
-## Verification by layer
-
-| Layer | Evidence |
-|---|---|
-| Documentation | Valid links, requirement/scenario coverage, no stale optional-launcher claims outside history |
-| Models/storage | Migration, atomic recovery, stable file/source identity, history-vs-file deletion, schema limits |
-| App/remote UI | Grid focus, one-click launch, context alternative, Home/Back task behavior, return state |
-| Transfer | Auth, quotas, streaming memory, cancellation, cleanup, permission/MIME/path validation |
-| Phone integration | Actual iPhone sending, receiver capability, disconnect/replay and codec behavior |
-| Drive | Granted-file access, refresh, range seek, revocation, changed/deleted media and redacted logs |
-| Device/release | Home default/reboot/rollback, 2 GB performance, two-hour playback, same-key upgrade |
-
-Preserve existing 74 contract assertions, editor state checks and 15 Android smoke assertions as regression coverage; they do not validate the new launcher UX or receiving integrations. Add meaningful tests for changed contracts when implementing, not artificial tests during this docs-only task.
-
-## Dependencies and completion
-
-Read [handoff](IMPLEMENTATION-HANDOFF.md), [PRD](PRD.md), [UX](UX-SPEC.md), [architecture](ARCHITECTURE.md) and [phone/Drive feasibility](PHONE-AND-DRIVE.md). Track actual results in [build status](BUILD-STATUS.md), never infer milestone acceptance from green CI. Record version/commit/device/route/expected/actual/evidence for each gate.
-
+Default Home, the refined visual design, configurable selected YouTube/RSS content, companion usability and one proven retained-file path are first-usable-launcher requirements. Full broader product scope still includes requested conditional integrations; see [PRD](PRD.md) and [acceptance](ACCEPTANCE.md).
