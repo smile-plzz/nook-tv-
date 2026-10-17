@@ -43,6 +43,7 @@ jobs:
             adb logcat -c
             adb shell am instrument -w com.ismail.nooktv.compat.test/com.ismail.nooktv.SmokeInstrumentation | tee smoke-result.txt
             adb logcat -d > android-logcat.txt
+            grep -A 35 -B 3 -E 'FATAL EXCEPTION|Fatal signal|AndroidRuntime|FAIL:' android-logcat.txt || true
             grep 'PASS:' smoke-result.txt
             adb shell screencap -p /sdcard/nook-preview.png
             adb pull /sdcard/nook-preview.png nook-preview.png
